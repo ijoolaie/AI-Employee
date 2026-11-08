@@ -75,11 +75,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     reseller_b.parent = vendor_b
     customer_a = Tenant(name=f"Portal test customer A {run_id}", slug=f"portal-customer-a-{run_id}", status="active", tenant_kind="customer", access_grant_required=True, settings={})
     customer_a.parent = target
+    unentitled_customer = Tenant(name=f"Portal unentitled customer {run_id}", slug=f"portal-unentitled-customer-{run_id}", status="active", tenant_kind="customer", access_grant_required=True, settings={})
+    unentitled_customer.parent = target
     direct_customer = Tenant(name=f"Portal direct Vendor customer {run_id}", slug=f"portal-direct-customer-{run_id}", status="active", tenant_kind="customer", access_grant_required=True, settings={})
     direct_customer.parent = vendor
     try:
         async with sessions() as session:
-            session.add_all([vendor, target, sibling, vendor_b, reseller_b, customer_a, direct_customer])
+            session.add_all([vendor, target, sibling, vendor_b, reseller_b, customer_a, unentitled_customer, direct_customer])
             await session.flush()
             grantor = User(
                 tenant_id=vendor.id, email=f"portal-grantor-{run_id}@example.com",
@@ -392,6 +394,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 target_tenant_id=sibling.id,
                 granted_by_user_id=grantor.id,
                 reason="Unentitled sibling grant for portal activation denial coverage",
+            ))
+            unentitled_customer_grant_id = uuid.uuid4()
+            session.add(PortalAccessGrant(
+                id=unentitled_customer_grant_id,
+                actor_user_id=reseller_actor.id,
+                actor_tenant_id=target.id,
+                target_tenant_id=unentitled_customer.id,
+                granted_by_user_id=reseller_grantor.id,
+                reason="Unentitled Reseller child grant for portal activation denial coverage",
             ))
             # Audit ledgers are tenant-scoped independently of the portal actor's
             # home tenant. Seed distinct records to prove both Vendor roots resolve
@@ -756,6 +767,24 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert reseller_created.status_code == 201, reseller_created.text
                 reseller_grant_id = reseller_created.json()["data"]["id"]
+                reseller_own_grants = await client.get(
+                    "/api/v1/edition/portal-access/my-grants",
+                    headers=reseller_actor_headers,
+                )
+                assert reseller_own_grants.status_code == 200, reseller_own_grants.text
+                reseller_own_grant_rows = reseller_own_grants.json()["data"]
+                assert [row["id"] for row in reseller_own_grant_rows] == [reseller_grant_id]
+                assert all(
+                    row["target_tenant_id"] != str(unentitled_customer.id)
+                    for row in reseller_own_grant_rows
+                )
+                unentitled_customer_activation = await client.post(
+                    f"/api/v1/edition/reseller/portal-access-grants/{unentitled_customer_grant_id}/activate",
+                    headers=reseller_actor_headers,
+                )
+                assert unentitled_customer_activation.status_code == 402, (
+                    unentitled_customer_activation.text
+                )
                 workflow_created = await client.post(
                     "/api/v1/workflows", headers=reseller_grantor_headers,
                     json={
