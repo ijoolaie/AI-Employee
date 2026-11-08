@@ -61,7 +61,8 @@ test("auth refresh is single-flight and scoped to its originating session", () =
   if (!auth.includes("sessionVersion: number")) throw new Error("missing session generation");
   if (!auth.includes("sessionVersion: state.sessionVersion + 1")) throw new Error("login/logout must advance session generation");
   if (!api.includes("const refreshRequests = new Map<string, Promise<TokenResponse>>()")) throw new Error("refresh requests must be deduplicated");
-  if (!api.includes("refreshRequests.get(refreshToken)")) throw new Error("concurrent requests must share refresh promise");
+  if (!api.includes("const refreshKey = `${sessionVersion}:${refreshToken}`")) throw new Error("refresh deduplication must be scoped to the session");
+  if (!api.includes("refreshRequests.get(refreshKey)")) throw new Error("concurrent requests must share refresh promise");
   if (!api.includes("_authSessionVersion = state.sessionVersion")) throw new Error("requests must capture originating session");
   if (!api.includes("sessionVersion !== state.sessionVersion")) throw new Error("late responses must not mutate a newer session");
   if (!api.includes("current.refreshToken === refresh")) throw new Error("refresh failure logout must be guarded by original credentials");
