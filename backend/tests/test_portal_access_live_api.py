@@ -438,7 +438,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             return [[1.0] + [0.0] * 63 for _ in _texts]
 
         monkeypatch.setattr(rag_service, "embed_texts", deterministic_test_embedding)
-        monkeypatch.setattr(rag_service, "extract_text", lambda _file: "target tenant knowledge")
+        monkeypatch.setattr(
+            rag_service, "extract_text",
+            lambda file: "customer tenant knowledge" if file.filename == "customer-policy.txt" else "target tenant knowledge",
+        )
         # Seeded FileObject rows intentionally avoid provider-specific storage.
         # This deterministic backend lets the live API test exercise the actual
         # authenticated streaming-download route and its tenant/context guards.
@@ -571,8 +574,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     direct_customer_foreign_download.text
                 )
 
-                # The direct Vendor→Customer portal must enforce the same
-                # complete file lifecycle boundary as Vendor→Reseller.
+                # The direct Vendor-to-Customer portal must enforce the same
+                # complete file lifecycle boundary as Vendor-to-Reseller.
                 direct_customer_uploaded_file = await client.post(
                     "/api/v1/files",
                     headers=direct_customer_portal_headers,
@@ -1026,6 +1029,24 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert customer_file_download.content == (
                     f"portal-file-content:{customer_file.storage_key}".encode()
                 )
+                customer_knowledge_index = await client.post(
+                    "/api/v1/knowledge/index",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    json={"file_id": str(customer_file.id)},
+                )
+                assert customer_knowledge_index.status_code == 201, customer_knowledge_index.text
+                customer_knowledge_search = await client.post(
+                    "/api/v1/knowledge/search",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    json={"query": "tenant policy", "top_k": 20},
+                )
+                assert customer_knowledge_search.status_code == 200, customer_knowledge_search.text
+                customer_knowledge_content = [
+                    item["content"] for item in customer_knowledge_search.json()["data"]
+                ]
+                assert "customer tenant knowledge" in customer_knowledge_content
+                assert "target tenant knowledge" not in customer_knowledge_content
+                assert "sibling tenant secret" not in customer_knowledge_content
                 reseller_file_from_customer = await client.get(
                     f"/api/v1/files/{target_file.id}",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
@@ -1091,6 +1112,14 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert revoked_customer_portal_download.status_code == 403, (
                     revoked_customer_portal_download.text
+                )
+                revoked_customer_knowledge_search = await client.post(
+                    "/api/v1/knowledge/search",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    json={"query": "tenant policy", "top_k": 20},
+                )
+                assert revoked_customer_knowledge_search.status_code == 403, (
+                    revoked_customer_knowledge_search.text
                 )
 
                 # Customer identities cannot enumerate or create Vendor/Reseller
