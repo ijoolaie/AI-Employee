@@ -457,7 +457,7 @@ test("delegated portal switching is wired to user-bound grants and session rotat
   }
   if (!api.includes("/edition/portal-access/my-grants")) throw new Error("missing user grant list endpoint");
   if (!switcher.includes("user.tenant_id !== tenant.id")) throw new Error("active delegated context must be distinguished from home identity");
-  if (!switcher.includes("beginPortalSession(activated.access_token, activated.refresh_token)")) throw new Error("portal activation must install context-bound refresh credentials");
+  if (!switcher.includes("latest.beginPortalSession(activated.access_token, activated.refresh_token)")) throw new Error("portal activation must install context-bound refresh credentials");
   const auth = read("lib/auth-store.ts");
   if (!auth.includes("homeRefreshToken: string | null")) throw new Error("missing preserved primary refresh credential");
   if (!auth.includes("beginPortalSession: (access, refresh) =>")) throw new Error("missing delegated session transition");
