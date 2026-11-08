@@ -55,6 +55,19 @@ test("new login resets previous identity before fetching account details", () =>
   if (!auth.includes("setTokens: (access, refresh) =>")) throw new Error("token refresh setter must remain available");
 });
 
+test("auth refresh is single-flight and scoped to its originating session", () => {
+  const auth = read("lib/auth-store.ts");
+  const api = read("lib/api.ts");
+  if (!auth.includes("sessionVersion: number")) throw new Error("missing session generation");
+  if (!auth.includes("sessionVersion: state.sessionVersion + 1")) throw new Error("login/logout must advance session generation");
+  if (!api.includes("const refreshRequests = new Map<string, Promise<TokenResponse>>()")) throw new Error("refresh requests must be deduplicated");
+  if (!api.includes("refreshRequests.get(refreshToken)")) throw new Error("concurrent requests must share refresh promise");
+  if (!api.includes("_authSessionVersion = state.sessionVersion")) throw new Error("requests must capture originating session");
+  if (!api.includes("sessionVersion !== state.sessionVersion")) throw new Error("late responses must not mutate a newer session");
+  if (!api.includes("current.refreshToken === refresh")) throw new Error("refresh failure logout must be guarded by original credentials");
+  if (!api.includes("current.refreshToken !== tokens.refresh_token")) throw new Error("retry must verify rotated refresh token belongs to current session");
+});
+
 test("login Suspense", () => {
   const src = read("app/(auth)/login/page.tsx");
   if (!src.includes("Suspense")) throw new Error("no Suspense");
