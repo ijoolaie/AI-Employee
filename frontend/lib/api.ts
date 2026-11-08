@@ -50,7 +50,8 @@ type AuthRequestConfig = InternalAxiosRequestConfig & {
 const refreshRequests = new Map<string, Promise<TokenResponse>>();
 
 function refreshSession(refreshToken: string, sessionVersion: number): Promise<TokenResponse> {
-  const pending = refreshRequests.get(refreshToken);
+  const refreshKey = `${sessionVersion}:${refreshToken}`;
+  const pending = refreshRequests.get(refreshKey);
   if (pending) return pending;
 
   const request = axios
@@ -67,10 +68,10 @@ function refreshSession(refreshToken: string, sessionVersion: number): Promise<T
       return data.data;
     })
     .finally(() => {
-      if (refreshRequests.get(refreshToken) === request) refreshRequests.delete(refreshToken);
+      if (refreshRequests.get(refreshKey) === request) refreshRequests.delete(refreshKey);
     });
 
-  refreshRequests.set(refreshToken, request);
+  refreshRequests.set(refreshKey, request);
   return request;
 }
 
