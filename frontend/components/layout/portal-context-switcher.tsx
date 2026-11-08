@@ -9,7 +9,7 @@ import {
   restorePrimaryPortalSession,
 } from "@/lib/api";
 import { useAuthStore } from "@/lib/auth-store";
-import { portalPath, type PortalKind } from "@/lib/portal-access";
+import { defaultPortalForAccount, portalPath, type PortalKind } from "@/lib/portal-access";
 import type { PortalAccessGrant } from "@/types";
 
 export function PortalContextSwitcher() {
@@ -80,8 +80,8 @@ export function PortalContextSwitcher() {
     setError(null);
     try {
       const me = await restorePrimaryPortalSession();
-      const homeKind = me.tenant.tenant_kind ?? "customer";
-      router.replace(portalPath(homeKind));
+      const homePortal = defaultPortalForAccount(me.tenant.tenant_kind ?? "customer");
+      router.replace(homePortal === "admin" ? "/admin" : portalPath(homePortal));
     } catch {
       setError("Unable to restore your primary account session. Please sign in again if this continues.");
     } finally {

@@ -465,6 +465,7 @@ test("delegated portal switching is wired to user-bound grants and session rotat
   if (!auth.includes("state.portalContextActive")) throw new Error("refresh must preserve the home credential while context is active");
   if (!api.includes("state.homeRefreshToken")) throw new Error("return-to-home must use the primary refresh credential");
   if (!switcher.includes("restorePrimaryPortalSession")) throw new Error("missing return-to-home flow");
+  if (!switcher.includes("defaultPortalForAccount")) throw new Error("return-to-home must preserve platform-admin routing");
   if (!switcher.includes("portalPath(grant.target_kind")) throw new Error("portal switch must route to the validated target kind");
   if (!types.includes("interface PortalAccessGrant")) throw new Error("missing typed portal grant");
   for (const rel of ["app/(customer)/layout.tsx", "app/(reseller)/layout.tsx", "app/(vendor)/layout.tsx"]) {
