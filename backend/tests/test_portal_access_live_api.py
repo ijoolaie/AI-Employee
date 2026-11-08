@@ -1060,6 +1060,16 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert nested_customer_uploaded_get.status_code == 200, (
                     nested_customer_uploaded_get.text
                 )
+                nested_customer_uploaded_download = await client.get(
+                    f"/api/v1/files/{nested_customer_uploaded_id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert nested_customer_uploaded_download.status_code == 200, (
+                    nested_customer_uploaded_download.text
+                )
+                assert nested_customer_uploaded_download.content == (
+                    b"nested-customer-upload-content"
+                )
                 reseller_home_cannot_read_nested_upload = await client.get(
                     f"/api/v1/files/{nested_customer_uploaded_id}",
                     headers=reseller_actor_headers,
