@@ -571,8 +571,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     direct_customer_foreign_download.text
                 )
 
-                # The direct Vendorâ†’Customer portal must enforce the same
-                # complete file lifecycle boundary as Vendorâ†’Reseller.
+                # The direct Vendor-to-Customer portal must enforce the same
+                # complete file lifecycle boundary as Vendor-to-Reseller.
                 direct_customer_uploaded_file = await client.post(
                     "/api/v1/files",
                     headers=direct_customer_portal_headers,
