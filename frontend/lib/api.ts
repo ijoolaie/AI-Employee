@@ -88,7 +88,7 @@ api.interceptors.response.use(
     const requestUrl = original?.url ?? "";
     // Credential failures must be returned to the login form without refresh.
     const isAuthRequest =
-      /\\/auth\\/(login|register|forgot-password|reset-password|invitations\\/accept)$/.test(requestUrl);
+      /\/auth\/(login|register|forgot-password|reset-password|invitations\/accept)$/.test(requestUrl);
 
     if (error.response?.status === 401 && original && !isAuthRequest && !original._retry) {
       original._retry = true;
