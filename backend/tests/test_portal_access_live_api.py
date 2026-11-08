@@ -1542,6 +1542,14 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert revoked_vendor_portal_files.status_code == 403, (
                     revoked_vendor_portal_files.text
                 )
+                revoked_knowledge_search = await client.post(
+                    "/api/v1/knowledge/search",
+                    headers=portal_headers,
+                    json={"query": "tenant policy", "top_k": 20},
+                )
+                assert revoked_knowledge_search.status_code == 403, (
+                    revoked_knowledge_search.text
+                )
 
                 async with sessions() as session:
                     grant = (await session.execute(
