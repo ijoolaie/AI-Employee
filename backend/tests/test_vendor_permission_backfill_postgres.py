@@ -56,39 +56,15 @@ async def test_vendor_admin_backfill_postgres_scope_and_idempotency():
             transaction = await connection.begin()
 
             def exercise(sync_connection):
-                sync_connection.exec_driver_sql(
-                    """
-                    CREATE TEMP TABLE tenants (
-                        id uuid PRIMARY KEY,
-                        tenant_kind text NOT NULL,
-                        parent_tenant_id uuid NULL
-                    );
-                    CREATE TEMP TABLE users (
-                        id uuid PRIMARY KEY,
-                        tenant_id uuid NOT NULL,
-                        is_platform_admin boolean NOT NULL
-                    );
-                    CREATE TEMP TABLE roles (
-                        id uuid PRIMARY KEY,
-                        tenant_id uuid NOT NULL,
-                        name text NOT NULL
-                    );
-                    CREATE TEMP TABLE user_roles (
-                        user_id uuid NOT NULL,
-                        role_id uuid NOT NULL
-                    );
-                    CREATE TEMP TABLE permissions (
-                        id uuid PRIMARY KEY,
-                        code text UNIQUE NOT NULL,
-                        description text NULL
-                    );
-                    CREATE TEMP TABLE role_permissions (
-                        role_id uuid NOT NULL,
-                        permission_id uuid NOT NULL,
-                        PRIMARY KEY (role_id, permission_id)
-                    );
-                    """
-                )
+                for ddl in (
+                    "CREATE TEMP TABLE tenants (id uuid PRIMARY KEY, tenant_kind text NOT NULL, parent_tenant_id uuid NULL)",
+                    "CREATE TEMP TABLE users (id uuid PRIMARY KEY, tenant_id uuid NOT NULL, is_platform_admin boolean NOT NULL)",
+                    "CREATE TEMP TABLE roles (id uuid PRIMARY KEY, tenant_id uuid NOT NULL, name text NOT NULL)",
+                    "CREATE TEMP TABLE user_roles (user_id uuid NOT NULL, role_id uuid NOT NULL)",
+                    "CREATE TEMP TABLE permissions (id uuid PRIMARY KEY, code text UNIQUE NOT NULL, description text NULL)",
+                    "CREATE TEMP TABLE role_permissions (role_id uuid NOT NULL, permission_id uuid NOT NULL, PRIMARY KEY (role_id, permission_id))",
+                ):
+                    sync_connection.exec_driver_sql(ddl)
 
                 vendor_a, vendor_b, reseller, customer = (uuid.uuid4() for _ in range(4))
                 eligible_a, eligible_b = uuid.uuid4(), uuid.uuid4()
