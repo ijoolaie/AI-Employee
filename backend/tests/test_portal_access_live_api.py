@@ -571,8 +571,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     direct_customer_foreign_download.text
                 )
 
-                # The direct Vendor→Customer portal must enforce the same
-                # complete file lifecycle boundary as Vendor→Reseller.
+                # The direct Vendor-to-Customer portal must enforce the same
+                # complete file lifecycle boundary as Vendor-to-Reseller.
                 direct_customer_uploaded_file = await client.post(
                     "/api/v1/files",
                     headers=direct_customer_portal_headers,
@@ -1037,6 +1037,59 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert reseller_file_download_from_customer.status_code == 404, (
                     reseller_file_download_from_customer.text
+                )
+                nested_customer_uploaded_file = await client.post(
+                    "/api/v1/files",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    files={
+                        "file": (
+                            "nested-customer-upload.txt",
+                            b"nested-customer-upload-content",
+                            "text/plain",
+                        )
+                    },
+                )
+                assert nested_customer_uploaded_file.status_code == 201, (
+                    nested_customer_uploaded_file.text
+                )
+                nested_customer_uploaded_id = nested_customer_uploaded_file.json()["data"]["id"]
+                nested_customer_uploaded_get = await client.get(
+                    f"/api/v1/files/{nested_customer_uploaded_id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert nested_customer_uploaded_get.status_code == 200, (
+                    nested_customer_uploaded_get.text
+                )
+                nested_customer_uploaded_download = await client.get(
+                    f"/api/v1/files/{nested_customer_uploaded_id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert nested_customer_uploaded_download.status_code == 200, (
+                    nested_customer_uploaded_download.text
+                )
+                assert nested_customer_uploaded_download.content == (
+                    b"nested-customer-upload-content"
+                )
+                reseller_home_cannot_read_nested_upload = await client.get(
+                    f"/api/v1/files/{nested_customer_uploaded_id}",
+                    headers=reseller_actor_headers,
+                )
+                assert reseller_home_cannot_read_nested_upload.status_code == 404, (
+                    reseller_home_cannot_read_nested_upload.text
+                )
+                nested_customer_uploaded_delete = await client.delete(
+                    f"/api/v1/files/{nested_customer_uploaded_id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert nested_customer_uploaded_delete.status_code == 200, (
+                    nested_customer_uploaded_delete.text
+                )
+                nested_customer_uploaded_after_delete = await client.get(
+                    f"/api/v1/files/{nested_customer_uploaded_id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert nested_customer_uploaded_after_delete.status_code == 404, (
+                    nested_customer_uploaded_after_delete.text
                 )
                 # A Reseller-to-Customer portal token must not expose the
                 # target Customer's user directory or permit user enumeration.
