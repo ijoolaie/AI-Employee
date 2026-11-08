@@ -1,0 +1,54 @@
+# Multi-Vendor acceptance matrix audit — 2026-11-08
+
+**Scope:** source/documentation/test audit against the approved architecture and delegated authorization contract.  
+**Baseline:** `main` at `f6a08abef942a1845650c5b04f6ad5c330b16669`.  
+**Tracker:** [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350).  
+**Conclusion:** core tenant hierarchy, delegated portal context, several high-risk cross-tenant surfaces, and entitlement denial have meaningful merged test evidence. The complete acceptance matrix is **not yet demonstrated**. This document records repository evidence, not production certification or a claim that every runtime path was manually exercised.
+
+## Evidence classification
+
+- **Covered:** an identifiable merged test or CI workflow asserts the relevant positive/negative boundary.
+- **Partial:** some paths or topologies are tested, but the full actor/resource/action combinations or underlying storage/runtime boundary are not.
+- **Not evidenced:** no dedicated test or source evidence was found in this audit for the required acceptance condition. This is a test-evidence gap, not proof of a vulnerability.
+
+## Matrix
+
+| Domain | Current evidence | Status | Remaining acceptance |
+|---|---|---|---|
+| Primary identity and portal-kind ceiling | `backend/tests/test_portal_access_contract.py`, `frontend/lib/portal-access.test.ts`, `frontend/e2e/portal-login.spec.ts`; #1409 and #1416 | **Covered for portal-kind routing/context rules** | Real browser acceptance with real authenticated Vendor/Reseller/Customer accounts and delegated target switching, beyond mocked login routing. |
+| Vendor A/B independent roots | #1389–#1393; `backend/tests/test_portal_access_live_api.py` seeds two Vendor roots and verifies Vendor B cannot read Vendor A resources, audit rows, files, exports, invoices and dead letters | **Covered for tested surfaces** | Expand the same cross-root negative assertions to every resource family and every API operation, not just sampled endpoints. |
+| Vendor → direct Reseller and direct Customer grants | `backend/tests/test_portal_access_live_api.py`; #1416–#1418 | **Covered for grant activation, user-bound listing, effective tenant context, revocation and entitlement denial** | Complete direct-child lifecycle and portal resource matrix for all actions. |
+| Reseller → direct Customer grants | `backend/tests/test_portal_access_live_api.py`; #1416–#1418 | **Covered for grant activation, context, revocation and unentitled denial** | Expand all resource/action cases under multiple independent Reseller roots and sibling Customers. |
+| Reseller-to-Reseller, Customer-to-parent, Vendor-to-grandchild escalation | `backend/tests/test_portal_access_live_api.py`; #1394–#1400 | **Covered for key negative portal/action-grant paths** | Add systematic ID enumeration, search, export and resource-level denial across every sibling/descendant combination. |
+| Child provisioning and action-grant delegation | `backend/tests/test_tenant_action_grants_live_api.py`, `backend/tests/test_edition_action_permissions.py`; #1407/#1408 | **Partial-to-covered** | The live action-grant integration test exercises Vendor direct Customer provisioning and revocation; add symmetric Reseller direct Customer and Vendor direct Reseller grant/revoke/unauthorized-user scenarios under PostgreSQL. |
+| Role creation/update/assignment delegation ceiling | Contract and focused role-boundary tests; #1407 | **Partial** | Demonstrate non-escalation for role create, role update and assignment across Vendor, Reseller and Customer, including attempts to assign platform/global permissions and scope wildcards. |
+| Tenant user lifecycle | #1395–#1398, #1407; `backend/tests/api/test_tenant_admin_role_boundary.py` | **Covered for selected Customer-denial and tenant permission boundaries** | Complete positive/negative invite, accept, role assignment, activation/deactivation, revoke and audit matrix for all three tenant kinds. |
+| Files API and portal-context scoping | `backend/tests/test_portal_access_live_api.py`; `backend/scripts/e2e_tenant_rbac_verify.py`; #1403–#1406 | **Covered for list/get/download/delete API paths and revoked-context denial** | Verify object-store direct/presigned URL access after grant revocation and across tenant boundaries; include upload/update/metadata and storage lifecycle paths. |
+| Knowledge search and indexing | `backend/scripts/e2e_tenant_rbac_verify.py` includes cross-tenant knowledge indexing/search denial; portal integration seeds tenant-scoped knowledge data | **Partial** | Run search/index acceptance for Vendor A/B, sibling Resellers, direct Customers and nested Customers in active portal context; include filters, pagination and cached results. |
+| Privacy exports | `backend/tests/test_portal_access_live_api.py`; #1390 and #1391 | **Covered for sampled Vendor B and Customer portal own-vs-foreign export paths** | Extend to all export types, nested topology, async export jobs, artifact retrieval/download and revoked-context access. |
+| Reports, invoices, usage, Test Center and operations | `backend/tests/test_portal_access_live_api.py`; `backend/scripts/e2e_reports_analytics_verify.py`; #1391–#1393 | **Partial-to-covered for sampled Vendor B reporting surfaces** | Complete every report/analytics endpoint and export/artifact action across all actor/tenant topologies; the generic real-stack report script currently uses independent root tenants rather than the complete Vendor/Reseller hierarchy. |
+| Audit views | `backend/tests/test_portal_access_live_api.py`; #1392 | **Covered for sampled tenant-owned audit rows across Vendor roots** | Verify all audit listing/detail/filter/export endpoints and actor attribution for delegated actions, revocation, failed access and background workers. |
+| Notifications and outbox | #1393; `backend/tests/test_customer_handoff_notification_outbox.py`, `backend/tests/test_outbox_tenant_dedupe.py` | **Partial** | Prove recipient resolution, dispatch, retry/dead-letter, and notification content cannot cross Vendor/Reseller/Customer boundaries; include delegated portal and revoked grant transitions. |
+| Background jobs and worker ownership | #1410–#1412; `backend/tests/test_workflow_worker_tenant_boundary.py`, `backend/tests/test_agent_runtime_binding_tenant_boundary.py`, `backend/tests/workers/test_workforce_evaluation_worker.py` | **Partial-to-covered for specific worker ownership invariants** | Inventory every Celery/async/background task and prove tenant context is explicit, revalidated at execution, and safe on retries, delayed jobs and stale/revoked portal context. |
+| WebSocket/realtime | Architecture contract requires it; no dedicated Multi-Vendor WebSocket/realtime acceptance test was identified in the test tree reviewed | **Not evidenced** | Add cross-tenant subscribe/read/write tests, reconnect/token refresh and grant-revocation behavior for all realtime channels. |
+| Cache isolation | #1413–#1415 cover frontend identity transitions, QueryClient clearing and stale auth refresh protection | **Partial** | Prove server-side Redis/cache keys and invalidation are tenant/context scoped; verify no stale response after portal switch, role/grant revocation or account switch across tabs. |
+| Entitlement and stale grant denial | #1417 and #1418 exact-head CI; PostgreSQL integration assertions on `my-grants` and activation HTTP 402 | **Covered for the tested Vendor→Reseller and Reseller→Customer grant cases** | Add entitlement expiry/suspension/paid-to-expired transitions against already active access tokens and in-flight/background operations. |
+| Legacy permission backfill | `backend/tests/test_vendor_permission_backfill_migration.py` validates migration SQL shape and intended root Vendor Admin selection | **Partial** | Run migration upgrade/downgrade and data reconciliation against an isolated PostgreSQL snapshot with representative legacy Vendor/Reseller/Customer roles; obtain explicit review before any staging/production backfill. |
+| Portal UX and human acceptance | Login routing Playwright tests and frontend contract tests; #1416 portal shell implementation | **Partial** | Capture authenticated desktop/mobile journeys for Vendor, Reseller and Customer, delegated switch/return, empty/error/expired states and accessibility; require human visual/product approval. |
+
+## Prioritized remaining work
+
+1. **P0 — Realtime/WebSocket:** identify every websocket/SSE channel and add explicit cross-Vendor, sibling-Reseller and Customer isolation tests, including reconnect and revoked-grant behavior.
+2. **P0 — Object storage:** test direct/presigned object URLs and download credentials after tenant switch, grant revocation, expiry and account logout. API-level `/files` checks do not by themselves prove the underlying storage URL boundary.
+3. **P0 — Complete actor/resource/action expansion:** turn the sampled endpoints into parameterized positive/negative coverage for Vendor A/B, Reseller A/B, direct Customers and nested Customers. Include list/get/create/update/delete, search, exports and artifacts.
+4. **P1 — Notifications and jobs:** trace every dispatch recipient and background task to its owning tenant; test retry, delayed execution, stale context and revocation.
+5. **P1 — Cache and reports:** prove server-side cache key isolation and expand reports/analytics/export artifacts beyond the sampled Vendor B paths.
+6. **P1 — Legacy migration rehearsal:** run the permission backfill against an isolated PostgreSQL snapshot and review resulting grants before any rollout. No rollout is authorized by this audit.
+7. **P1 — Human UX acceptance:** complete real authenticated desktop/mobile portal journeys and record explicit visual/product sign-off.
+
+## Safety and release boundary
+
+- Keep [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350) OPEN until the matrix above is completed and evidence is attached.
+- CI and synthetic/integration fixtures are not production certification or customer acceptance.
+- Do not perform production/staging deployment, permission backfill, schema migration, persistent account mutation or payment activation without separate explicit approval.
+- PostgreSQL integration tests must use isolated `SUPPORT_TEST_DATABASE_URL`; the local environment did not have that variable configured during this audit.
