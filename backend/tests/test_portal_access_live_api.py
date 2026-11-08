@@ -381,6 +381,18 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 granted_by_user_id=grantor.id,
                 reason="Invalid legacy Reseller-to-Vendor grant for denial coverage",
             ))
+            # Simulate a stale/corrupt grant to a child with no paid or Demo
+            # entitlement. Listing and activation must both fail closed even
+            # though the direct-child relationship and grant row look valid.
+            unentitled_sibling_grant_id = uuid.uuid4()
+            session.add(PortalAccessGrant(
+                id=unentitled_sibling_grant_id,
+                actor_user_id=actor.id,
+                actor_tenant_id=vendor.id,
+                target_tenant_id=sibling.id,
+                granted_by_user_id=grantor.id,
+                reason="Unentitled sibling grant for portal activation denial coverage",
+            ))
             # Audit ledgers are tenant-scoped independently of the portal actor's
             # home tenant. Seed distinct records to prove both Vendor roots resolve
             # only the audit entries owned by the active Reseller context.
@@ -465,6 +477,12 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert own_grant_rows[0]["target_tenant_id"] == str(target.id)
                 assert own_grant_rows[0]["target_kind"] == "reseller"
                 assert own_grant_rows[0]["target_name"] == target.name
+                assert all(row["target_tenant_id"] != str(sibling.id) for row in own_grant_rows)
+                unentitled_activation = await client.post(
+                    f"/api/v1/edition/vendor/portal-access-grants/{unentitled_sibling_grant_id}/activate",
+                    headers=actor_headers,
+                )
+                assert unentitled_activation.status_code == 402, unentitled_activation.text
 
                 # A Vendor may also grant its actor access to a direct Customer,
                 # not only a direct Reseller. The token keeps the Vendor as the
