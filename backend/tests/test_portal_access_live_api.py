@@ -442,9 +442,24 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
         # Seeded FileObject rows intentionally avoid provider-specific storage.
         # This deterministic backend lets the live API test exercise the actual
         # authenticated streaming-download route and its tenant/context guards.
-        test_storage_backend = SimpleNamespace(
-            open=lambda key: BytesIO(f"portal-file-content:{key}".encode())
-        )
+        class _PortalTestStorageBackend:
+            def __init__(self):
+                self.objects = {}
+
+            def save(self, key, data):
+                content = data.read()
+                self.objects[key] = content
+                return len(content)
+
+            def open(self, key):
+                if key in self.objects:
+                    return BytesIO(self.objects[key])
+                return BytesIO(f"portal-file-content:{key}".encode())
+
+            def delete(self, key):
+                self.objects.pop(key, None)
+
+        test_storage_backend = _PortalTestStorageBackend()
         monkeypatch.setattr(
             storage_service, "get_storage_backend", lambda: test_storage_backend
         )
@@ -634,6 +649,73 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert vendor_b_foreign_file_download.status_code == 404, (
                     vendor_b_foreign_file_download.text
                 )
+
+                # Exercise the full tenant-scoped file lifecycle while the
+                # actor is in Vendor B's delegated Reseller context.
+                vendor_b_uploaded_file = await client.post(
+                    "/api/v1/files",
+                    headers=vendor_b_portal_headers,
+                    files={
+                        "file": (
+                            "vendor-b-upload.txt",
+                            b"vendor-b-upload-content",
+                            "text/plain",
+                        )
+                    },
+                )
+                assert vendor_b_uploaded_file.status_code == 201, (
+                    vendor_b_uploaded_file.text
+                )
+                uploaded_file_id = vendor_b_uploaded_file.json()["data"]["id"]
+                vendor_b_uploaded_file_get = await client.get(
+                    f"/api/v1/files/{uploaded_file_id}",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_uploaded_file_get.status_code == 200, (
+                    vendor_b_uploaded_file_get.text
+                )
+                assert vendor_b_uploaded_file_get.json()["data"]["filename"] == (
+                    "vendor-b-upload.txt"
+                )
+                vendor_b_uploaded_file_download = await client.get(
+                    f"/api/v1/files/{uploaded_file_id}/download",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_uploaded_file_download.status_code == 200, (
+                    vendor_b_uploaded_file_download.text
+                )
+                assert vendor_b_uploaded_file_download.content == (
+                    b"vendor-b-upload-content"
+                )
+                vendor_a_cannot_read_vendor_b_upload = await client.get(
+                    f"/api/v1/files/{uploaded_file_id}",
+                    headers=actor_headers,
+                )
+                assert vendor_a_cannot_read_vendor_b_upload.status_code == 404, (
+                    vendor_a_cannot_read_vendor_b_upload.text
+                )
+                vendor_b_uploaded_file_deleted = await client.delete(
+                    f"/api/v1/files/{uploaded_file_id}",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_uploaded_file_deleted.status_code == 200, (
+                    vendor_b_uploaded_file_deleted.text
+                )
+                vendor_b_deleted_file_get = await client.get(
+                    f"/api/v1/files/{uploaded_file_id}",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_deleted_file_get.status_code == 404, (
+                    vendor_b_deleted_file_get.text
+                )
+                vendor_b_deleted_file_download = await client.get(
+                    f"/api/v1/files/{uploaded_file_id}/download",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_deleted_file_download.status_code == 404, (
+                    vendor_b_deleted_file_download.text
+                )
+
                 vendor_b_customer_export = await client.get(
                     f"/api/v1/privacy/customers/{cross_vendor_customer.id}/export",
                     headers=vendor_b_portal_headers,
