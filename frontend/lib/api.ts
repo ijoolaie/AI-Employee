@@ -42,55 +42,83 @@ export const api = axios.create({
   headers: { "Content-Type": "application/json" },
 });
 
+type AuthRequestConfig = InternalAxiosRequestConfig & {
+  _retry?: boolean;
+  _authSessionVersion?: number;
+};
+
+const refreshRequests = new Map<string, Promise<TokenResponse>>();
+
+function refreshSession(refreshToken: string, sessionVersion: number): Promise<TokenResponse> {
+  const pending = refreshRequests.get(refreshToken);
+  if (pending) return pending;
+
+  const request = axios
+    .post<APIResponse<TokenResponse>>(`${API_BASE}/auth/refresh`, {
+      refresh_token: refreshToken,
+    })
+    .then(({ data }) => {
+      if (!data.data) throw new Error("Unexpected refresh response");
+      const state = useAuthStore.getState();
+      if (state.sessionVersion !== sessionVersion || state.refreshToken !== refreshToken) {
+        throw new Error("Session changed while refreshing credentials");
+      }
+      state.setTokens(data.data.access_token, data.data.refresh_token);
+      return data.data;
+    })
+    .finally(() => {
+      if (refreshRequests.get(refreshToken) === request) refreshRequests.delete(refreshToken);
+    });
+
+  refreshRequests.set(refreshToken, request);
+  return request;
+}
+
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  const token = useAuthStore.getState().accessToken;
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  const state = useAuthStore.getState();
+  (config as AuthRequestConfig)._authSessionVersion = state.sessionVersion;
+  if (state.accessToken) config.headers.Authorization = `Bearer ${state.accessToken}`;
   return config;
 });
 
 api.interceptors.response.use(
   (res) => res,
   async (error: AxiosError<APIResponse<unknown>>) => {
-    const original = error.config;
+    const original = error.config as AuthRequestConfig | undefined;
     const requestUrl = original?.url ?? "";
-    // Authentication failures (especially invalid tenant slugs) must be
-    // returned to the login form immediately. Refreshing a previous session
-    // for a failed login can delay or obscure the actual credential error.
+    // Credential failures must be returned to the login form without refresh.
     const isAuthRequest =
-      /\/auth\/(login|register|forgot-password|reset-password|invitations\/accept)$/.test(requestUrl);
+      /\\/auth\\/(login|register|forgot-password|reset-password|invitations\\/accept)$/.test(requestUrl);
 
-    if (
-      error.response?.status === 401 &&
-      original &&
-      !isAuthRequest &&
-      !(original as InternalAxiosRequestConfig & { _retry?: boolean })._retry
-    ) {
-      (original as InternalAxiosRequestConfig & { _retry?: boolean })._retry =
-        true;
-      const refresh = useAuthStore.getState().refreshToken;
+    if (error.response?.status === 401 && original && !isAuthRequest && !original._retry) {
+      original._retry = true;
+      const state = useAuthStore.getState();
+      const sessionVersion = original._authSessionVersion;
+      // Ignore delayed 401 responses from a previous account.
+      if (sessionVersion !== state.sessionVersion) return Promise.reject(error);
+
+      const refresh = state.refreshToken;
       if (refresh) {
         try {
-          const { data } = await axios.post<APIResponse<TokenResponse>>(
-            `${API_BASE}/auth/refresh`,
-            { refresh_token: refresh }
-          );
-          if (data.data) {
-            useAuthStore
-              .getState()
-              .setTokens(data.data.access_token, data.data.refresh_token);
-            original.headers.Authorization = `Bearer ${data.data.access_token}`;
-            return api(original);
+          const tokens = await refreshSession(refresh, sessionVersion);
+          const current = useAuthStore.getState();
+          if (current.sessionVersion !== sessionVersion || current.refreshToken !== tokens.refresh_token) {
+            return Promise.reject(error);
           }
+          original.headers.Authorization = `Bearer ${tokens.access_token}`;
+          return api(original);
         } catch {
-          useAuthStore.getState().logout();
-          if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
-            window.location.href = "/login?reason=session";
+          const current = useAuthStore.getState();
+          // An old refresh failure must not log out a newer account.
+          if (current.sessionVersion === sessionVersion && current.refreshToken === refresh) {
+            current.logout();
+            if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
+              window.location.href = "/login?reason=session";
+            }
           }
         }
-      } else {
-        useAuthStore.getState().logout();
+      } else if (state.sessionVersion === sessionVersion) {
+        state.logout();
         if (typeof window !== "undefined" && !window.location.pathname.startsWith("/login")) {
           window.location.href = "/login?reason=session";
         }
@@ -99,7 +127,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
 function unwrap<T>(res: { data: APIResponse<T> }): T {
   if (!res.data.success || res.data.data === undefined) {
     throw new Error("Unexpected API response");
