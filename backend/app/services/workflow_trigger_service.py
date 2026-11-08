@@ -147,6 +147,14 @@ async def dispatch_event(db: AsyncSession, *, delivery_id: uuid.UUID) -> Workflo
     trigger = trigger_result.scalar_one_or_none()
     if trigger is None or not trigger.is_active:
         delivery.status = "rejected"; delivery.error = {"message": "Trigger inactive or missing"}; await db.flush(); return delivery
+    # The delivery row is the durable tenant boundary for this background
+    # dispatch. A stale/corrupt cross-tenant trigger reference must never be
+    # allowed to select a workflow or creator from another tenant.
+    if trigger.tenant_id != delivery.tenant_id:
+        delivery.status = "rejected"
+        delivery.error = {"message": "Trigger tenant does not match event delivery"}
+        await db.flush()
+        return delivery
     delivery.attempts += 1
     try:
         run = await workflow_service.create_workflow_run(db, tenant_id=delivery.tenant_id, workflow_id=trigger.workflow_id, input_data={"event": delivery.payload, "event_id": delivery.event_id, "event_type": delivery.event_type}, created_by=trigger.created_by)
