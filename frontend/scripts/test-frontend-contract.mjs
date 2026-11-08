@@ -48,11 +48,25 @@ test("new login resets previous identity before fetching account details", () =>
   const auth = read("lib/auth-store.ts");
   const login = read("app/(auth)/login/page.tsx");
   if (!auth.includes("beginSession: (access, refresh) =>")) throw new Error("missing new-session transition");
-  if (!auth.includes("user: null, tenant: null")) throw new Error("new session must clear previous identity");
+  if (!auth.includes("user: null") || !auth.includes("tenant: null")) throw new Error("new session must clear previous identity");
   if (!login.includes("beginSession(tokens.access_token, tokens.refresh_token)")) throw new Error("login must reset identity before fetchMe");
   if (!login.includes("me = await fetchMe()")) throw new Error("login must still fetch authoritative identity");
   if (!login.includes("useAuthStore.getState().logout()")) throw new Error("failed identity resolution must clear the new token");
   if (!auth.includes("setTokens: (access, refresh) =>")) throw new Error("token refresh setter must remain available");
+});
+
+test("auth refresh is single-flight and scoped to its originating session", () => {
+  const auth = read("lib/auth-store.ts");
+  const api = read("lib/api.ts");
+  if (!auth.includes("sessionVersion: number")) throw new Error("missing session generation");
+  if (!auth.includes("sessionVersion: state.sessionVersion + 1")) throw new Error("login/logout must advance session generation");
+  if (!api.includes("const refreshRequests = new Map<string, Promise<TokenResponse>>()")) throw new Error("refresh requests must be deduplicated");
+  if (!api.includes("const refreshKey = `${sessionVersion}:${refreshToken}`")) throw new Error("refresh deduplication must be scoped to the session");
+  if (!api.includes("refreshRequests.get(refreshKey)")) throw new Error("concurrent requests must share refresh promise");
+  if (!api.includes("_authSessionVersion = state.sessionVersion")) throw new Error("requests must capture originating session");
+  if (!api.includes("sessionVersion !== state.sessionVersion")) throw new Error("late responses must not mutate a newer session");
+  if (!api.includes("current.refreshToken === refresh")) throw new Error("refresh failure logout must be guarded by original credentials");
+  if (!api.includes("current.refreshToken !== tokens.refresh_token")) throw new Error("retry must verify rotated refresh token belongs to current session");
 });
 
 test("login Suspense", () => {
