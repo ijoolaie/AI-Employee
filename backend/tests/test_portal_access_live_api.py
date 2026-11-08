@@ -1038,6 +1038,75 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert reseller_file_download_from_customer.status_code == 404, (
                     reseller_file_download_from_customer.text
                 )
+
+                # Complete the file lifecycle for a Reseller actor operating
+                # in its explicitly delegated Customer portal context.
+                reseller_customer_uploaded_file = await client.post(
+                    "/api/v1/files",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    files={
+                        "file": (
+                            "reseller-customer-upload.txt",
+                            b"reseller-customer-upload-content",
+                            "text/plain",
+                        )
+                    },
+                )
+                assert reseller_customer_uploaded_file.status_code == 201, (
+                    reseller_customer_uploaded_file.text
+                )
+                reseller_customer_uploaded_id = (
+                    reseller_customer_uploaded_file.json()["data"]["id"]
+                )
+                reseller_customer_uploaded_get = await client.get(
+                    f"/api/v1/files/{reseller_customer_uploaded_id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_customer_uploaded_get.status_code == 200, (
+                    reseller_customer_uploaded_get.text
+                )
+                assert reseller_customer_uploaded_get.json()["data"]["filename"] == (
+                    "reseller-customer-upload.txt"
+                )
+                reseller_customer_uploaded_download = await client.get(
+                    f"/api/v1/files/{reseller_customer_uploaded_id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_customer_uploaded_download.status_code == 200, (
+                    reseller_customer_uploaded_download.text
+                )
+                assert reseller_customer_uploaded_download.content == (
+                    b"reseller-customer-upload-content"
+                )
+                reseller_home_cannot_read_customer_upload = await client.get(
+                    f"/api/v1/files/{reseller_customer_uploaded_id}",
+                    headers=reseller_actor_headers,
+                )
+                assert reseller_home_cannot_read_customer_upload.status_code == 404, (
+                    reseller_home_cannot_read_customer_upload.text
+                )
+                reseller_customer_uploaded_deleted = await client.delete(
+                    f"/api/v1/files/{reseller_customer_uploaded_id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_customer_uploaded_deleted.status_code == 200, (
+                    reseller_customer_uploaded_deleted.text
+                )
+                reseller_customer_deleted_get = await client.get(
+                    f"/api/v1/files/{reseller_customer_uploaded_id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_customer_deleted_get.status_code == 404, (
+                    reseller_customer_deleted_get.text
+                )
+                reseller_customer_deleted_download = await client.get(
+                    f"/api/v1/files/{reseller_customer_uploaded_id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_customer_deleted_download.status_code == 404, (
+                    reseller_customer_deleted_download.text
+                )
+
                 # A Reseller-to-Customer portal token must not expose the
                 # target Customer's user directory or permit user enumeration.
                 customer_portal_users = await client.get(
