@@ -111,3 +111,49 @@ def test_superuser_without_tenant_admin_role_cannot_enter_edition_portal():
                 context(edition, is_superuser=True, has_admin_role=False), edition
             )
         assert exc.value.status_code == 403
+
+
+def test_self_service_portal_grant_list_is_scoped_to_the_authenticated_user():
+    source_path = Path(__file__).parents[1] / "app" / "api" / "v1" / "portal_access.py"
+    module = ast.parse(source_path.read_text(encoding="utf-8"))
+    endpoint = next(
+        node for node in module.body
+        if isinstance(node, ast.AsyncFunctionDef) and node.name == "list_my_portal_access_grants"
+    )
+    source = ast.get_source_segment(source_path.read_text(encoding="utf-8"), endpoint)
+    assert "PortalAccessGrant.actor_user_id == ctx.user_id" in source
+    assert "PortalAccessGrant.actor_tenant_id == ctx.tenant_id" in source
+    assert "PortalAccessGrant.revoked_at.is_(None)" in source
+    assert "validate_portal_access_grant" in source
+    assert '"target_name": target.name' in source
+
+
+def test_portal_refresh_revalidates_grant_and_preserves_context_claims():
+    source_path = Path(__file__).parents[1] / "app" / "services" / "auth_service.py"
+    module = ast.parse(source_path.read_text(encoding="utf-8"))
+    refresh = next(
+        node for node in module.body
+        if isinstance(node, ast.AsyncFunctionDef) and node.name == "refresh_tokens"
+    )
+    issue = next(
+        node for node in module.body
+        if isinstance(node, ast.FunctionDef) and node.name == "issue_tokens"
+    )
+    source = ast.get_source_segment(source_path.read_text(encoding="utf-8"), refresh)
+    issue_source = ast.get_source_segment(source_path.read_text(encoding="utf-8"), issue)
+    assert "validate_portal_access_grant" in source
+    assert "portal_context_grant_id" in source
+    assert "return issue_tokens(user, extra_claims=context_claims)" in source
+    assert "extra_claims=extra_claims" in issue_source
+    portal_source_path = Path(__file__).parents[1] / "app" / "api" / "v1" / "portal_access.py"
+    portal_source = portal_source_path.read_text(encoding="utf-8")
+    assert "create_refresh_token" in portal_source
+    assert '"refresh_token": refresh_token' in portal_source
+    security_path = Path(__file__).parents[1] / "app" / "core" / "security.py"
+    security_module = ast.parse(security_path.read_text(encoding="utf-8"))
+    refresh_creator = next(
+        node for node in security_module.body
+        if isinstance(node, ast.FunctionDef) and node.name == "create_refresh_token"
+    )
+    refresh_creator_source = ast.get_source_segment(security_path.read_text(encoding="utf-8"), refresh_creator)
+    assert "portal_context_grant_id" in refresh_creator_source

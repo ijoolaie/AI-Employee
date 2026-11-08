@@ -1,6 +1,7 @@
 "use client";
 
 import { ResellerSidebar } from "@/components/layout/reseller-sidebar";
+import { PortalContextSwitcher } from "@/components/layout/portal-context-switcher";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -35,8 +36,9 @@ export default function ResellerLayout({ children }: { children: React.ReactNode
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <ResellerSidebar />
       <main className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700">
           Current portal: Reseller
+          <PortalContextSwitcher />
         </div>
         <div className="flex-1 overflow-y-auto">{children}</div>
       </main>

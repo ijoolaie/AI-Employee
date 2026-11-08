@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from app.core.deps import CurrentContext, DbSession
-from app.core.security import create_access_token
+from app.core.security import create_access_token, create_refresh_token
 from app.core.edition_deps import ResellerAdminContext, VendorAdminContext
 from app.models.portal_access_grant import PortalAccessGrant
 from app.models.tenant import Tenant
@@ -78,14 +78,18 @@ async def _activate(grant_id: UUID, ctx, db: DbSession):
         target_tenant_id=grant.target_tenant_id, grant_id=grant.id,
     )
     target = (await db.execute(select(Tenant).where(Tenant.id == grant.target_tenant_id))).scalar_one()
+    context_claims = {
+        "portal_context_tenant_id": str(target.id),
+        "portal_context_grant_id": str(grant.id),
+        "portal_context_kind": target.tenant_kind,
+    }
     token = create_access_token(
         subject=ctx.user_id, tenant_id=ctx.tenant_id,
-        extra_claims={
-            "auth_token_version": ctx.user.auth_token_version,
-            "portal_context_tenant_id": str(target.id),
-            "portal_context_grant_id": str(grant.id),
-            "portal_context_kind": target.tenant_kind,
-        },
+        extra_claims={"auth_token_version": ctx.user.auth_token_version, **context_claims},
+    )
+    refresh_token = create_refresh_token(
+        subject=ctx.user_id, tenant_id=ctx.tenant_id,
+        auth_token_version=ctx.user.auth_token_version, extra_claims=context_claims,
     )
     from app.services import audit_service
     await audit_service.record(
@@ -94,7 +98,13 @@ async def _activate(grant_id: UUID, ctx, db: DbSession):
         resource_id=str(grant.id),
         metadata={"actor_tenant_id": str(ctx.tenant_id), "target_tenant_id": str(target.id)},
     )
-    return APIResponse(success=True, data={"access_token": token, "token_type": "bearer", "context_tenant_id": str(target.id), "context_kind": target.tenant_kind})
+    return APIResponse(success=True, data={
+        "access_token": token,
+        "refresh_token": refresh_token,
+        "token_type": "bearer",
+        "context_tenant_id": str(target.id),
+        "context_kind": target.tenant_kind,
+    })
 
 async def _list(ctx, db: DbSession):
     _reject_api_key(ctx)
@@ -105,6 +115,42 @@ async def _list(ctx, db: DbSession):
         .limit(200)
     )).scalars().all()
     return APIResponse(success=True, data=[_serialize(row) for row in rows])
+
+
+@router.get("/portal-access/my-grants", response_model=APIResponse[list[dict]])
+async def list_my_portal_access_grants(ctx: CurrentContext, db: DbSession):
+    """List only the current user's usable portal grants, not tenant-wide grants."""
+    _reject_api_key(ctx)
+    rows = (await db.execute(
+        select(PortalAccessGrant, Tenant)
+        .join(Tenant, Tenant.id == PortalAccessGrant.target_tenant_id)
+        .where(
+            PortalAccessGrant.actor_user_id == ctx.user_id,
+            PortalAccessGrant.actor_tenant_id == ctx.tenant_id,
+            PortalAccessGrant.revoked_at.is_(None),
+        )
+        .order_by(PortalAccessGrant.created_at.desc())
+        .limit(100)
+    )).all()
+    data = []
+    for grant, target in rows:
+        try:
+            await portal_access_service.validate_portal_access_grant(
+                db,
+                actor_user_id=ctx.user_id,
+                actor_tenant_id=ctx.tenant_id,
+                target_tenant_id=target.id,
+                grant_id=grant.id,
+            )
+        except HTTPException:
+            continue
+        data.append({
+            **_serialize(grant),
+            "target_name": target.name,
+            "target_slug": target.slug,
+            "target_kind": target.tenant_kind,
+        })
+    return APIResponse(success=True, data=data)
 
 
 @router.post("/vendor/portal-access-grants", status_code=201, response_model=APIResponse[dict])

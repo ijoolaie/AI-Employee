@@ -203,20 +203,47 @@ async def refresh_tokens(db: AsyncSession, refresh_token: str) -> TokenResponse:
     user = result.scalar_one_or_none()
     if user is None or user.auth_token_version != token_version:
         raise UnauthorizedError("Invalid refresh token")
-    return issue_tokens(user)
+
+    context_keys = ("portal_context_tenant_id", "portal_context_grant_id", "portal_context_kind")
+    present_context_keys = [key for key in context_keys if key in payload]
+    context_claims: dict[str, str] = {}
+    if present_context_keys:
+        if len(present_context_keys) != len(context_keys):
+            raise UnauthorizedError("Invalid portal context refresh token")
+        try:
+            context_tenant_id = UUID(str(payload["portal_context_tenant_id"]))
+            context_grant_id = UUID(str(payload["portal_context_grant_id"]))
+            context_kind = str(payload["portal_context_kind"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise UnauthorizedError("Invalid portal context refresh token") from exc
+        from app.services.portal_access_service import validate_portal_access_grant
+        try:
+            await validate_portal_access_grant(
+                db, actor_user_id=user.id, actor_tenant_id=user.tenant_id,
+                target_tenant_id=context_tenant_id, grant_id=context_grant_id,
+            )
+        except HTTPException as exc:
+            raise UnauthorizedError("Portal access grant is no longer valid") from exc
+        target = (await db.execute(select(Tenant).where(Tenant.id == context_tenant_id))).scalar_one_or_none()
+        if target is None or target.tenant_kind != context_kind:
+            raise UnauthorizedError("Portal context tenant kind mismatch")
+        context_claims = {
+            "portal_context_tenant_id": str(context_tenant_id),
+            "portal_context_grant_id": str(context_grant_id),
+            "portal_context_kind": context_kind,
+        }
+    return issue_tokens(user, extra_claims=context_claims)
 
 
-def issue_tokens(user: User) -> TokenResponse:
+def issue_tokens(user: User, *, extra_claims: dict[str, str] | None = None) -> TokenResponse:
+    claims = {"auth_token_version": user.auth_token_version, **(extra_claims or {})}
     return TokenResponse(
         access_token=create_access_token(
-            subject=user.id,
-            tenant_id=user.tenant_id,
-            extra_claims={"auth_token_version": user.auth_token_version},
+            subject=user.id, tenant_id=user.tenant_id, extra_claims=claims,
         ),
         refresh_token=create_refresh_token(
-            subject=user.id,
-            tenant_id=user.tenant_id,
-            auth_token_version=user.auth_token_version,
+            subject=user.id, tenant_id=user.tenant_id,
+            auth_token_version=user.auth_token_version, extra_claims=extra_claims,
         ),
         token_type="bearer",
     )
