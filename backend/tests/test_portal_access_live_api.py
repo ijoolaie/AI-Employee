@@ -455,6 +455,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert created.status_code == 201, created.text
                 grant_id = created.json()["data"]["id"]
 
+                own_grants = await client.get(
+                    "/api/v1/edition/portal-access/my-grants",
+                    headers=actor_headers,
+                )
+                assert own_grants.status_code == 200, own_grants.text
+                own_grant_rows = own_grants.json()["data"]
+                assert [row["id"] for row in own_grant_rows] == [grant_id]
+                assert own_grant_rows[0]["target_tenant_id"] == str(target.id)
+                assert own_grant_rows[0]["target_kind"] == "reseller"
+                assert own_grant_rows[0]["target_name"] == target.name
+
                 # A Vendor may also grant its actor access to a direct Customer,
                 # not only a direct Reseller. The token keeps the Vendor as the
                 # primary identity while scoping resource reads to that Customer.
@@ -968,7 +979,14 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers=actor_headers,
                 )
                 assert activated.status_code == 200, activated.text
-                portal_token = activated.json()["data"]["access_token"]
+                context_refresh_token = activated.json()["data"]["refresh_token"]
+                refreshed_context = await client.post(
+                    "/api/v1/auth/refresh",
+                    json={"refresh_token": context_refresh_token},
+                )
+                assert refreshed_context.status_code == 200, refreshed_context.text
+                portal_token = refreshed_context.json()["data"]["access_token"]
+                rotated_context_refresh = refreshed_context.json()["data"]["refresh_token"]
                 portal_headers = {"Authorization": f"Bearer {portal_token}"}
                 dispatched = await client.post(
                     f"/api/v1/workflows/{workflow_id}/runs", headers=portal_headers,
@@ -1241,6 +1259,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert revoked.status_code == 200, revoked.text
                 denied = await client.get("/api/v1/auth/me", headers=portal_headers)
                 assert denied.status_code == 403, denied.text
+                revoked_context_refresh = await client.post(
+                    "/api/v1/auth/refresh",
+                    json={"refresh_token": rotated_context_refresh},
+                )
+                assert revoked_context_refresh.status_code == 401, revoked_context_refresh.text
                 revoked_vendor_portal_files = await client.get("/api/v1/files", headers=portal_headers)
                 assert revoked_vendor_portal_files.status_code == 403, (
                     revoked_vendor_portal_files.text

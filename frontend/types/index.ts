@@ -36,6 +36,20 @@ export interface Tenant {
   slug: string;
   status: string;
   access_granted: boolean;
+  tenant_kind?: "customer" | "reseller" | "vendor";
+}
+
+export interface PortalAccessGrant {
+  id: string;
+  actor_user_id: string;
+  actor_tenant_id: string;
+  target_tenant_id: string;
+  target_name: string;
+  target_slug: string;
+  target_kind: "customer" | "reseller" | "vendor";
+  reason: string;
+  created_at: string;
+  revoked_at: string | null;
 }
 
 export interface MeResponse {

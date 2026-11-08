@@ -64,7 +64,12 @@ def create_access_token(
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 
-def create_refresh_token(subject: str | UUID, tenant_id: str | UUID, auth_token_version: int = 0) -> str:
+def create_refresh_token(
+    subject: str | UUID,
+    tenant_id: str | UUID,
+    auth_token_version: int = 0,
+    extra_claims: Optional[dict[str, Any]] = None,
+) -> str:
     expire = datetime.now(timezone.utc) + timedelta(days=settings.refresh_token_expire_days)
     now = datetime.now(timezone.utc)
     payload = {
@@ -75,6 +80,9 @@ def create_refresh_token(subject: str | UUID, tenant_id: str | UUID, auth_token_
         "iat": now,
         "auth_token_version": auth_token_version,
     }
+    for key in ("portal_context_tenant_id", "portal_context_grant_id", "portal_context_kind"):
+        if extra_claims and key in extra_claims:
+            payload[key] = extra_claims[key]
     return jwt.encode(payload, settings.secret_key, algorithm=settings.algorithm)
 
 

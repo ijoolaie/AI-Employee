@@ -179,6 +179,51 @@ export async function fetchMe() {
   return unwrap(await api.get<APIResponse<MeResponse>>("/auth/me"));
 }
 
+export async function listMyPortalAccessGrants() {
+  return unwrap(await api.get<APIResponse<import("@/types").PortalAccessGrant[]>>("/edition/portal-access/my-grants"));
+}
+
+export async function activatePortalAccessGrant(
+  accountKind: "vendor" | "reseller",
+  grantId: string
+) {
+  const path = "/edition/" + accountKind + "/portal-access-grants/" + encodeURIComponent(grantId) + "/activate";
+  return unwrap(await api.post<APIResponse<{
+    access_token: string;
+    refresh_token: string;
+    token_type: "bearer";
+    context_tenant_id: string;
+    context_kind: "customer" | "reseller" | "vendor";
+  }>>(path));
+}
+
+export async function restorePrimaryPortalSession() {
+  const state = useAuthStore.getState();
+  const primaryRefreshToken = state.homeRefreshToken ?? state.refreshToken;
+  if (!primaryRefreshToken) throw new Error("No primary-account refresh credential is available");
+  const { data } = await axios.post<APIResponse<TokenResponse>>(API_BASE + "/auth/refresh", {
+    refresh_token: primaryRefreshToken,
+  });
+  if (!data.data) throw new Error("Unexpected primary-session refresh response");
+  const current = useAuthStore.getState();
+  if (
+    current.sessionVersion !== state.sessionVersion ||
+    (current.homeRefreshToken ?? current.refreshToken) !== primaryRefreshToken
+  ) {
+    throw new Error("Session changed while restoring the primary account");
+  }
+  const tokens = data.data;
+  current.beginSession(tokens.access_token, tokens.refresh_token);
+  try {
+    const me = await fetchMe();
+    useAuthStore.getState().setSession(me.user, me.tenant);
+    return me;
+  } catch (error) {
+    useAuthStore.getState().logout();
+    throw error;
+  }
+}
+
 // ── Employees ─────────────────────────────────────────
 export async function listAvailableTools() {
   return unwrap(await api.get<APIResponse<ToolDefinition[]>>("/employees/available-tools"));

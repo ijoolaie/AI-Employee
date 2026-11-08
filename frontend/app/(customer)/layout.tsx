@@ -3,6 +3,7 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { ModeSwitch } from "@/components/layout/mode-switch";
 import { VendorSidebar } from "@/components/layout/vendor-sidebar";
+import { PortalContextSwitcher } from "@/components/layout/portal-context-switcher";
 import { useAuthStore } from "@/lib/auth-store";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -46,14 +47,14 @@ export default function CustomerLayout({ children }: { children: React.ReactNode
   if (isWorld) return <div className="min-h-screen">{children}</div>;
 
   if (isVendorManagementRoute) {
-    return <div className="flex h-screen overflow-hidden bg-slate-50"><VendorSidebar /><main className="flex flex-1 flex-col overflow-hidden"><div className="border-b border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700">Vendor portal</div><div className="flex-1 overflow-y-auto">{children}</div></main></div>;
+    return <div className="flex h-screen overflow-hidden bg-slate-50"><VendorSidebar /><main className="flex flex-1 flex-col overflow-hidden"><div className="flex items-center justify-between border-b border-slate-200 bg-white px-5 py-2 text-sm font-semibold text-slate-700">Vendor portal<PortalContextSwitcher /></div><div className="flex-1 overflow-y-auto">{children}</div></main></div>;
   }
 
   return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
       <Sidebar />
       <main className="flex flex-1 flex-col overflow-hidden">
-        <div className="border-b border-gray-200 bg-white px-4 py-2 md:px-6"><ModeSwitch /></div>
+        <div className="flex items-center justify-between border-b border-gray-200 bg-white px-4 py-2 md:px-6"><ModeSwitch /><PortalContextSwitcher /></div>
         <div className="flex-1 overflow-y-auto">{children}</div>
       </main>
     </div>

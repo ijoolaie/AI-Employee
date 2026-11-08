@@ -448,5 +448,29 @@ test("Vendor portal route contract", () => {
   if (!read("app/(customer)/vendor/customers/page.tsx").includes("/edition/vendor/customers")) throw new Error("missing direct Customer API");
 });
 
+test("delegated portal switching is wired to user-bound grants and session rotation", () => {
+  const switcher = read("components/layout/portal-context-switcher.tsx");
+  const api = read("lib/api.ts");
+  const types = read("types/index.ts");
+  for (const name of ["listMyPortalAccessGrants", "activatePortalAccessGrant", "restorePrimaryPortalSession"]) {
+    if (!api.includes("function " + name)) throw new Error("missing portal API " + name);
+  }
+  if (!api.includes("/edition/portal-access/my-grants")) throw new Error("missing user grant list endpoint");
+  if (!switcher.includes("user.tenant_id !== tenant.id")) throw new Error("active delegated context must be distinguished from home identity");
+  if (!switcher.includes("beginPortalSession(activated.access_token, activated.refresh_token)")) throw new Error("portal activation must install context-bound refresh credentials");
+  const auth = read("lib/auth-store.ts");
+  if (!auth.includes("homeRefreshToken: string | null")) throw new Error("missing preserved primary refresh credential");
+  if (!auth.includes("beginPortalSession: (access, refresh) =>")) throw new Error("missing delegated session transition");
+  if (!auth.includes("portalContextActive: boolean")) throw new Error("missing explicit context session marker");
+  if (!auth.includes("state.portalContextActive")) throw new Error("refresh must preserve the home credential while context is active");
+  if (!api.includes("state.homeRefreshToken")) throw new Error("return-to-home must use the primary refresh credential");
+  if (!switcher.includes("restorePrimaryPortalSession")) throw new Error("missing return-to-home flow");
+  if (!switcher.includes("portalPath(grant.target_kind")) throw new Error("portal switch must route to the validated target kind");
+  if (!types.includes("interface PortalAccessGrant")) throw new Error("missing typed portal grant");
+  for (const rel of ["app/(customer)/layout.tsx", "app/(reseller)/layout.tsx", "app/(vendor)/layout.tsx"]) {
+    if (!read(rel).includes("PortalContextSwitcher")) throw new Error("switcher missing from " + rel);
+  }
+});
+
 console.log("\nResult: " + passed + " passed, " + failed + " failed\n");
 process.exit(failed ? 1 : 0);
