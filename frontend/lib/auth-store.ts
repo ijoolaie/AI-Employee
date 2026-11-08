@@ -10,6 +10,7 @@ interface AuthState {
   user: User | null;
   tenant: Tenant | null;
   setTokens: (access: string, refresh: string) => void;
+  beginSession: (access: string, refresh: string) => void;
   setSession: (user: User, tenant: Tenant) => void;
   logout: () => void;
   isAuthenticated: () => boolean;
@@ -24,6 +25,10 @@ export const useAuthStore = create<AuthState>()(
       tenant: null,
       setTokens: (access, refresh) =>
         set({ accessToken: access, refreshToken: refresh }),
+      // Start a new login without retaining the previous account identity.
+      // TenantQueryCacheBoundary observes the reset and clears cached data.
+      beginSession: (access, refresh) =>
+        set({ accessToken: access, refreshToken: refresh, user: null, tenant: null }),
       setSession: (user, tenant) => set({ user, tenant }),
       logout: () =>
         set({
