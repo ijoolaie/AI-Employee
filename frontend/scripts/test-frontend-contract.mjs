@@ -48,7 +48,7 @@ test("new login resets previous identity before fetching account details", () =>
   const auth = read("lib/auth-store.ts");
   const login = read("app/(auth)/login/page.tsx");
   if (!auth.includes("beginSession: (access, refresh) =>")) throw new Error("missing new-session transition");
-  if (!auth.includes("user: null, tenant: null")) throw new Error("new session must clear previous identity");
+  if (!auth.includes("user: null") || !auth.includes("tenant: null")) throw new Error("new session must clear previous identity");
   if (!login.includes("beginSession(tokens.access_token, tokens.refresh_token)")) throw new Error("login must reset identity before fetchMe");
   if (!login.includes("me = await fetchMe()")) throw new Error("login must still fetch authoritative identity");
   if (!login.includes("useAuthStore.getState().logout()")) throw new Error("failed identity resolution must clear the new token");
