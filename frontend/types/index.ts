@@ -36,7 +36,7 @@ export interface Tenant {
   slug: string;
   status: string;
   access_granted: boolean;
-  tenant_kind?: "customer" | "reseller" | "vendor";
+  tenant_kind?: "customer" | "reseller" | "vendor" | "platform-admin";
 }
 
 export interface PortalAccessGrant {
