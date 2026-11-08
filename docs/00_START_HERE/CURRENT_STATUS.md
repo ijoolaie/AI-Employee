@@ -1,3 +1,17 @@
+## Multi-Vendor implementation and acceptance checkpoint — 2026-11-08
+
+- Verified `main` baseline for this checkpoint: `f6a08abef942a1845650c5b04f6ad5c330b16669` (PR #1418 merge). PRs #1389–#1418 are merged; this is substantial engineering progress, not completion of the full Multi-Vendor acceptance/release gate.
+- Delegated portal context switching is implemented by [PR #1416](https://github.com/ijoolaie/AI-Employee/pull/1416): authenticated-user/home-tenant scoped grant discovery, context-bound refresh-token rotation with grant revalidation, Vendor/Reseller/Customer switching, separate home/delegated refresh credentials, and identity/query-cache reset. Exact-head CI passed 13 workflows / 15 jobs.
+- [PR #1417](https://github.com/ijoolaie/AI-Employee/pull/1417) and [PR #1418](https://github.com/ijoolaie/AI-Employee/pull/1418) add PostgreSQL integration regression coverage for stale/corrupt unentitled Vendor→Reseller and Reseller→Customer portal grants. In both cases `my-grants` excludes the unentitled target and activation returns HTTP 402. PR #1418 exact-head CI passed 9 workflows / 11 jobs; backend PostgreSQL integration ran in CI. The local PostgreSQL integration was not run because `SUPPORT_TEST_DATABASE_URL` is not configured.
+- Frontend identity boundaries are hardened: [PR #1413](https://github.com/ijoolaie/AI-Employee/pull/1413) clears query cache on user/tenant identity changes; [PR #1414](https://github.com/ijoolaie/AI-Employee/pull/1414) resets previous identity at login transition; [PR #1415](https://github.com/ijoolaie/AI-Employee/pull/1415) coordinates concurrent refresh and rejects stale-session token/logout mutations. These are merged.
+- Tenant isolation, lifecycle/permissions, portal revocation, delegated authorization, workforce ownership and public child-signup acceptance work is recorded in merged PRs #1389–#1412. See PR history and [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350) for incremental evidence.
+- **Acceptance still open:** complete the Actor × Resource × Action matrix across Vendor A/B, Reseller A/B, direct Customers and Reseller-nested Customers. Explicitly verify read/list/get/create/update/delete, search, reports, exports, files/downloads/object storage, WebSocket/realtime, notifications, audit views, caches and asynchronous/background workers. Include cross-root negative cases, delegation ceilings, grant revocation on existing sessions, and entitlement changes.
+- Remaining release work includes evidence-backed desktop/mobile UX review, legacy-tenant permission/backfill compatibility plan with explicit review, and a final acceptance/handoff record. Do not infer production readiness from merged PRs or CI alone.
+- [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350) remains OPEN until the acceptance matrix is complete. A stale comment saying PR #1418 is Draft is superseded by its merge; the tracker will be reconciled separately.
+- No production/staging deployment, database migration, persistent account/data mutation, or payment activation is claimed in this checkpoint.
+
+---
+
 ## Current project checkpoint — 2026-11-02
 
 - Approved multi-Vendor architecture, source-backed gap analysis and master handoff are merged to `main` at `2819cdc651c0a769b653bf3c92cd74e21a62925a` via PR #1351. Implementation tracker: [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350).
