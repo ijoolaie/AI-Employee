@@ -570,6 +570,75 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert direct_customer_foreign_download.status_code == 404, (
                     direct_customer_foreign_download.text
                 )
+
+                # The direct Vendor→Customer portal must enforce the same
+                # complete file lifecycle boundary as Vendor→Reseller.
+                direct_customer_uploaded_file = await client.post(
+                    "/api/v1/files",
+                    headers=direct_customer_portal_headers,
+                    files={
+                        "file": (
+                            "direct-customer-upload.txt",
+                            b"direct-customer-upload-content",
+                            "text/plain",
+                        )
+                    },
+                )
+                assert direct_customer_uploaded_file.status_code == 201, (
+                    direct_customer_uploaded_file.text
+                )
+                direct_customer_uploaded_id = (
+                    direct_customer_uploaded_file.json()["data"]["id"]
+                )
+                direct_customer_uploaded_get = await client.get(
+                    f"/api/v1/files/{direct_customer_uploaded_id}",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_uploaded_get.status_code == 200, (
+                    direct_customer_uploaded_get.text
+                )
+                assert direct_customer_uploaded_get.json()["data"]["filename"] == (
+                    "direct-customer-upload.txt"
+                )
+                direct_customer_uploaded_download = await client.get(
+                    f"/api/v1/files/{direct_customer_uploaded_id}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_uploaded_download.status_code == 200, (
+                    direct_customer_uploaded_download.text
+                )
+                assert direct_customer_uploaded_download.content == (
+                    b"direct-customer-upload-content"
+                )
+                vendor_home_cannot_read_direct_customer_upload = await client.get(
+                    f"/api/v1/files/{direct_customer_uploaded_id}",
+                    headers=actor_headers,
+                )
+                assert vendor_home_cannot_read_direct_customer_upload.status_code == 404, (
+                    vendor_home_cannot_read_direct_customer_upload.text
+                )
+                direct_customer_uploaded_deleted = await client.delete(
+                    f"/api/v1/files/{direct_customer_uploaded_id}",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_uploaded_deleted.status_code == 200, (
+                    direct_customer_uploaded_deleted.text
+                )
+                direct_customer_deleted_get = await client.get(
+                    f"/api/v1/files/{direct_customer_uploaded_id}",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_deleted_get.status_code == 404, (
+                    direct_customer_deleted_get.text
+                )
+                direct_customer_deleted_download = await client.get(
+                    f"/api/v1/files/{direct_customer_uploaded_id}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_deleted_download.status_code == 404, (
+                    direct_customer_deleted_download.text
+                )
+
                 direct_customer_revoked = await client.delete(
                     f"/api/v1/edition/vendor/portal-access-grants/{direct_customer_grant_id}",
                     headers=grantor_headers,
