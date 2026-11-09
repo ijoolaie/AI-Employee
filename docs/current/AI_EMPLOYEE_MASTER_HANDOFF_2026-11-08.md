@@ -227,3 +227,12 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Corrected the E2E fixture to explicitly set `access_granted: true`; pushed commit `c474efe20e448565f21cc0d6c21e14252e4f52bc` to PR #1434. `git diff --check` passed. Local Playwright was not run because frontend dependencies are absent in the worktree. Exact-head CI had not yet appeared at handoff update time; do not claim it passed.
 - Issue #1350 comment 6743679405 records the failure and correction.
 - All five acceptance PRs remain open/unmerged. Latest previously refreshed review threads and submitted reviews were zero on all five. Freebuff remains a merge blocker until it reports success on each exact head. No merge, deployment, migration, persistent-data mutation, or payment activation.
+
+
+## 2026-11-09 frontend CI package mirror remediation
+
+- PR #1434 exact head `c474efe20e448565f21cc0d6c21e14252e4f52bc`: CI frontend and backend jobs both succeeded. The Playwright portal-login test including the 390×844 Reseller navigation assertions passed after adding `access_granted: true` to the mocked tenant. Eight of nine workflow runs succeeded; three independent image-build validations (Production Infrastructure, Ephemeral DAST, HA Recovery) failed at the same Docker frontend dependency install step.
+- Failure root cause from all three job logs: `npm ci` received HTTP 500 from `registry.npmmirror.com` for `zod-4.6.7.tgz`, with mirror backend error `ER_NO_SUCH_TABLE`. This is a package-registry service failure, not an application/test failure.
+- Remediation pushed to PR #1434 as `3d455b3d05049af82bdce4e147951a543b13002d`: `frontend/.npmrc` now points to canonical `https://registry.npmjs.org`; all 147 resolved tarball URLs in `frontend/package-lock.json` were changed to the canonical registry. Dependency versions and integrity hashes were not changed. `git diff --check` passed. No local npm installation attempted. Exact-head CI had not yet appeared.
+- Issue #1350 comment 6744256956 records the failure evidence and fix.
+- All five acceptance PRs remain open/unmerged. Freebuff Web remains queued on the previous exact heads and must report success on the current exact head before any merge. No merge, deployment, migration, persistent-data mutation, or payment activation.
