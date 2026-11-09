@@ -1,5 +1,7 @@
 """PostgreSQL-backed portal grant, context, and immediate revocation contract."""
 
+import hashlib
+import json
 import os
 import uuid
 from io import BytesIO
@@ -53,7 +55,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.workflow import WorkflowRun
     from app.models.file import FileObject
     from app.models.customer import Customer
-    from app.models.employee import Employee
+    from app.models.employee import Employee, EmployeeVersion
+    from app.models.run import Run
+    from app.models.audit_log import AuditLog
     from app.models.meeting import Meeting, MeetingParticipant
     from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
     from app.rag import service as rag_service
@@ -214,7 +218,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             vendor_b_actor.roles = [vendor_b_reader_role]
             reseller_admin_role.permissions = [
                 *file_permissions, workflow_write_permission,
-                invoice_read_permission, invoice_export_pdf_permission,
+                invoice_read_permission, invoice_export_pdf_permission, run_read_permission,
             ]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
@@ -349,8 +353,71 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 tenant_id=sibling.id, slug=f"sibling-dashboard-{run_id}",
                 name="Sibling dashboard secret", kind="custom", is_active=True,
             )
-            session.add_all([target_dashboard_employee, sibling_dashboard_employee])
+            customer_run_employee = Employee(
+                tenant_id=customer_a.id, slug=f"customer-run-{run_id}",
+                name="Customer Run Employee", kind="custom", is_active=True,
+            )
+            session.add_all([target_dashboard_employee, sibling_dashboard_employee, customer_run_employee])
             await session.flush()
+            target_run_version = EmployeeVersion(
+                employee_id=target_dashboard_employee.id, version_number=1, is_current=True,
+                input_schema={}, output_schema={}, prompt_template="", allowed_tools=[], rules={},
+            )
+            sibling_run_version = EmployeeVersion(
+                employee_id=sibling_dashboard_employee.id, version_number=1, is_current=True,
+                input_schema={}, output_schema={}, prompt_template="", allowed_tools=[], rules={},
+            )
+            customer_run_version = EmployeeVersion(
+                employee_id=customer_run_employee.id, version_number=1, is_current=True,
+                input_schema={}, output_schema={}, prompt_template="", allowed_tools=[], rules={},
+            )
+            session.add_all([target_run_version, sibling_run_version, customer_run_version])
+            await session.flush()
+            target_run = Run(
+                tenant_id=target.id, employee_id=target_dashboard_employee.id,
+                employee_version_id=target_run_version.id, created_by=reseller_actor.id,
+                status="completed", input_data={"private": "parent-run"},
+            )
+            sibling_run = Run(
+                tenant_id=sibling.id, employee_id=sibling_dashboard_employee.id,
+                employee_version_id=sibling_run_version.id, created_by=actor.id,
+                status="completed", input_data={"private": "sibling-run"},
+            )
+            customer_run = Run(
+                tenant_id=customer_a.id, employee_id=customer_run_employee.id,
+                employee_version_id=customer_run_version.id, created_by=customer_actor.id,
+                status="completed", input_data={"private": "customer-run"},
+            )
+            session.add_all([target_run, sibling_run, customer_run])
+            await session.flush()
+            customer_run_artifact_id = f"customer-artifact-{run_id}"
+            customer_run_artifact_key = f"{customer_a.id}/workforce-artifacts/{customer_run_artifact_id}.json"
+            sibling_run_artifact_id = f"sibling-artifact-{run_id}"
+            sibling_run_artifact_key = f"{sibling.id}/workforce-artifacts/{sibling_run_artifact_id}.json"
+            session.add_all([
+                AuditLog(
+                    tenant_id=customer_a.id, actor_type="user", actor_id=customer_actor.id,
+                    action="tool.call", resource_type="run", resource_id=str(customer_run.id),
+                    status="success",
+                    metadata_={"persisted_workforce_artifact": {
+                        "artifact_id": customer_run_artifact_id,
+                        "payload_artifact_id": customer_run_artifact_id,
+                        "storage_key_sha256": hashlib.sha256(customer_run_artifact_key.encode("utf-8")).hexdigest(),
+                        "tool": "workforce_keyword_research",
+                    }},
+                ),
+                AuditLog(
+                    tenant_id=sibling.id, actor_type="user", actor_id=actor.id,
+                    action="tool.call", resource_type="run", resource_id=str(sibling_run.id),
+                    status="success",
+                    metadata_={"persisted_workforce_artifact": {
+                        "artifact_id": sibling_run_artifact_id,
+                        "payload_artifact_id": sibling_run_artifact_id,
+                        "storage_key_sha256": hashlib.sha256(sibling_run_artifact_key.encode("utf-8")).hexdigest(),
+                        "tool": "workforce_keyword_research",
+                    }},
+                ),
+            ])
             target_meeting = Meeting(
                 tenant_id=target.id, title=f"Target reseller meeting {run_id}",
                 description="Target tenant meeting",
@@ -486,10 +553,29 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     return BytesIO(self.objects[key])
                 return BytesIO(f"portal-file-content:{key}".encode())
 
+            def exists(self, key):
+                return key in self.objects
+
+            def list_prefix(self, prefix):
+                return [key for key in self.objects if key.startswith(prefix)]
+
             def delete(self, key):
                 self.objects.pop(key, None)
 
         test_storage_backend = _PortalTestStorageBackend()
+        customer_run_artifact_payload = json.dumps({
+            "kind": "keyword_research_artifact",
+            "artifact_id": customer_run_artifact_id,
+            "operation": "keyword_research",
+            "status": "completed",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "provider_execution": "not_configured",
+            "external_side_effect": False,
+        }).encode("utf-8")
+        test_storage_backend.objects[customer_run_artifact_key] = customer_run_artifact_payload
+        test_storage_backend.objects[sibling_run_artifact_key] = json.dumps({
+            "kind": "keyword_research_artifact", "artifact_id": sibling_run_artifact_id,
+        }).encode("utf-8")
         test_storage_backend.objects[f"{customer_a.id}/customer-sales.csv"] = (
             b"date,region,revenue\n2026-01-01,North,100\n2026-01-02,South,200\n"
             b"2026-01-03,North,150\n"
@@ -1130,6 +1216,37 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert excel_download.status_code == 200, excel_download.text
                 assert excel_download.content[:2] == b"PK"
+                customer_run_headers = {"Authorization": f"Bearer {customer_portal_token}"}
+                customer_run_artifacts = await client.get(
+                    f"/api/v1/runs/{customer_run.id}/artifacts", headers=customer_run_headers,
+                )
+                assert customer_run_artifacts.status_code == 200, customer_run_artifacts.text
+                customer_run_artifact_rows = customer_run_artifacts.json()["data"]
+                assert [row["artifact_id"] for row in customer_run_artifact_rows] == [
+                    customer_run_artifact_id
+                ]
+                assert customer_run_artifact_rows[0]["kind"] == "keyword_research_artifact"
+                assert "storage_key" not in str(customer_run_artifact_rows)
+                customer_run_artifact_download = await client.get(
+                    f"/api/v1/runs/{customer_run.id}/artifacts/{customer_run_artifact_id}/download",
+                    headers=customer_run_headers,
+                )
+                assert customer_run_artifact_download.status_code == 200, customer_run_artifact_download.text
+                assert json.loads(customer_run_artifact_download.content)["artifact_id"] == customer_run_artifact_id
+                parent_run_artifacts = await client.get(
+                    f"/api/v1/runs/{target_run.id}/artifacts", headers=customer_run_headers,
+                )
+                assert parent_run_artifacts.status_code == 404, parent_run_artifacts.text
+                sibling_run_artifacts = await client.get(
+                    f"/api/v1/runs/{sibling_run.id}/artifacts", headers=customer_run_headers,
+                )
+                assert sibling_run_artifacts.status_code == 404, sibling_run_artifacts.text
+                sibling_run_artifact_download = await client.get(
+                    f"/api/v1/runs/{sibling_run.id}/artifacts/{sibling_run_artifact_id}/download",
+                    headers=customer_run_headers,
+                )
+                assert sibling_run_artifact_download.status_code == 404, sibling_run_artifact_download.text
+
                 customer_invoice_list = await client.get(
                     "/api/v1/invoices",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
@@ -1269,6 +1386,19 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert revoked_customer_knowledge_search.status_code == 403, (
                     revoked_customer_knowledge_search.text
+                )
+                revoked_customer_run_artifacts = await client.get(
+                    f"/api/v1/runs/{customer_run.id}/artifacts", headers=customer_run_headers,
+                )
+                assert revoked_customer_run_artifacts.status_code == 403, (
+                    revoked_customer_run_artifacts.text
+                )
+                revoked_customer_run_artifact_download = await client.get(
+                    f"/api/v1/runs/{customer_run.id}/artifacts/{customer_run_artifact_id}/download",
+                    headers=customer_run_headers,
+                )
+                assert revoked_customer_run_artifact_download.status_code == 403, (
+                    revoked_customer_run_artifact_download.text
                 )
                 revoked_customer_invoice_export = await client.post(
                     f"/api/v1/invoices/{customer_invoice.id}/export-pdf",
