@@ -140,3 +140,13 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Issue #1350 progress comment: `6741209969`.
 - Fresh exact-head check-suite fetch for `9793f210...` currently returns only Freebuff Web suite `115448675682`, queued with no conclusion. Other suites have not provisioned yet; missing is not success. Re-fetch before any merge decision.
 - No application code change, merge, deployment, migration, persistent-data mutation, or payment activation.
+
+
+## 2026-11-09 delayed Agent Run revocation checkpoint
+
+- PR #1434 exact head: `8fa32c46887351bb6d50371b93479c2a2f0f5747`.
+- Added `test_run_worker_blocks_delayed_run_after_delegation_revocation` in `backend/tests/workers/test_run_worker.py`. It simulates a queued Agent Run whose delegated authority has been revoked before worker execution. The worker runs kill-switch and current authorization checks, rejects the revoked delegation, and never loads runtime memory or starts Run execution.
+- Combined Run-worker/outbox/dispatcher/email/AgentExecutionAdapter tests: 37 passed in 4.69s. py_compile, Ruff and `git diff --check` passed.
+- Issue #1350 progress comment: `6741237057`.
+- This complements the existing durable outbox forged-proof stripping, tenant mismatch enqueue rejection, dispatcher payload-vs-row binding, and pre-SMTP authority revalidation tests.
+- Refresh exact-head CI for `8fa32c46...` before any merge decision. Previous head `9793f210...` exposed only queued Freebuff suite `115448675682`; do not carry statuses to this new SHA. No application code change, merge, deployment, migration, or persistent-data mutation.
