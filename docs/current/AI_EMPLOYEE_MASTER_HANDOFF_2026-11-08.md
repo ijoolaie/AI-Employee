@@ -236,3 +236,13 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Remediation pushed to PR #1434 as `3d455b3d05049af82bdce4e147951a543b13002d`: `frontend/.npmrc` now points to canonical `https://registry.npmjs.org`; all 147 resolved tarball URLs in `frontend/package-lock.json` were changed to the canonical registry. Dependency versions and integrity hashes were not changed. `git diff --check` passed. No local npm installation attempted. Exact-head CI had not yet appeared.
 - Issue #1350 comment 6744256956 records the failure evidence and fix.
 - All five acceptance PRs remain open/unmerged. Freebuff Web remains queued on the previous exact heads and must report success on the current exact head before any merge. No merge, deployment, migration, persistent-data mutation, or payment activation.
+
+
+## 2026-11-09 follow-up exact-head refresh
+
+- All five acceptance PRs refreshed: #1428 `ba65814d05dd624d6095d0ce5a8da1be761c0bcf`, #1431 `c32576fec6c11d0fbd5bd79de98729818a35118d`, #1432 `5102b645511ca01083af0bd97db3645d1b3c2f24`, #1433 `b499890f47c44b5ab40368cd4a18132128b7086b`, #1434 `3d455b3d05049af82bdce4e147951a543b13002d`. All open/unmerged; zero review threads and submitted reviews.
+- PR #1434 current exact-head workflows: HA Failure Recovery passed; Architecture Guard and W21 AI Business Network E2E passed; Backend, Frontend Playwright browser regressions, Production Infrastructure lifecycle/persistence, Ephemeral DAST/OWASP ZAP, Public Widget browser/API, Workforce semantic real-stack were still running at the latest job-level refresh without failed steps. Freebuff Web queued.
+- PR #1433 current head Documentation Truth Consistency passed; CodeQL in progress; Freebuff queued.
+- Local frontend dependency installation was attempted only in the approved PR1434 worktree and failed with Windows `ENOSPC` due to low C: storage (about 413 MB free). The partial ignored `frontend/node_modules` directory was removed and worktree status is clean. No further local install/browser test until storage is available; rely on CI.
+- Entitlement check-vs-revocation race remains open for lock-order analysis. Execution locks WorkItem lineage then Run, but entitlement reads do not lock Subscription/DemoGrant rows while revoke operations do. No ad hoc Tenant anchor lock added because global lock-order reconciliation is still required. Issue #1350 comment 6744317044 records this refresh.
+- No merge, deployment, migration, persistent-data mutation, or payment activation.
