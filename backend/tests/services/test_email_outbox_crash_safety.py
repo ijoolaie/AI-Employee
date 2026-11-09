@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -367,3 +368,51 @@ async def test_email_success_metric_is_not_emitted_when_final_commit_fails(monke
 
     assert metric_events == []
     assert db.commits == 2
+
+
+
+@pytest.mark.asyncio
+async def test_governed_email_rejects_cross_tenant_row_binding_before_smtp(monkeypatch):
+    row_tenant_id = uuid4()
+    proof_tenant_id = uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        status="processing",
+        attempts=1,
+        tenant_id=row_tenant_id,
+        last_error=None,
+        payload={
+            "to": ["private@example.test"],
+            "subject": "Tenant-bound message",
+            "body": "must not send",
+            "_agent_governance": {
+                "tenant_id": str(proof_tenant_id),
+                "agent_instance_id": str(uuid4()),
+                "run_id": str(uuid4()),
+                "tool_name": "email.send",
+            },
+        },
+    )
+    db = _DB([row])
+    authorization = AsyncMock()
+    smtp_attempts = []
+
+    class _UnexpectedSMTP:
+        def __init__(self, *args, **kwargs):
+            smtp_attempts.append((args, kwargs))
+            raise AssertionError("cross-tenant email must be rejected before SMTP")
+
+    async def mark_retry(_db, message, *_args, **_kwargs):
+        message.status = "pending"
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorization)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _UnexpectedSMTP)
+    monkeypatch.setattr(outbox_service, "mark_retry", mark_retry)
+
+    await email_worker._send(str(row.id))
+
+    authorization.assert_not_awaited()
+    assert smtp_attempts == []
+    assert row.status == "pending"
