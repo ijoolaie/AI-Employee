@@ -175,3 +175,10 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Combined governance bootstrap, Run Worker and delegation governance tests: 31 passed in 4.70s. Ruff and `git diff --check` passed.
 - This verifies the second authorization boundary with a focused service wrapper test; a live PostgreSQL race test with two concurrent transactions is still not run locally and remains a CI/integration evidence gap.
 - Prior exact-head CI for 2941f403 was green for GitHub Actions and CodeQL, with Freebuff queued. These results do not transfer to the new SHA `1219a9ef`; refresh exact-head checks. No application code changed; no merge, deployment, migration, persistent-data mutation or payment activation.
+
+## 2026-11-09 CI refresh after Run revalidation commit
+
+- PR #1434 current head: `1219a9efa05434ee34adea2412dd66cb607badff`. Fresh check-suite snapshot: eight GitHub Actions suites in progress, one GitHub Actions suite queued, and Freebuff Web queued. No current suite failure reported; CI is not complete.
+- PR #1433 current head: `1f5193b7576f3630ba06ccf398620553398f6d28`. Fresh snapshot: GitHub Actions and GitHub Advanced Security completed successfully; Freebuff Web queued.
+- PRs #1428, #1431 and #1432: GitHub Actions and GitHub Advanced Security completed successfully at their current heads; Freebuff Web remains queued.
+- All five PRs remain open and unmerged. PR #1434 review threads and submitted reviews are both empty at the latest fetch. Do not treat Freebuff queued as success or merge any PR until every required check on the exact head is green.
