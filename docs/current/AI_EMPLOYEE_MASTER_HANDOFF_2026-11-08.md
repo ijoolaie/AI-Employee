@@ -129,3 +129,14 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - PR #1434 advanced to exact head `9115e3bcfac4fe156f324367d8b031cacaa39970`. A second email-worker regression simulates delegated Agent authority being revoked between initial authorization and immediate pre-SMTP revalidation after the outbox row is durably marked `uncertain`. It verifies the second authorization is performed, SMTP is not attempted, and the row remains `uncertain` (no blind retry after the side-effect boundary). Focused notification/outbox/worker suite: 22 passed in 2.70s; py_compile, Ruff and diff checks passed. Issue #1350 comment: `6738850124`. This is test-only; no application behavior changed.
 - The current PR #1434 head must be re-fetched for CI; the prior head `c607ec128f8e7c16444614023d10a1b3aec66c99` had nine GitHub Actions workflows, most still in progress, and Freebuff `115402938536` queued. Do not carry those statuses forward to the new head.
 - Keep Issue #1350 open and all PRs unmerged pending fresh exact-head required-check success, especially Freebuff.
+
+
+## 2026-11-09 forged outbox governance checkpoint
+
+- PR #1434 exact head: `9793f2109ff648ba920e4c3422ace76d56af9137`.
+- Added tests in `backend/tests/test_outbox_tenant_dedupe.py`: forged caller-provided `_agent_governance` is stripped without an active governed tool context; an active Agent Run context cannot enqueue a message under a different tenant (rejected before add/flush).
+- This supplements the existing dispatcher boundary tests: `agent.run.execute` compares payload tenant to the durable outbox row tenant, rejects mismatches before broker publish, and forwards the durable row tenant to the Run worker.
+- Focused outbox/dispatcher/email/AgentExecutionAdapter tests: 28 passed in 2.43s. py_compile, Ruff and `git diff --check` passed.
+- Issue #1350 progress comment: `6741209969`.
+- Fresh exact-head check-suite fetch for `9793f210...` currently returns only Freebuff Web suite `115448675682`, queued with no conclusion. Other suites have not provisioned yet; missing is not success. Re-fetch before any merge decision.
+- No application code change, merge, deployment, migration, persistent-data mutation, or payment activation.
