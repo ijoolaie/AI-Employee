@@ -61,7 +61,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.tenant import Tenant
     from app.models.tenant_demo_grant import TenantDemoGrant
     from app.models.user import User
-    from app.services import audit_service, customer_dashboard_service, storage as storage_service
+    from app.services import audit_service, customer_dashboard_service, license_service, storage as storage_service
+    from app.ai.tool_registry import registry
+    from app.core.exceptions import NotFoundError
 
     engine = create_async_engine(db_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
@@ -221,6 +223,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 status="active",
             )
             target_file = FileObject(tenant_id=target.id, uploaded_by=actor.id, filename="target-policy.txt", content_type="text/plain", size_bytes=10, storage_key=f"{target.id}/target-policy.txt", status="active")
+            customer_report_source = FileObject(
+                tenant_id=customer_a.id, uploaded_by=customer_actor.id,
+                filename="customer-sales.csv", content_type="text/csv",
+                size_bytes=57, storage_key=f"{customer_a.id}/customer-sales.csv", status="active",
+            )
             sibling_file = FileObject(tenant_id=sibling.id, uploaded_by=actor.id, filename="sibling-secret.txt", content_type="text/plain", size_bytes=12, storage_key=f"{sibling.id}/sibling-secret.txt", status="active")
             cross_vendor_file = FileObject(tenant_id=reseller_b.id, uploaded_by=actor.id, filename="vendor-b-secret.txt", content_type="text/plain", size_bytes=15, storage_key=f"{reseller_b.id}/vendor-b-secret.txt", status="active")
             vendor_b_file = FileObject(
@@ -229,7 +236,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 size_bytes=17, storage_key=f"{reseller_b.id}/vendor-b-target-policy.txt",
                 status="active",
             )
-            session.add_all([direct_customer_file, customer_file, target_file, sibling_file, cross_vendor_file, vendor_b_file])
+            session.add_all([direct_customer_file, customer_file, customer_report_source, target_file, sibling_file, cross_vendor_file, vendor_b_file])
             target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
             sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
             customer_portal_customer = Customer(tenant_id=customer_a.id, external_key=f"customer-portal-customer-{run_id}", name="Customer portal record", email="portal-customer@example.com", notes="customer-portal-private-note")
@@ -463,6 +470,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 self.objects.pop(key, None)
 
         test_storage_backend = _PortalTestStorageBackend()
+        test_storage_backend.objects[f"{customer_a.id}/customer-sales.csv"] = (
+            b"date,region,revenue\n2026-01-01,North,100\n2026-01-02,South,200\n"
+            b"2026-01-03,North,150\n"
+        )
         monkeypatch.setattr(
             storage_service, "get_storage_backend", lambda: test_storage_backend
         )
@@ -1020,7 +1031,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert customer_visible_files.status_code == 200, customer_visible_files.text
-                assert [item["id"] for item in customer_visible_files.json()["data"]] == [str(customer_file.id)]
+                assert {item["id"] for item in customer_visible_files.json()["data"]} == {
+                    str(customer_file.id), str(customer_report_source.id),
+                }
                 customer_file_download = await client.get(
                     f"/api/v1/files/{customer_file.id}/download",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
@@ -1047,6 +1060,87 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert "customer tenant knowledge" in customer_knowledge_content
                 assert "target tenant knowledge" not in customer_knowledge_content
                 assert "sibling tenant secret" not in customer_knowledge_content
+                # Execute the real Report Employee tool with the effective
+                # Customer tenant resolved by the delegated portal grant.
+                async def allow_report_tool_entitlement(_db, *, tenant_id, feature_code):
+                    assert tenant_id == customer_a.id
+                    assert feature_code == "tool:analyze_dataset"
+                    return None
+
+                monkeypatch.setattr(
+                    license_service, "assert_feature_entitlement", allow_report_tool_entitlement
+                )
+                async with sessions() as report_session:
+                    report_result = await registry.execute(
+                        "analyze_dataset",
+                        {"file_id": str(customer_report_source.id)},
+                        permissions={"run.execute"},
+                        allowed_tools={"analyze_dataset"},
+                        db=report_session,
+                        tenant_id=customer_a.id,
+                        actor_id=customer_actor.id,
+                    )
+                    await report_session.commit()
+                report_artifacts = report_result["report_artifacts"]
+                report_file_ids = [
+                    report_artifacts["pdf_file_id"],
+                    report_artifacts["excel_file_id"],
+                    *report_artifacts["chart_file_ids"],
+                ]
+                assert report_result["row_count"] == 3
+                assert len(report_file_ids) >= 2
+                customer_files_after_report = await client.get(
+                    "/api/v1/files",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_files_after_report.status_code == 200, customer_files_after_report.text
+                listed_report_ids = {
+                    item["id"] for item in customer_files_after_report.json()["data"]
+                }
+                assert set(report_file_ids).issubset(listed_report_ids)
+                pdf_download = await client.get(
+                    f"/api/v1/files/{report_artifacts['pdf_file_id']}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert pdf_download.status_code == 200, pdf_download.text
+                assert pdf_download.content.startswith(b"%PDF-")
+                excel_download = await client.get(
+                    f"/api/v1/files/{report_artifacts['excel_file_id']}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert excel_download.status_code == 200, excel_download.text
+                assert excel_download.content[:2] == b"PK"
+
+                async with sessions() as report_session:
+                    report_rows = (
+                        await report_session.execute(
+                            select(FileObject).where(FileObject.id.in_(
+                                [uuid.UUID(value) for value in report_file_ids]
+                            ))
+                        )
+                    ).scalars().all()
+                    assert {str(row.id) for row in report_rows} == set(report_file_ids)
+                    assert {row.tenant_id for row in report_rows} == {customer_a.id}
+                    with pytest.raises(NotFoundError):
+                        await registry.execute(
+                            "analyze_dataset",
+                            {"file_id": str(target_file.id)},
+                            permissions={"run.execute"},
+                            allowed_tools={"analyze_dataset"},
+                            db=report_session,
+                            tenant_id=customer_a.id,
+                            actor_id=customer_actor.id,
+                        )
+                    with pytest.raises(NotFoundError):
+                        await registry.execute(
+                            "analyze_dataset",
+                            {"file_id": str(sibling_file.id)},
+                            permissions={"run.execute"},
+                            allowed_tools={"analyze_dataset"},
+                            db=report_session,
+                            tenant_id=customer_a.id,
+                            actor_id=customer_actor.id,
+                        )
                 reseller_file_from_customer = await client.get(
                     f"/api/v1/files/{target_file.id}",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
