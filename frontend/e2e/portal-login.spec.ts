@@ -71,6 +71,7 @@ test.describe("commercial portal sign-in routing", () => {
               slug: "portal-test",
               status: "active",
               tenant_kind: scenario.kind,
+              access_granted: true,
             },
           },
         }),
