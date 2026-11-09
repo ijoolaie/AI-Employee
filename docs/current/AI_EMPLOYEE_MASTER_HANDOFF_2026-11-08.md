@@ -218,3 +218,12 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - At the time of this handoff update, exact-head GitHub Actions suites for #1434 were in progress/queued; Freebuff Web was still queued. Do not claim browser interaction passed until the exact-head CI Playwright step succeeds.
 - Issue #1350 comment: https://github.com/ijoolaie/AI-Employee/issues/1350#issuecomment-6743042079
 - All five acceptance PRs remain open/unmerged. No deployment, migration, persistent-data change, or payment activation.
+
+
+## 2026-11-09 mobile navigation CI fixture correction
+
+- PR #1434 exact head `ca2a31bcaef8c35b184dae2d619dff551b2ac8e9` ran its full CI. Backend and eight other Actions workflows succeeded; Frontend Playwright failed in the existing sign-in routing loop before reaching the new mobile-navigation assertions.
+- Root cause: the mocked `/auth/me` tenant fixture omitted `access_granted`. The login implementation treats missing/false access as inactive and correctly routes to `/billing`, while the test expected a permitted portal route.
+- Corrected the E2E fixture to explicitly set `access_granted: true`; pushed commit `c474efe20e448565f21cc0d6c21e14252e4f52bc` to PR #1434. `git diff --check` passed. Local Playwright was not run because frontend dependencies are absent in the worktree. Exact-head CI had not yet appeared at handoff update time; do not claim it passed.
+- Issue #1350 comment 6743679405 records the failure and correction.
+- All five acceptance PRs remain open/unmerged. Latest previously refreshed review threads and submitted reviews were zero on all five. Freebuff remains a merge blocker until it reports success on each exact head. No merge, deployment, migration, persistent-data mutation, or payment activation.
