@@ -174,3 +174,15 @@ async def test_already_issued_portal_grant_is_denied_after_commercial_access_exp
     assert exc.value.status_code == 402
     assert exc.value.detail == 'Target tenant commercial entitlement is inactive'
     commercial_access.assert_awaited_once_with(db, tenant=target_tenant)
+
+@pytest.mark.asyncio
+async def test_paused_subscription_does_not_preserve_existing_tenant_access():
+    now = datetime(2026, 11, 9, 12, 0, tzinfo=timezone.utc)
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(None), Result(None)]))
+    tenant = SimpleNamespace(id=uuid4(), access_grant_required=True)
+
+    assert await service.tenant_has_access(db, tenant=tenant, now=now) is False
+    paid_query = db.execute.await_args_list[0].args[0]
+    assert 'subscriptions.status' in str(paid_query)
+    assert 'active' in paid_query.compile().params.values()
+    assert now in paid_query.compile().params.values()
