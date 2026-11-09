@@ -416,3 +416,53 @@ async def test_governed_email_rejects_cross_tenant_row_binding_before_smtp(monke
     authorization.assert_not_awaited()
     assert smtp_attempts == []
     assert row.status == "pending"
+
+
+@pytest.mark.asyncio
+async def test_governed_email_revocation_after_uncertain_commit_blocks_smtp(monkeypatch):
+    tenant_id = uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        status="processing",
+        attempts=1,
+        tenant_id=tenant_id,
+        last_error=None,
+        payload={
+            "to": ["private@example.test"],
+            "subject": "Tenant-bound message",
+            "body": "must not send after revocation",
+            "_agent_governance": {
+                "tenant_id": str(tenant_id),
+                "agent_instance_id": str(uuid4()),
+                "run_id": str(uuid4()),
+                "tool_name": "email.send",
+            },
+        },
+    )
+    db = _DB([row])
+    authorization_calls = 0
+    smtp_attempts = []
+
+    async def authorize(*_args, **_kwargs):
+        nonlocal authorization_calls
+        authorization_calls += 1
+        if authorization_calls == 2:
+            raise RuntimeError("delegated authority revoked before SMTP")
+
+    class _UnexpectedSMTP:
+        def __init__(self, *args, **kwargs):
+            smtp_attempts.append((args, kwargs))
+            raise AssertionError("revoked email must not reach SMTP")
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _UnexpectedSMTP)
+
+    await email_worker._send(str(row.id))
+
+    assert authorization_calls == 2
+    assert smtp_attempts == []
+    assert row.status == "uncertain"
+    assert "revoked before SMTP" in row.last_error
+    assert db.commits >= 2
