@@ -117,3 +117,60 @@ async def test_demo_grant_revocation_rejects_cross_tenant_grant(monkeypatch):
     assert "tenant_demo_grants.tenant_id" in str(query)
     assert "tenant_demo_grants.id" in str(query)
     audit.assert_not_awaited()
+
+@pytest.mark.asyncio
+async def test_expired_paid_period_and_expired_demo_grant_deny_existing_tenant_access():
+    now = datetime(2026, 11, 9, 12, 0, tzinfo=timezone.utc)
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[Result(None), Result(None)]))
+    tenant = SimpleNamespace(id=uuid4(), access_grant_required=True)
+
+    assert await service.tenant_has_access(db, tenant=tenant, now=now) is False
+    assert db.execute.await_count == 2
+
+    paid_query = db.execute.await_args_list[0].args[0]
+    demo_query = db.execute.await_args_list[1].args[0]
+    assert 'subscriptions.status' in str(paid_query)
+    assert 'subscriptions.current_period_end' in str(paid_query)
+    assert 'tenant_demo_grants.expires_at' in str(demo_query)
+    assert 'tenant_demo_grants.revoked_at' in str(demo_query)
+    assert now in paid_query.compile().params.values()
+    assert now in demo_query.compile().params.values()
+
+
+@pytest.mark.asyncio
+async def test_already_issued_portal_grant_is_denied_after_commercial_access_expires(monkeypatch):
+    from fastapi import HTTPException
+    from app.services import portal_access_service
+
+    actor_tenant_id = uuid4()
+    target_tenant_id = uuid4()
+    actor_user_id = uuid4()
+    grant_id = uuid4()
+    grant = SimpleNamespace(id=grant_id, revoked_at=None)
+    actor_tenant = SimpleNamespace(id=actor_tenant_id, tenant_kind='vendor', status='active')
+    target_tenant = SimpleNamespace(
+        id=target_tenant_id, tenant_kind='reseller', parent_tenant_id=actor_tenant_id, status='active'
+    )
+
+    class _Result:
+        def __init__(self, value): self.value = value
+        def scalar_one_or_none(self): return self.value
+
+    db = SimpleNamespace(execute=AsyncMock(side_effect=[
+        _Result(grant), _Result(actor_tenant), _Result(target_tenant)
+    ]))
+    commercial_access = AsyncMock(return_value=False)
+    monkeypatch.setattr(portal_access_service, 'tenant_has_access', commercial_access)
+
+    with pytest.raises(HTTPException) as exc:
+        await portal_access_service.validate_portal_access_grant(
+            db,
+            actor_user_id=actor_user_id,
+            actor_tenant_id=actor_tenant_id,
+            target_tenant_id=target_tenant_id,
+            grant_id=grant_id,
+        )
+
+    assert exc.value.status_code == 402
+    assert exc.value.detail == 'Target tenant commercial entitlement is inactive'
+    commercial_access.assert_awaited_once_with(db, tenant=target_tenant)
