@@ -96,3 +96,22 @@ See the detailed acceptance audit and evidence comments on Issue #1350. Do not c
 - PR and check-suite states are point-in-time observations from 2026-11-08, not guarantees about later status.
 - No Production/Staging deployment, migration, persistent data mutation, payment activation or merge is claimed by this handoff.
 - The historical `AI_EMPLOYEE_MASTER_HANDOFF_2026-11-02.md` remains historical; this dated document supersedes it as the current project checkpoint once merged.
+
+
+## 2026-11-09 live refresh � supersedes stale status snapshots above
+
+Observed at 2026-11-09 14:38 +03:30. This section is the current point-in-time snapshot; older tables and status paragraphs above are historical.
+
+- PR #1428 exact head `ba65814d05dd624d6095d0ce5a8da1be761c0bcf`: open, unmerged, mergeable; 9 GitHub Actions suites and CodeQL succeeded; Freebuff Web suite `115101840461` remains queued. Review threads: 0; submitted reviews: none.
+- PR #1431 exact head `c32576fec6c11d0fbd5bd79de98729818a35118d`: open, unmerged, mergeable; 9 GitHub Actions suites and CodeQL succeeded; Freebuff Web suite `115085202766` remains queued. Review threads: 0; submitted reviews: none.
+- PR #1432 exact head `5102b645511ca01083af0bd97db3645d1b3c2f24`: open, unmerged, mergeable; 9 GitHub Actions suites and CodeQL succeeded; Freebuff Web suite `115094879907` remains queued. Review threads: 0; submitted reviews: none.
+- PR #1433 exact head `f16052ada34c55d4a03167003f2434d2ce1b17f6`: open, unmerged, mergeable; 2 GitHub Actions suites and CodeQL succeeded; Freebuff Web suite `115303559730` remains queued. Review threads: 0; submitted reviews: none.
+- PR #1434 exact head `65a941d766ba086ae68fb4da0a43305c529f68fa`: open, unmerged, mergeable; 9 GitHub Actions suites and CodeQL succeeded; Freebuff Web suite `115303403012` remains queued. Review threads: 0; submitted reviews: none.
+
+PR #1434 now extends the authenticated delegated Reseller-to-Customer PostgreSQL portal integration beyond the earlier unit/API regressions. It seeds a Customer-owned completed Run and persisted artifact audit pointer; verifies Customer portal list and download; verifies parent and sibling Run artifact list/download are denied (404); and verifies both list and download are denied after delegated grant revocation (403). The same integration test also covers delegated Knowledge post-revocation denial, Report Employee generated artifact ownership/list/download and parent/sibling source denial, and Invoice PDF export/download with parent/sibling denial and post-revocation denial. Report Employee entitlement remains stubbed at the license-service boundary, so commercial entitlement is not certified by that test.
+
+Local verification on PR #1434 exact head: py_compile passed; Ruff passed; `git diff --check origin/main...HEAD` passed; focused Report/Invoice/ToolRegistry/Run-artifact test group: 82 passed in 6.89s. The Run-artifact test module alone: 7 passed. Python 3.10 compatibility shim was used for StrEnum/UTC. PostgreSQL-backed portal integration remains CI-only because local `SUPPORT_TEST_DATABASE_URL` and `DATABASE_URL` are not configured.
+
+Issue #1350 received progress comment `6738577079` recording this checkpoint. It remains open. No PR merged; no Production/Staging deployment, migration, persistent-data mutation, or payment activation occurred. No supported Freebuff retry/dispatch action is available in the inspected tool surface. Treat all five queued Freebuff suites as merge blockers, not passes.
+
+Next work: continue notification/outbox recipient, dispatch, retry/dead-letter tenant-isolation coverage; then worker enqueue/forged metadata and post-revocation delayed work; then entitlement transitions and portal UX/accessibility. Keep the acceptance issue open until the full matrix and evidence review are complete.
