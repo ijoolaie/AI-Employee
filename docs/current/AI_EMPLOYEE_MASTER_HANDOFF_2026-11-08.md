@@ -167,3 +167,11 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Re-ran tenant access, feature entitlement, subscription lifecycle and subscription creation-fence tests: 39 passed in 1.97s. Ruff and git diff --check passed.
 - This is a request-time entitlement predicate test; full PostgreSQL-backed lifecycle transitions and revocation of already-running background work remain pending CI/remaining matrix.
 - Exact-head CI must be refreshed for 2941f403; statuses from 0d83105a must not be carried forward. No application code changed; no merge/deploy/migration/data mutation/payment activation.
+
+## 2026-11-09 execution-boundary revalidation checkpoint
+
+- PR #1434 advanced to `1219a9efa05434ee34adea2412dd66cb607badff` (`test: revalidate delegation before run side effects`).
+- Added `test_run_service_rechecks_delegation_after_worker_preflight_before_execution`: simulates the worker preflight succeeding, then delegation being revoked before the canonical Run service execution boundary. The service-level governance wrapper re-authorizes using the persisted Run delegation proof; denial prevents the original execution function (and therefore provider/tool side effects) from being invoked.
+- Combined governance bootstrap, Run Worker and delegation governance tests: 31 passed in 4.70s. Ruff and `git diff --check` passed.
+- This verifies the second authorization boundary with a focused service wrapper test; a live PostgreSQL race test with two concurrent transactions is still not run locally and remains a CI/integration evidence gap.
+- Prior exact-head CI for 2941f403 was green for GitHub Actions and CodeQL, with Freebuff queued. These results do not transfer to the new SHA `1219a9ef`; refresh exact-head checks. No application code changed; no merge, deployment, migration, persistent-data mutation or payment activation.
