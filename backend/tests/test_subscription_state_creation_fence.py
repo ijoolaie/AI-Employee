@@ -30,6 +30,11 @@ async def test_resource_quota_rejects_inactive_subscription(
     )
     monkeypatch.setattr(
         billing_service,
+        "_require_tenant_access_source",
+        AsyncMock(return_value="paid"),
+    )
+    monkeypatch.setattr(
+        billing_service,
         "get_subscription",
         AsyncMock(return_value=subscription),
     )
@@ -66,6 +71,11 @@ async def test_resource_quota_allows_active_subscription_states(
         billing_service,
         "_lock_tenant_for_quota",
         AsyncMock(),
+    )
+    monkeypatch.setattr(
+        billing_service,
+        "_require_tenant_access_source",
+        AsyncMock(return_value="paid"),
     )
     monkeypatch.setattr(
         billing_service,
