@@ -246,3 +246,14 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Local frontend dependency installation was attempted only in the approved PR1434 worktree and failed with Windows `ENOSPC` due to low C: storage (about 413 MB free). The partial ignored `frontend/node_modules` directory was removed and worktree status is clean. No further local install/browser test until storage is available; rely on CI.
 - Entitlement check-vs-revocation race remains open for lock-order analysis. Execution locks WorkItem lineage then Run, but entitlement reads do not lock Subscription/DemoGrant rows while revoke operations do. No ad hoc Tenant anchor lock added because global lock-order reconciliation is still required. Issue #1350 comment 6744317044 records this refresh.
 - No merge, deployment, migration, persistent-data mutation, or payment activation.
+
+
+## 2026-11-09 acceptance refresh and entitlement-lock audit
+
+- Refreshed exact heads and check suites for all five acceptance PRs. #1428, #1431, #1432 and #1434 each have all nine GitHub Actions workflow runs successful; #1433 has Documentation Truth Consistency and CodeQL successful. All five PRs remain open/unmerged, with zero review threads and zero submitted reviews.
+- All five PRs still have the external Freebuff Web check suite in `queued`; this is a blocking non-success state. GitHub branch-protection read returned 403 for the connected integration, so required-check configuration could not be independently enumerated.
+- PR #1434 exact head `3d455b3d05049af82bdce4e147951a543b13002d`: all nine Actions runs successful, including CI, Playwright browser regressions, CodeQL, Architecture Guard, W21 E2E, HA Recovery, Production Infrastructure, Ephemeral DAST and Public Widget browser/API.
+- PR #1433 handoff head advanced to `6507977d059d3f5e1cb980c635881dc2ea422841`; Documentation Truth Consistency and CodeQL passed on this exact SHA.
+- Deeper Run entitlement audit identifies a candidate row-level serialization approach: `FOR SHARE` (SQLAlchemy `with_for_update(read=True)`) on the qualifying Subscription or TenantDemoGrant during entitlement reads. Mutations/revocations already lock those entitlement rows with `FOR UPDATE`. This may serialize admission against revocation without adding a broad Tenant anchor lock. It is not yet proven: verify all writers, PostgreSQL SQL semantics, lock retention through Run terminal commit, and a two-session PostgreSQL race test for both paid and Demo entitlements. No code change made. Issue #1350 comment 6744411079 contains the detailed rationale and test plan.
+- Local frontend npm install remains unavailable until disk space is restored (previous `ENOSPC`, partial ignored node_modules removed, worktree clean). Dedicated PostgreSQL URL was not configured locally. Use CI/PostgreSQL-backed tests for proof.
+- No merge, deployment, migration, persistent-data mutation, or payment activation.
