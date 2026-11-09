@@ -115,3 +115,10 @@ Local verification on PR #1434 exact head: py_compile passed; Ruff passed; `git 
 Issue #1350 received progress comment `6738577079` recording this checkpoint. It remains open. No PR merged; no Production/Staging deployment, migration, persistent-data mutation, or payment activation occurred. No supported Freebuff retry/dispatch action is available in the inspected tool surface. Treat all five queued Freebuff suites as merge blockers, not passes.
 
 Next work: continue notification/outbox recipient, dispatch, retry/dead-letter tenant-isolation coverage; then worker enqueue/forged metadata and post-revocation delayed work; then entitlement transitions and portal UX/accessibility. Keep the acceptance issue open until the full matrix and evidence review are complete.
+
+
+## 2026-11-09 follow-up after the preceding refresh
+
+- PR #1434 advanced to exact head `c607ec128f8e7c16444614023d10a1b3aec66c99`. It adds `test_governed_email_rejects_cross_tenant_row_binding_before_smtp`: a durable email row whose tenant differs from its Agent governance proof is rejected before policy authorization and SMTP; the row remains in the retryable pre-side-effect state. Focused notification/outbox/worker tests: 21 passed in 2.71s; py_compile, Ruff and diff checks passed. The new exact-head check snapshot currently exposes only Freebuff suite `115402938536`, still queued; GitHub Actions/CodeQL suites have not yet provisioned at the time of this note. Issue #1350 progress comment: `6738792891`.
+- PR #1433 handoff refresh commit: `2ea9c73c0aee251babf0bef977b627e0c81b02c0`; PR remains open/unmerged. Its newly observed check-suite snapshot exposed Freebuff suite `115399883219` queued; other check suites had not yet provisioned at that instant.
+- Do not treat missing/not-yet-provisioned suites as success. Re-fetch exact-head suites and check-runs before any merge decision. All queued Freebuff suites remain blockers.
