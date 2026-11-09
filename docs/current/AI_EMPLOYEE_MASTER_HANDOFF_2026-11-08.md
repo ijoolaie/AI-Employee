@@ -198,3 +198,12 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Added a frontend contract covering the accessible label, mobile visibility breakpoint, navigation callback and route parity. Local verification: frontend contract 150 passed / 0 failed; Governance UI contract PASS; git diff --check PASS. Browser/Vitest and screen-reader checks remain outstanding because frontend/node_modules is not installed in the worktree.
 - Fresh exact-head check suites for fa00b497...: Freebuff Web queued and nine GitHub Actions suites queued; none is a pass yet. PR #1434 remains open/unmerged, mergeable, with zero review threads and no submitted reviews.
 - Issue #1350 comments 6742448078 and 6742459933 record the implementation and CI snapshot. No deployment, merge, migration, persistent-data mutation, or payment activation.
+
+
+## 2026-11-09 exact-head CI completion for Reseller mobile navigation
+
+- PR #1434 exact head `fa00b497cc27d6249008acd65eccfb89cbb95d13`: all 10 GitHub Actions check suites and GitHub Advanced Security completed successfully; Freebuff Web remains queued. PR remains open/unmerged. Review threads and submitted reviews remain zero.
+- CI run 42634451684: frontend dependency installation, ESLint, contract tests, unit tests, production build, Chromium setup, Playwright browser regressions and visual-review screenshot upload all succeeded. Backend job also succeeded. Public widget browser/API acceptance run 42634451565 succeeded, including production frontend build and Chromium browser-to-real-API/worker flow. Additional architecture, CodeQL, HA recovery, production infrastructure, DAST, workforce and semantic real-stack runs succeeded.
+- Scope qualification: broad Playwright browser regressions passed, but none is yet a dedicated interaction assertion for the new Reseller mobile navigation select; the added contract checks markup, accessibility label, mobile breakpoint, route callback and 13-route parity. Dedicated mobile interaction and screen-reader validation remain outstanding.
+- All five PRs remain open/unmerged. Latest exact-head snapshot: #1428 (10 success, Freebuff queued); #1431 (10 success, Freebuff queued); #1432 (10 success, Freebuff queued); #1433 (3 success, Freebuff queued); #1434 (10 success, Freebuff queued). Do not merge while Freebuff remains queued.
+- Issue #1350 comment 6742781635 records the CI details. No merge, deployment, migration, persistent-data mutation or payment activation.
