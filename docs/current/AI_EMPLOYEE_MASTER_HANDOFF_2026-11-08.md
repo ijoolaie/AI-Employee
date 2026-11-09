@@ -160,3 +160,10 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Exact-head CI for 0d83105a... was freshly queried: 10 suites are queued/pending at observation time (including Freebuff and GitHub Actions); none is treated as passed. PR #1434 remains open/unmerged; review threads and submitted reviews were empty at the latest query.
 - This covers time-bounded paid/Demo access at request time for an already-issued portal grant. Full subscription suspension and in-flight/background operation cancellation remain separate acceptance cases.
 - No application code changed; no merge, deployment, migration, persistent-data mutation or payment activation occurred. Issue #1350 remains open.
+
+## 2026-11-09 paused-subscription follow-up
+
+- PR #1434 advanced to 2941f40324bc7307b2d4b4b376f655431ac4028b. Added test_paused_subscription_does_not_preserve_existing_tenant_access, asserting a subscription that is not active (including paused/suspended states) cannot satisfy the paid-access predicate even before the billing period end; no unexpired Demo grant means access is denied.
+- Re-ran tenant access, feature entitlement, subscription lifecycle and subscription creation-fence tests: 39 passed in 1.97s. Ruff and git diff --check passed.
+- This is a request-time entitlement predicate test; full PostgreSQL-backed lifecycle transitions and revocation of already-running background work remain pending CI/remaining matrix.
+- Exact-head CI must be refreshed for 2941f403; statuses from 0d83105a must not be carried forward. No application code changed; no merge/deploy/migration/data mutation/payment activation.
