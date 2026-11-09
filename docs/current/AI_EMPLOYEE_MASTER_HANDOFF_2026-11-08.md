@@ -1,11 +1,24 @@
 # AI-Employee Master Handoff — 2026-11-08
 
 **Repository:** `ijoolaie/AI-Employee`
-**Snapshot date:** 2026-11-08 (UTC)
+**Snapshot date:** 2026-11-09 (UTC; refreshed acceptance evidence)
 **Main baseline observed:** `d943ec2cffd75ea88daebdf02c7b6df413d3f2f6`
 **Architecture / acceptance tracker:** [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350)
 
 > This is the current checkpoint, not a release certification. Refresh exact SHAs and live CI before every subsequent handoff or merge decision.
+
+## 2026-11-09 live refresh ? supersedes stale CI and PR #1434 notes below
+
+- PR #1428 exact head ba65814d05dd624d6095d0ce5a8da1be761c0bcf: 9 GitHub Actions suites and GitHub Advanced Security completed successfully; Freebuff suite 115101840461 remains queued.
+- PR #1431 exact head c32576fec6c11d0fbd5bd79de98729818a35118d: 9 GitHub Actions suites and GitHub Advanced Security completed successfully; Freebuff suite 115085202766 remains queued.
+- PR #1432 exact head 5102b645511ca01083af0bd97db3645d1b3c2f24: 9 GitHub Actions suites and GitHub Advanced Security completed successfully; Freebuff suite 115094879907 remains queued.
+- PR #1433 exact head 2be178619e09140e115c582ef90dd027467c55fc: 2 GitHub Actions suites and GitHub Advanced Security completed successfully; Freebuff suite 115294197191 remains queued. PR remains open.
+- PR #1434 exact head e0cc44938a39ff5cf8d9d3699bd98d1d717b1190: one GitHub Actions suite succeeded, eight GitHub Actions suites are in progress, and Freebuff suite 115300358193 is queued. Review threads and submitted reviews were empty at the latest inspection. PR remains open.
+- PR #1434 Run-artifact delegated portal extension: the PostgreSQL-backed Reseller?Customer integration now seeds Customer, parent-Reseller and sibling-Customer Runs plus tenant-scoped audit pointers and storage objects. Authenticated Customer portal assertions cover own artifact listing and download, parent/sibling Run denial (404), sibling artifact download denial (404), and immediate 403 for list/download after grant revocation. The test storage backend implements tenant-prefix listing and existence checks, so the real authenticated Run artifact API routes are exercised.
+- Local PR #1434 verification on the updated worktree: 82 targeted Run-artifact, Report Employee, ToolRegistry and Invoice tests passed; py_compile, Ruff and git diff --check passed. The PostgreSQL-backed portal integration was not run locally because both SUPPORT_TEST_DATABASE_URL and DATABASE_URL are absent; exact-head CI must execute it.
+- No PR was merged. No Production/Staging deployment, migration, persistent-data mutation or payment activation occurred. No supported Freebuff dispatch/retry action is available; queued Freebuff suites are blockers, not passes.
+- Issue #1350 received progress comment 6733168750. It remains open.
+
 
 ## 1. Operating decisions and boundaries
 
@@ -26,8 +39,8 @@ The acceptance and handoff PRs below were observed open and unmerged against the
 | [#1428](https://github.com/ijoolaie/AI-Employee/pull/1428) | Direct and nested Customer file lifecycle | `ba65814d05dd624d6095d0ce5a8da1be761c0bcf` | Open; 10 GitHub Actions/security check suites succeeded; Freebuff suite `115101840461` was queued with zero check runs at last detailed suite inspection |
 | [#1431](https://github.com/ijoolaie/AI-Employee/pull/1431) | Delegated Reseller→Customer file lifecycle | `c32576fec6c11d0fbd5bd79de98729818a35118d` | Open; 10 suites succeeded; Freebuff suite `115085202766` was queued with zero check runs at last detailed suite inspection |
 | [#1432](https://github.com/ijoolaie/AI-Employee/pull/1432) | Sibling Customer file isolation | `5102b645511ca01083af0bd97db3645d1b3c2f24` | Open; 10 suites succeeded; Freebuff suite `115094879907` was queued with zero check runs at last detailed suite inspection |
-| [#1433](https://github.com/ijoolaie/AI-Employee/pull/1433) | Refresh dated master handoff | d111fd51d915cf263778bda889bdbb6bc3397813 | Open; Documentation Truth Consistency and CodeQL succeeded; Freebuff suite 115111856312 queued |
-| [#1434](https://github.com/ijoolaie/AI-Employee/pull/1434) | Delegated Knowledge, Report Employee and Invoice PDF isolation/revocation; Run artifact download isolation | baac199fabffe511d4219d99df8d919860726750 | Open; new exact-head suites not yet started at refresh; Freebuff suite 115294066243 queued; reviews clean at prior refresh |
+| [#1433](https://github.com/ijoolaie/AI-Employee/pull/1433) | Refresh dated master handoff | 2be178619e09140e115c582ef90dd027467c55fc | Open; 2 GitHub Actions suites and CodeQL succeeded; Freebuff suite 115294197191 queued |
+| [#1434](https://github.com/ijoolaie/AI-Employee/pull/1434) | Delegated Knowledge, Report Employee, Invoice PDF and Run artifact isolation/revocation | e0cc44938a39ff5cf8d9d3699bd98d1d717b1190 | Open; 1 GitHub Actions suite succeeded, 8 in progress; Freebuff suite 115300358193 queued; review threads/reviews empty |
 
 For each PR, the listed successful checks included Backend/CI, Architecture Guard, CodeQL, DAST, infrastructure validation, recovery validation, semantic E2E, public-widget acceptance, W21 and other applicable workflows. Combined commit status had no legacy status entries. Review threads were empty at the last recorded review-thread inspection. Re-fetch current suite/check-run and review state before acting; this snapshot is not a live status feed.
 
@@ -51,9 +64,9 @@ For each PR, the listed successful checks included Backend/CI, Architecture Guar
 The source-backed audit against main `d943ec2cffd75ea88daebdf02c7b6df413d3f2f6` identified the following incomplete or unproven areas:
 
 - **Knowledge:** tenant-scoped indexing/search and Vendor-to-Reseller isolation exist. PR #1434 now covers Vendor-to-Reseller post-revocation denial and delegated Reseller-to-Customer indexing/search, exclusion of parent Reseller and sibling-tenant content, and immediate search denial after Customer grant revocation. Still need a distinct sibling-Customer topology, reindex-after-revoke and stale-context coverage; relational tenant-filtered chunks are evidenced, physical vector-store isolation is not.
-- **Employee Reports:** source file, lock, audit and generated/reused artifacts are tenant-scoped. Missing delegated portal integration proving generate/list/download and sibling/foreign/revoked-context denial.
-- **Invoices/PDF:** invoice operations and PDF artifact creation are tenant-scoped; Vendor foreign invoice read denial exists. Missing delegated PDF export/download and sibling/revoked-context denial integration.
-- **Run artifacts:** Run and audit/storage paths derive from tenant-scoped Run records. PR #1434 adds unit/API-level cross-tenant Run download and foreign-Run audit-pointer denial tests (including 404); full authenticated delegated portal integration for list/download, sibling topology and revoked grant remains outstanding.
+- **Employee Reports:** source file, lock, audit and generated/reused artifacts are tenant-scoped. PR #1434 adds delegated Reseller-to-Customer Report Employee generation/list/download coverage and parent/sibling source denial; entitlement is stubbed at the license-service boundary, and revoked-context report-artifact denial remains outstanding.
+- **Invoices/PDF:** invoice operations and PDF artifact creation are tenant-scoped; Vendor foreign invoice read denial exists. PR #1434 adds delegated Customer invoice list/PDF export/download, parent/sibling invoice denial and post-revocation export denial.
+- **Run artifacts:** Run and audit/storage paths derive from tenant-scoped Run records. PR #1434 adds unit/API-level cross-tenant Run download and foreign-Run audit-pointer denial tests (including 404); full authenticated delegated Reseller-to-Customer portal integration for list/download, parent/sibling topology and revoked grant is now covered on PR #1434 exact head e0cc4493; its PostgreSQL integration execution remains pending exact-head CI.
 - **Notifications/outbox:** durable tenant-aware enqueue/dedupe and several consumer-side checks exist. Still need recipient resolution, dispatch, retry/dead-letter and content-isolation matrix across Vendor/Reseller/Customer and delegated/revoked grants.
 - **Background workers:** workflow, run, email, WhatsApp, workforce evaluation and test-center source paths were inspected. Need complete Celery/async task inventory, forged/mismatched task metadata and unauthorized enqueue tests, plus delayed/retried work after grant revocation and tenant-safe outputs/audit across all handlers.
 - **Cache:** frontend identity-transition clearing exists; server-side Redis/cache key separation and invalidation on context switch/revocation are not proven.
@@ -67,8 +80,8 @@ See the detailed acceptance audit and evidence comments on Issue #1350. Do not c
 ## 4. Immediate next actions
 
 1. Refresh exact PR heads, all check suites/check runs (especially Freebuff), combined statuses, review threads and mergeability for #1428/#1431/#1432.
-2. Keep all PRs unmerged while any required check is queued, missing or unsuccessful.
-3. Continue the gap-driven source/test audit in this order: delegated Knowledge; Reports; Invoice PDF; Run artifacts; notification/outbox recipient and retry isolation; worker enqueue/revocation; cache; entitlement expiry; portal UX.
+2. Keep all PRs unmerged while any required check is queued, missing or unsuccessful; current Freebuff suites remain queued on all five PRs.
+3. Continue the gap-driven source/test audit in this order: notification/outbox recipient and retry isolation; worker enqueue/revocation; server cache keys/invalidation; entitlement expiry; portal UX; remaining nested Knowledge and revoked Report artifact cases.
 4. Add focused negative tests before changing authorization behavior.
 5. Record each verified checkpoint on Issue #1350 and refresh this handoff with exact SHAs and observed evidence.
 6. Complete the full multi-tenant acceptance matrix and final evidence review before closing Issue #1350.
