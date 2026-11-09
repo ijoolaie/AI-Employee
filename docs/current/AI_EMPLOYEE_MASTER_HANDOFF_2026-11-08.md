@@ -257,3 +257,12 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Deeper Run entitlement audit identifies a candidate row-level serialization approach: `FOR SHARE` (SQLAlchemy `with_for_update(read=True)`) on the qualifying Subscription or TenantDemoGrant during entitlement reads. Mutations/revocations already lock those entitlement rows with `FOR UPDATE`. This may serialize admission against revocation without adding a broad Tenant anchor lock. It is not yet proven: verify all writers, PostgreSQL SQL semantics, lock retention through Run terminal commit, and a two-session PostgreSQL race test for both paid and Demo entitlements. No code change made. Issue #1350 comment 6744411079 contains the detailed rationale and test plan.
 - Local frontend npm install remains unavailable until disk space is restored (previous `ENOSPC`, partial ignored node_modules removed, worktree clean). Dedicated PostgreSQL URL was not configured locally. Use CI/PostgreSQL-backed tests for proof.
 - No merge, deployment, migration, persistent-data mutation, or payment activation.
+
+
+## 2026-11-09 latest acceptance refresh
+
+- Exact-head check suites refreshed across all five open PRs. #1428 (`ba65814d05dd624d6095d0ce5a8da1be761c0bcf`), #1431 (`c32576fec6c11d0fbd5bd79de98729818a35118d`), #1432 (`5102b645511ca01083af0bd97db3645d1b3c2f24`), and #1434 (`3d455b3d05049af82bdce4e147951a543b13002d`) each have nine successful GitHub Actions suites plus successful GitHub Advanced Security. #1433 (`22d83c87524084b4b58eecdc7b0d6fc9e31eeeb0`) has Documentation Truth Consistency and CodeQL successful.
+- All five remain open/unmerged, with zero review threads and zero submitted reviews. Freebuff Web remains `queued` on every PR and is not a pass. Combined legacy commit status has no contexts; branch protection API returned 403 to the connected integration.
+- Reviewed additive portal test patches: #1428 nested Customer file lifecycle and parent isolation; #1431 delegated Reseller-in-Customer file lifecycle and parent-home isolation; #1432 sibling Customer file enumeration/read/download/delete denial under another Customer's grant.
+- Entitlement race remains open. Candidate `FOR SHARE` on the qualifying Subscription/DemoGrant row is not implemented until PostgreSQL two-session tests prove the ordering and all writer paths are verified.
+- No merge, deployment, migration, persistent-data mutation, or payment activation.
