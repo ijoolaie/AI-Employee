@@ -154,6 +154,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 invoice_read_permission = Permission(code="invoices.read", description="Read invoices")
                 session.add(invoice_read_permission)
                 await session.flush()
+            invoice_export_pdf_permission = (
+                await session.execute(
+                    select(Permission).where(Permission.code == "invoices.export_pdf")
+                )
+            ).scalar_one_or_none()
+            if invoice_export_pdf_permission is None:
+                invoice_export_pdf_permission = Permission(
+                    code="invoices.export_pdf", description="Export invoice PDFs"
+                )
+                session.add(invoice_export_pdf_permission)
+                await session.flush()
             run_read_permission = (
                 await session.execute(select(Permission).where(Permission.code == "run.read"))
             ).scalar_one_or_none()
@@ -201,7 +212,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 invoice_read_permission, run_read_permission, audit_read_permission,
             ]
             vendor_b_actor.roles = [vendor_b_reader_role]
-            reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
+            reseller_admin_role.permissions = [
+                *file_permissions, workflow_write_permission,
+                invoice_read_permission, invoice_export_pdf_permission,
+            ]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
             direct_customer_file = FileObject(
@@ -274,6 +288,12 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 issue_date=today, subtotal=120, tax_rate=0, tax_amount=0,
                 total=120, line_items=[{"description": "target-only", "quantity": 1, "unit_price": 120}],
             )
+            customer_invoice = BusinessInvoice(
+                tenant_id=customer_a.id, number=f"CUSTOMER-{run_id}", status="paid",
+                currency="USD", customer_name="Customer Portal Invoice",
+                issue_date=today, subtotal=75, tax_rate=0, tax_amount=0,
+                total=75, line_items=[{"description": "customer-only", "quantity": 1, "unit_price": 75}],
+            )
             sibling_invoice = BusinessInvoice(
                 tenant_id=sibling.id, number=f"SIBLING-{run_id}", status="paid",
                 currency="USD", customer_name="Sibling Reseller Secret",
@@ -288,7 +308,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             )
             session.add_all([
                 target_dead_letter, sibling_dead_letter, vendor_b_dead_letter,
-                target_invoice, sibling_invoice, vendor_b_invoice,
+                target_invoice, sibling_invoice, vendor_b_invoice, customer_invoice,
             ])
             test_center_rows = []
             for tenant, marker in ((target, "target"), (sibling, "sibling"), (reseller_b, "vendor-b")):
@@ -1110,6 +1130,41 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert excel_download.status_code == 200, excel_download.text
                 assert excel_download.content[:2] == b"PK"
+                customer_invoice_list = await client.get(
+                    "/api/v1/invoices",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_invoice_list.status_code == 200, customer_invoice_list.text
+                assert [row["id"] for row in customer_invoice_list.json()["data"]] == [
+                    str(customer_invoice.id)
+                ]
+                parent_invoice_read = await client.get(
+                    f"/api/v1/invoices/{target_invoice.id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert parent_invoice_read.status_code == 404, parent_invoice_read.text
+                sibling_invoice_read = await client.get(
+                    f"/api/v1/invoices/{sibling_invoice.id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert sibling_invoice_read.status_code == 404, sibling_invoice_read.text
+                customer_invoice_export = await client.post(
+                    f"/api/v1/invoices/{customer_invoice.id}/export-pdf",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_invoice_export.status_code == 200, customer_invoice_export.text
+                invoice_pdf_id = customer_invoice_export.json()["data"]["pdf_file_id"]
+                invoice_pdf_download = await client.get(
+                    f"/api/v1/files/{invoice_pdf_id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert invoice_pdf_download.status_code == 200, invoice_pdf_download.text
+                assert invoice_pdf_download.content.startswith(b"%PDF-")
+                parent_invoice_export = await client.post(
+                    f"/api/v1/invoices/{target_invoice.id}/export-pdf",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert parent_invoice_export.status_code == 404, parent_invoice_export.text
 
                 async with sessions() as report_session:
                     report_rows = (
@@ -1214,6 +1269,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert revoked_customer_knowledge_search.status_code == 403, (
                     revoked_customer_knowledge_search.text
+                )
+                revoked_customer_invoice_export = await client.post(
+                    f"/api/v1/invoices/{customer_invoice.id}/export-pdf",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert revoked_customer_invoice_export.status_code == 403, (
+                    revoked_customer_invoice_export.text
                 )
 
                 # Customer identities cannot enumerate or create Vendor/Reseller
