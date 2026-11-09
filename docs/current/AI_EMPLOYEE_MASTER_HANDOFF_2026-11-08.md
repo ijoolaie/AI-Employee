@@ -207,3 +207,14 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Scope qualification: broad Playwright browser regressions passed, but none is yet a dedicated interaction assertion for the new Reseller mobile navigation select; the added contract checks markup, accessibility label, mobile breakpoint, route callback and 13-route parity. Dedicated mobile interaction and screen-reader validation remain outstanding.
 - All five PRs remain open/unmerged. Latest exact-head snapshot: #1428 (10 success, Freebuff queued); #1431 (10 success, Freebuff queued); #1432 (10 success, Freebuff queued); #1433 (3 success, Freebuff queued); #1434 (10 success, Freebuff queued). Do not merge while Freebuff remains queued.
 - Issue #1350 comment 6742781635 records the CI details. No merge, deployment, migration, persistent-data mutation or payment activation.
+
+
+## 2026-11-09 Reseller mobile navigation browser acceptance added
+
+- PR #1434 advanced from `fa00b497cc27d6249008acd65eccfb89cbb95d13` to exact head `ca2a31bcaef8c35b184dae2d619dff551b2ac8e9` (commit `test: cover reseller mobile navigation in browser`).
+- `frontend/e2e/portal-login.spec.ts` now exercises the Reseller portal at 390×844: accessible combobox visibility, 13 route options, initial Dashboard selection, selection of Integrations, route transition to `/reseller/integrations`, and selected-option synchronization.
+- CI Playwright browser-regression command now includes `e2e/portal-login.spec.ts`; this converts the new mobile navigation check into an actual CI browser test.
+- `git diff --check` passed before commit. Local Playwright execution was not completed: npm installation ran out of free space on the C: drive (about 504 MB remained); partial `frontend/node_modules` was removed. No tracked lockfile change.
+- At the time of this handoff update, exact-head GitHub Actions suites for #1434 were in progress/queued; Freebuff Web was still queued. Do not claim browser interaction passed until the exact-head CI Playwright step succeeds.
+- Issue #1350 comment: https://github.com/ijoolaie/AI-Employee/issues/1350#issuecomment-6743042079
+- All five acceptance PRs remain open/unmerged. No deployment, migration, persistent-data change, or payment activation.
