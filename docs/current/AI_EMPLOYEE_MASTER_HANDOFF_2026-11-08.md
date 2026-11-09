@@ -150,3 +150,13 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Issue #1350 progress comment: `6741237057`.
 - This complements the existing durable outbox forged-proof stripping, tenant mismatch enqueue rejection, dispatcher payload-vs-row binding, and pre-SMTP authority revalidation tests.
 - Refresh exact-head CI for `8fa32c46...` before any merge decision. Previous head `9793f210...` exposed only queued Freebuff suite `115448675682`; do not carry statuses to this new SHA. No application code change, merge, deployment, migration, or persistent-data mutation.
+
+## 2026-11-09 existing-token commercial entitlement expiry checkpoint
+
+- PR #1434 advanced from 8fa32c46887351bb6d50371b93479c2a2f0f5747 to 0d83105a752e298237b0ceb50821caf93ad93278 (commit: test: deny portal access after tenant entitlement expiry).
+- Added test_expired_paid_period_and_expired_demo_grant_deny_existing_tenant_access: when the paid subscription period is over and no unexpired, unrevoked Demo grant exists, a tenant requiring explicit access has no commercial access. The test asserts the paid-period and Demo-expiry/revocation predicates are in the SQL lookup.
+- Added test_already_issued_portal_grant_is_denied_after_commercial_access_expires: a still-unrevoked portal grant and active tenant rows do not preserve access after the target tenant loses commercial entitlement; request-time validation fails closed with HTTP 402.
+- Local verification: tenant access, feature entitlement, subscription lifecycle and subscription creation-fence suites: 38 passed in 1.90s. Ruff, compileall and git diff --check passed. Dedicated PostgreSQL portal integration remains unrun locally because no local test DB URL is configured.
+- Exact-head CI for 0d83105a... was freshly queried: 10 suites are queued/pending at observation time (including Freebuff and GitHub Actions); none is treated as passed. PR #1434 remains open/unmerged; review threads and submitted reviews were empty at the latest query.
+- This covers time-bounded paid/Demo access at request time for an already-issued portal grant. Full subscription suspension and in-flight/background operation cancellation remain separate acceptance cases.
+- No application code changed; no merge, deployment, migration, persistent-data mutation or payment activation occurred. Issue #1350 remains open.
