@@ -190,3 +190,11 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Entitlement concurrency audit confirmed execute_run_locked() acquires WorkItem lineage root-to-leaf then Run, matching cancellation's ordering. tenant_access_source() reads Subscription and TenantDemoGrant without row locks; revoke paths lock their respective entitlement rows. Tenant-row locking is used by several other services with different surrounding lock orders, so adding a common tenant anchor requires a complete cross-service lock-order review before implementation; no safe global ordering has yet been established.
 - Local DATABASE_URL, SUPPORT_TEST_DATABASE_URL, and COMMERCIAL_LICENSE_TEST_DATABASE_URL are unset. No live PostgreSQL race test was run. Issue #1350 comment 6742216504 records these findings.
 - No code change, merge, deployment, migration, persistent-data mutation, or payment activation. Keep Issue #1350 open; Freebuff queued remains a merge blocker.
+
+## 2026-11-09 Reseller mobile navigation remediation
+
+- PR #1434 advanced to exact head fa00b497cc27d6249008acd65eccfb89cbb95d13 (fix: add mobile navigation to reseller portal).
+- The Reseller route-group layout now provides a shared native, labelled mobile navigation select below the md breakpoint, using bilingual reseller labels and all 13 destinations from the desktop sidebar. The current route is selected; choosing a destination navigates through Next router. Desktop sidebar behavior is unchanged.
+- Added a frontend contract covering the accessible label, mobile visibility breakpoint, navigation callback and route parity. Local verification: frontend contract 150 passed / 0 failed; Governance UI contract PASS; git diff --check PASS. Browser/Vitest and screen-reader checks remain outstanding because frontend/node_modules is not installed in the worktree.
+- Fresh exact-head check suites for fa00b497...: Freebuff Web queued and nine GitHub Actions suites queued; none is a pass yet. PR #1434 remains open/unmerged, mergeable, with zero review threads and no submitted reviews.
+- Issue #1350 comments 6742448078 and 6742459933 record the implementation and CI snapshot. No deployment, merge, migration, persistent-data mutation, or payment activation.
