@@ -29,7 +29,7 @@ async def tenant_access_source(db: AsyncSession, *, tenant: Tenant, now: datetim
     grant = (await db.execute(select(TenantDemoGrant.id).where(
         TenantDemoGrant.tenant_id == tenant.id, TenantDemoGrant.revoked_at.is_(None),
         TenantDemoGrant.expires_at > now,
-    ).limit(1))).scalar_one_or_none()
+    ).limit(1).with_for_update(read=True))).scalar_one_or_none()
     return "demo" if grant is not None else None
 
 
