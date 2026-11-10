@@ -380,3 +380,11 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Local disposable PostgreSQL 16: all three Stripe event scenarios passed in three consecutive matrix repetitions; expanded entitlement/Stripe/DemoGrant regression suite = 59 passed. Ruff lint/format and git diff --check passed.
 - Commit pushed to PR #1434: 8a3a845709679837551fd13b0635a2a0e240dafc. Issue #1350 comment 6763088467 records evidence. Fresh exact-head CI required.
 - No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
+
+## 2026-11-10 worker session factory included in PostgreSQL lock race
+
+- Tightened the paid-admission-first race scenario to use the actual app.core.database.worker_db_session() factory used by Celery _run_async, instead of a generic test session. The worker session acquires the paid Subscription FOR UPDATE lock; PostgreSQL pg_stat_activity observes the competing lifecycle updater waiting; the worker transaction commits only after the simulated runtime interval, then the updater proceeds.
+- Source inspection confirms _run_async calls db.commit() only after AgentRuntime.execute() returns. This test now validates transaction lock retention with the production worker session configuration, though it does not instantiate the entire Celery task or external provider runtime.
+- Local disposable PostgreSQL 16 expanded suite = 59 passed after this change; the three Stripe lifecycle webhook event variants passed in three consecutive repetitions. Ruff lint/format and git diff --check passed.
+- Commit pushed to PR #1434: 62b61846094063f763270ac8e07abde5346b50d3. Issue #1350 comment 6763155793 records evidence. Fresh exact-head CI required.
+- No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
