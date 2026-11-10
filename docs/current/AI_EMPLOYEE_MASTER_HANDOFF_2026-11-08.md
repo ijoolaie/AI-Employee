@@ -388,3 +388,13 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Local disposable PostgreSQL 16 expanded suite = 59 passed after this change; the three Stripe lifecycle webhook event variants passed in three consecutive repetitions. Ruff lint/format and git diff --check passed.
 - Commit pushed to PR #1434: 62b61846094063f763270ac8e07abde5346b50d3. Issue #1350 comment 6763155793 records evidence. Fresh exact-head CI required.
 - No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
+
+## 2026-11-10 FastAPI request-boundary DemoGrant lock integration
+
+- Added backend/tests/test_tenant_demo_grant_postgres_race.py::test_fastapi_request_holds_demo_grant_lock_until_endpoint_commit on PR #1434. It sends a signed JWT through an actual FastAPI ASGI request, uses the production get_current_context() and get_db() dependencies with the disposable PostgreSQL session factory, and asserts the entitlement guard and endpoint DbSession are the identical AsyncSession.
+- While the endpoint is deliberately held open after authorization, an independent revoke_demo_grant() transaction is observed waiting on the DemoGrant row lock in pg_stat_activity. After the endpoint returns and the real get_db() dependency commits, revocation completes. This closes the previously source-only HTTP request transaction-lifetime proof; it is still a minimal ASGI route using the production auth/dependency path, not a full production API router.
+- Local disposable PostgreSQL 16: DemoGrant race + tenant-access focused suite = 14 passed. The new HTTP request-boundary race passed 3/3 consecutive repetitions. Ruff check, Ruff format check, Python compile and git diff --check passed. One initial fixture attempt found a missing flush ordering for the User FK; corrected by flushing the User before inserting the DemoGrant, then the full suite passed.
+- PR #1434 commit: 1ef348d77629803f60107d4fb77805e9c4db8cd5. At the latest exact-head refresh, Production Observability and Rollback & Alerting were successful; the other 11 GitHub Actions workflows were in progress; Freebuff Web was queued; Advanced Security was successful. PR remained open/unmerged with zero review threads and zero submitted reviews. Earlier CI results on prior SHAs do not apply.
+- Issue #1350 comment 6766480757 records the request-boundary test and local evidence.
+- PR #1433 handoff head before this update: 45b9520d24bca6c1aec7a66741c4f55835e09c0f; its Documentation Truth Consistency, CodeQL and Freebuff states must be refreshed after this handoff commit.
+- No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
