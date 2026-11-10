@@ -39,6 +39,7 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
         pytest.skip("DATABASE_URL is not configured; PostgreSQL integration test only")
     assert make_url(database_url).get_backend_name() == "postgresql"
 
+    from app.core.database import worker_db_session
     from app.models.billing import BillingPlan, Subscription
     from app.models.tenant import Tenant
     from app.services import billing_service
@@ -111,14 +112,18 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
                     sub.status = "canceled"
                     sub.canceled_at = datetime.now(timezone.utc)
 
-        async with sessions() as admission:
+        # Exercise the actual Celery worker session factory. _run_async commits
+        # only after AgentRuntime.execute() returns, retaining this lock across runtime.
+        async with worker_db_session() as admission:
             tx = await admission.begin()
             await billing_service.assert_run_execution_entitlement(admission, tenant_id=tenant_id)
             update_task = asyncio.create_task(update_after_admission())
             try:
                 await asyncio.wait_for(update_started.wait(), timeout=5)
                 await _wait_for_lock(sessions, updater_pid)
-                assert not update_task.done(), "subscription update passed active admission lock"
+                assert not update_task.done(), (
+                    "subscription update passed active worker admission lock"
+                )
                 await tx.commit()
                 await asyncio.wait_for(update_task, timeout=5)
             finally:
