@@ -2,6 +2,7 @@
 
 import asyncio
 import os
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
@@ -165,6 +166,140 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
             finally:
                 if not admission_task.done():
                     await updater.rollback()
+                    admission_task.cancel()
+                    await asyncio.gather(admission_task, return_exceptions=True)
+
+    finally:
+        async with sessions() as cleanup:
+            async with cleanup.begin():
+                await cleanup.execute(
+                    delete(Subscription).where(Subscription.tenant_id == tenant_id)
+                )
+                await cleanup.execute(delete(Tenant).where(Tenant.id == tenant_id))
+                await cleanup.execute(delete(BillingPlan).where(BillingPlan.id == plan_id))
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_stripe_subscription_webhook_serializes_with_paid_run_admission(monkeypatch):
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        pytest.skip("DATABASE_URL is not configured; PostgreSQL integration test only")
+    assert make_url(database_url).get_backend_name() == "postgresql"
+
+    from app.models.billing import BillingPlan, Subscription
+    from app.models.tenant import Tenant
+    from app.services import billing_service, stripe_service
+
+    monkeypatch.setattr(
+        billing_service.license_service,
+        "assert_execution_license",
+        AsyncMock(return_value=object()),
+    )
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
+    suffix = uuid.uuid4().hex
+    tenant_id = uuid.uuid4()
+    plan_id = uuid.uuid4()
+    subscription_id = uuid.uuid4()
+    provider_subscription_id = f"sub_race_{suffix}"
+
+    try:
+        async with sessions() as setup:
+            async with setup.begin():
+                setup.add(
+                    Tenant(
+                        id=tenant_id,
+                        name=f"Stripe webhook race {suffix}",
+                        slug=f"stripe-webhook-race-{suffix}",
+                        tenant_kind="customer",
+                        status="active",
+                        access_grant_required=True,
+                    )
+                )
+                setup.add(
+                    BillingPlan(
+                        id=plan_id,
+                        code=f"stripe-race-{suffix[:12]}",
+                        name="Stripe webhook race plan",
+                        monthly_price_usd=49,
+                        monthly_runs=100,
+                        monthly_tokens=100_000,
+                        max_employees=3,
+                        max_workflows=3,
+                        features={},
+                        is_active=True,
+                    )
+                )
+                await setup.flush()
+                setup.add(
+                    Subscription(
+                        id=subscription_id,
+                        tenant_id=tenant_id,
+                        plan_id=plan_id,
+                        status="active",
+                        provider="stripe",
+                        provider_subscription_id=provider_subscription_id,
+                        current_period_start=datetime.now(timezone.utc) - timedelta(days=1),
+                        current_period_end=datetime.now(timezone.utc) + timedelta(days=20),
+                        cancel_at_period_end=False,
+                    )
+                )
+
+        webhook_pid = None
+        async with sessions() as webhook_db:
+            webhook_tx = await webhook_db.begin()
+            webhook_pid = await webhook_db.scalar(text("SELECT pg_backend_pid()"))
+            event = {
+                "id": f"evt_race_{suffix}",
+                "type": "customer.subscription.updated",
+                "created": int(time.time()) + 10,
+                "data": {
+                    "object": {
+                        "id": provider_subscription_id,
+                        "object": "subscription",
+                        "status": "past_due",
+                        "metadata": {"tenant_id": str(tenant_id)},
+                        "customer": f"cus_race_{suffix}",
+                        "items": {"data": []},
+                        "current_period_start": int(
+                            (datetime.now(timezone.utc) - timedelta(days=1)).timestamp()
+                        ),
+                        "current_period_end": int(
+                            (datetime.now(timezone.utc) + timedelta(days=20)).timestamp()
+                        ),
+                    }
+                },
+            }
+            result = await stripe_service.apply_webhook_event(webhook_db, event)
+            assert result["stale"] is False
+
+            admission_started = asyncio.Event()
+            admission_pid = None
+
+            async def admit_after_webhook_lock():
+                nonlocal admission_pid
+                async with sessions() as admission:
+                    async with admission.begin():
+                        admission_pid = await admission.scalar(text("SELECT pg_backend_pid()"))
+                        admission_started.set()
+                        await billing_service.assert_run_execution_entitlement(
+                            admission, tenant_id=tenant_id
+                        )
+
+            admission_task = asyncio.create_task(admit_after_webhook_lock())
+            try:
+                await asyncio.wait_for(admission_started.wait(), timeout=5)
+                await _wait_for_lock(sessions, admission_pid)
+                assert not admission_task.done(), (
+                    "admission passed Stripe webhook Subscription lock"
+                )
+                await webhook_tx.commit()
+                with pytest.raises(ConflictError, match="Tenant access requires"):
+                    await asyncio.wait_for(admission_task, timeout=5)
+            finally:
+                if not admission_task.done():
+                    await webhook_db.rollback()
                     admission_task.cancel()
                     await asyncio.gather(admission_task, return_exceptions=True)
 
