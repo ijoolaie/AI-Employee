@@ -344,3 +344,11 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - PR #1434 exact head is 971ff1b11374fed35157d33449baf9d8d2087541; all GitHub Actions suites freshly queued, Freebuff Web remains queued. PR remains open/unmerged with zero review threads and zero submitted reviews.
 - Latest previously refreshed other heads: #1428 ba65814d05dd624d6095d0ce5a8da1be761c0bcf; #1431 c32576fec6c11d0fbd5bd79de98729818a35118d; #1432 5102b645511ca01083af0bd97db3645d1b3c2f24; #1433 c354398f28660e74d63ea632cb87abbfb87f4551. All open/unmerged; Freebuff queued on each; Actions and Advanced Security successful on #1428/#1431/#1432, while #1433 Documentation Truth Consistency passed and CodeQL was in progress at last refresh.
 - Remaining: full Worker runtime duration and HTTP request-boundary integration, Stripe webhook event matrix, current exact-head CI, Freebuff blocker, and remaining multi-tenant acceptance matrix. No merge/deploy/shared-environment migration/persistent data mutation/payment activation.
+
+## 2026-11-10 quota-path post-lock entitlement revalidation tests
+
+- Added parameterized regression tests for enforce_run_quota, enforce_employee_quota, and enforce_workflow_quota. Each simulates an initial paid entitlement followed by a failed post-Subscription-lock revalidation and asserts quota usage is not consumed.
+- Latest local disposable PostgreSQL 16 targeted result: 33 passed across DemoGrant race, paid Subscription period-end race, tenant access, Subscription lock, subscription-state creation fence, quota-path revalidation, and vendor billing exemption. Paid expiry race separately passed three consecutive runs. Ruff lint, new-test formatting, and git diff --check passed.
+- PR #1434 test commit: 331b0ca0eabe38a5d4815435facae054262c5dc2. CI must be refreshed on this exact head.
+- Issue #1350 comment 6762754308 records the expanded regression coverage.
+- No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
