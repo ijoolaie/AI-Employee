@@ -310,6 +310,15 @@ async def test_fastapi_request_holds_demo_grant_lock_until_endpoint_commit(monke
             assert response.json()["tenant_id"] == str(tenant_id)
             await asyncio.wait_for(revoke_task, timeout=5)
             revoke_task = None
+
+            denied_response = await client.get(
+                "/protected", headers={"Authorization": f"Bearer {token}"}
+            )
+            assert denied_response.status_code == 402, denied_response.text
+            assert len(access_sessions) == 2
+            assert len(endpoint_sessions) == 1, (
+                "the protected endpoint must not run after DemoGrant revocation"
+            )
     finally:
         release_endpoint.set()
         if revoke_task is not None and not revoke_task.done():
