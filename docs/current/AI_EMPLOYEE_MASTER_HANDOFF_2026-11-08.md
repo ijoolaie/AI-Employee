@@ -406,3 +406,12 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Local disposable PostgreSQL 16: focused DemoGrant + tenant-access suite remains 14 passed; the complete HTTP request/revocation race including post-revoke 402 passed 3/3 consecutive repetitions. Ruff check, Ruff format check, Python compile and git diff --check passed.
 - Latest PR #1434 test head is 254c473993ec49be07a6798ae9fc9127b0177509; this new SHA requires fresh CI. Issue #1350 comment 6766547546 records the refinement and evidence.
 - No application behavior changed; no merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
+
+## 2026-11-10 expanded local entitlement regression sweep
+
+- Re-ran the combined seven-file entitlement regression set on PR #1434 test head 254c473993ec49be07a6798ae9fc9127b0177509: test_tenant_access_service.py, test_tenant_demo_grant_postgres_race.py, test_tenant_paid_subscription_postgres_race.py, test_billing_subscription_locking.py, test_quota_race_fencing.py, test_subscription_state_creation_fence.py, and test_vendor_internal_billing_exemption.py.
+- Disposable PostgreSQL 16 result: 39 passed, 0 failed, 0 skipped. This includes the real FastAPI request-boundary test, post-revocation HTTP 402 assertion, DemoGrant two-session race, paid Subscription/Stripe lifecycle races, quota revalidation and vendor exemption.
+- The HTTP request/revocation/402 scenario separately passed 3/3 consecutive repetitions. Ruff check, Ruff format check, Python compile and git diff --check passed.
+- Issue #1350 comment 6766591128 records this expanded evidence.
+- At refresh, PR #1434 exact head 254c473993ec49be07a6798ae9fc9127b0177509 had CI frontend and backend jobs in progress (Playwright browser regressions and full backend tests respectively); Freebuff Web queued. PR #1433 handoff head 458c210df2760577416beb4b875acb6f85be06fd had Documentation Truth Consistency and GitHub Advanced Security successful, CodeQL in progress, and Freebuff queued.
+- No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
