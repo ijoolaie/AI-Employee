@@ -362,3 +362,13 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - PR #1433 handoff exact head 41b0835c779a8d4bdeb8027ad25682307d49baa8; Documentation Truth Consistency and CodeQL have freshly queued, Freebuff queued. #1428/#1431/#1432 remain at previously refreshed heads with Actions and Advanced Security successful; Freebuff queued.
 - Issue #1350 comment 6762778450 records the request/Worker transaction boundary and exact local/CI status.
 - No merge, deployment, shared-environment migration, persistent-data mutation, or payment activation.
+
+## 2026-11-10 Stripe webhook / Run admission PostgreSQL race proof
+
+- Added a second independent-session PostgreSQL scenario to backend/tests/test_tenant_paid_subscription_postgres_race.py. It calls stripe_service.apply_webhook_event() with a real customer.subscription.updated event in one transaction, holds the Subscription lifecycle row lock, and starts billing_service.assert_run_execution_entitlement() concurrently in a separate transaction.
+- pg_stat_activity confirms Run admission actually waits on the Stripe webhook row lock. After webhook commit changes Subscription status to past_due, admission's post-lock access revalidation denies the request. This exercises the real Stripe webhook service path rather than a mocked lifecycle writer.
+- Local disposable PostgreSQL 16: the new Stripe webhook race passed 3 consecutive runs; expanded suite across paid Subscription/Stripe, DemoGrant races, tenant access, billing locks, quota revalidation, subscription-state fence, and vendor billing exemption = 57 passed. Ruff lint/format and git diff --check passed.
+- Test commit pushed to PR #1434: 5dc564b2bbb663c370c83119bc5074a80db2edeb. Exact-head CI must rerun. Issue #1350 comment 6763029350 records evidence.
+- At last exact-head refresh before this new commit, all GitHub Actions and GitHub Advanced Security workflows were successful on PR #1434 head 331b0ca0eabe38a5d4815435facae054262c5dc2; Freebuff Web remained queued. The new commit invalidates those prior exact-head CI results.
+- PRs #1428/#1431/#1432 remain open/unmerged, all Actions and Advanced Security successful on their exact heads, Freebuff queued. PR #1433 latest handoff head 0158e89377538df6a241818738784c82aea0f742 had Documentation Truth Consistency and CodeQL successful; Freebuff queued.
+- All five PRs had zero review threads and zero submitted reviews at last refresh. No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
