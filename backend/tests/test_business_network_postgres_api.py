@@ -187,6 +187,35 @@ async def test_business_network_sender_decision_and_recipient_isolation():
                 assert created.json()["recipient_tenant_id"] == str(recipient.id)
                 assert created.json()["status"] == "pending_approval"
 
+                exact_retry = await client.post(
+                    "/api/v1/business-network/requests",
+                    headers=headers(requester, sender),
+                    json={
+                        "recipient_tenant_id": str(recipient.id),
+                        "operation": "share_capability",
+                        "capability_contract": {"capability": "catalog.read", "version": 1},
+                        "payload": {"resource": "public-catalog"},
+                        "idempotency_key": f"network-{run_id}",
+                        "sponsor_user_id": str(sponsor.id),
+                    },
+                )
+                assert exact_retry.status_code == 201, exact_retry.text
+                assert exact_retry.json()["id"] == created.json()["id"]
+
+                conflicting_retry = await client.post(
+                    "/api/v1/business-network/requests",
+                    headers=headers(requester, sender),
+                    json={
+                        "recipient_tenant_id": str(recipient.id),
+                        "operation": "share_capability",
+                        "capability_contract": {"capability": "catalog.read", "version": 1},
+                        "payload": {"resource": "different-catalog"},
+                        "idempotency_key": f"network-{run_id}",
+                        "sponsor_user_id": str(sponsor.id),
+                    },
+                )
+                assert conflicting_retry.status_code == 409, conflicting_retry.text
+
                 foreign_decision = await client.post(
                     f"/api/v1/business-network/requests/{request_id}/decision",
                     headers=headers(recipient_decider, recipient),
