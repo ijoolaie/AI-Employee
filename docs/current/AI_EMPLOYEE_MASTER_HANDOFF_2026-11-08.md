@@ -424,3 +424,12 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - At refresh, PR #1434 frontend Playwright browser regressions and Workforce Semantic Real-Stack E2E / Public Widget browser/API acceptance were still in progress; Freebuff Web remained queued. No complete PR check pass is claimed.
 - Issue #1350 comment 6766613824 records the exact-head backend CI evidence.
 - No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
+
+## 2026-11-10 exact-head PR #1434 frontend CI completion
+
+- On PR #1434 exact head 254c473993ec49be07a6798ae9fc9127b0177509, the GitHub Actions CI workflow is now completed/success for both frontend and backend jobs.
+- Frontend log: contract tests 150 passed / 0 failed; Vitest 16 files and 93 tests passed; Playwright browser regressions 12 passed, including e2e/portal-login.spec.ts; production build and remaining frontend steps succeeded.
+- Backend log: 1,986 passed, 1 deselected; the DemoGrant two-session PostgreSQL race, FastAPI request-boundary lock/402 test, paid entitlement revocation race and all three Stripe webhook race variants explicitly passed.
+- Workforce Semantic Real-Stack E2E has also succeeded. Public Widget browser/API acceptance is still in progress; all other visible Actions and Advanced Security suites are successful. Freebuff Web remains queued; therefore PR #1434 is not merge-ready.
+- Issue #1350 comment 6766633971 records the exact-head CI results.
+- No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
