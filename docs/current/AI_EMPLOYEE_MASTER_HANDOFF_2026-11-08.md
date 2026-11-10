@@ -372,3 +372,11 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - At last exact-head refresh before this new commit, all GitHub Actions and GitHub Advanced Security workflows were successful on PR #1434 head 331b0ca0eabe38a5d4815435facae054262c5dc2; Freebuff Web remained queued. The new commit invalidates those prior exact-head CI results.
 - PRs #1428/#1431/#1432 remain open/unmerged, all Actions and Advanced Security successful on their exact heads, Freebuff queued. PR #1433 latest handoff head 0158e89377538df6a241818738784c82aea0f742 had Documentation Truth Consistency and CodeQL successful; Freebuff queued.
 - All five PRs had zero review threads and zero submitted reviews at last refresh. No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
+
+## 2026-11-10 Stripe lifecycle event matrix expanded
+
+- Expanded the PostgreSQL two-session race test to run three real Stripe lifecycle webhook branches through stripe_service.apply_webhook_event(): customer.subscription.updated, customer.subscription.deleted, and invoice.payment_failed.
+- For each event, the webhook transaction holds the Subscription lifecycle lock while independent Run-admission attempts paid entitlement. pg_stat_activity confirms a real PostgreSQL row-lock wait; after webhook commit, post-lock revalidation denies access. This exercises all three webhook branches and their shared lifecycle-lock helper.
+- Local disposable PostgreSQL 16: all three Stripe event scenarios passed in three consecutive matrix repetitions; expanded entitlement/Stripe/DemoGrant regression suite = 59 passed. Ruff lint/format and git diff --check passed.
+- Commit pushed to PR #1434: 8a3a845709679837551fd13b0635a2a0e240dafc. Issue #1350 comment 6763088467 records evidence. Fresh exact-head CI required.
+- No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
