@@ -181,7 +181,17 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
 
 
 @pytest.mark.asyncio
-async def test_stripe_subscription_webhook_serializes_with_paid_run_admission(monkeypatch):
+@pytest.mark.parametrize(
+    "event_type",
+    [
+        "customer.subscription.updated",
+        "customer.subscription.deleted",
+        "invoice.payment_failed",
+    ],
+)
+async def test_stripe_subscription_webhook_serializes_with_paid_run_admission(
+    monkeypatch, event_type
+):
     database_url = os.getenv("DATABASE_URL")
     if not database_url:
         pytest.skip("DATABASE_URL is not configured; PostgreSQL integration test only")
@@ -250,26 +260,39 @@ async def test_stripe_subscription_webhook_serializes_with_paid_run_admission(mo
         async with sessions() as webhook_db:
             webhook_tx = await webhook_db.begin()
             webhook_pid = await webhook_db.scalar(text("SELECT pg_backend_pid()"))
+            if event_type == "customer.subscription.updated":
+                event_object = {
+                    "id": provider_subscription_id,
+                    "object": "subscription",
+                    "status": "past_due",
+                    "metadata": {"tenant_id": str(tenant_id)},
+                    "customer": f"cus_race_{suffix}",
+                    "items": {"data": []},
+                    "current_period_start": int(
+                        (datetime.now(timezone.utc) - timedelta(days=1)).timestamp()
+                    ),
+                    "current_period_end": int(
+                        (datetime.now(timezone.utc) + timedelta(days=20)).timestamp()
+                    ),
+                }
+            elif event_type == "customer.subscription.deleted":
+                event_object = {
+                    "id": provider_subscription_id,
+                    "object": "subscription",
+                    "status": "canceled",
+                }
+            else:
+                event_object = {
+                    "id": f"in_race_{suffix}",
+                    "object": "invoice",
+                    "subscription": provider_subscription_id,
+                    "status": "open",
+                }
             event = {
-                "id": f"evt_race_{suffix}",
-                "type": "customer.subscription.updated",
+                "id": f"evt_race_{suffix}_{event_type.replace('.', '_')}",
+                "type": event_type,
                 "created": int(time.time()) + 10,
-                "data": {
-                    "object": {
-                        "id": provider_subscription_id,
-                        "object": "subscription",
-                        "status": "past_due",
-                        "metadata": {"tenant_id": str(tenant_id)},
-                        "customer": f"cus_race_{suffix}",
-                        "items": {"data": []},
-                        "current_period_start": int(
-                            (datetime.now(timezone.utc) - timedelta(days=1)).timestamp()
-                        ),
-                        "current_period_end": int(
-                            (datetime.now(timezone.utc) + timedelta(days=20)).timestamp()
-                        ),
-                    }
-                },
+                "data": {"object": event_object},
             }
             result = await stripe_service.apply_webhook_event(webhook_db, event)
             assert result["stale"] is False
