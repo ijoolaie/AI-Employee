@@ -266,6 +266,24 @@ async def install_package(
     if not template_snapshot or not definition_snapshot:
         raise ValidationAppError("employee marketplace package is missing immutable employee snapshot")
 
+    # Revalidate persisted snapshots at the buyer boundary as well as publish.
+    # Older immutable packages may predate recursive seller-side validation.
+    for field, value in (
+        ("package.template_snapshot.capability_contract", template_snapshot.get("capability_contract") or {}),
+        ("package.template_snapshot.permission_policy", template_snapshot.get("permission_policy") or {}),
+        ("package.template_snapshot.approval_policy", template_snapshot.get("approval_policy") or {}),
+        ("package.template_snapshot.evaluation_policy", template_snapshot.get("evaluation_policy") or {}),
+        ("package.template_snapshot.install_policy", template_snapshot.get("install_policy") or {}),
+        ("package.definition_snapshot.allowed_tools", definition_snapshot.get("allowed_tools") or []),
+        ("package.definition_snapshot.model_policy", definition_snapshot.get("model_policy") or {}),
+        ("package.definition_snapshot.input_schema", definition_snapshot.get("input_schema") or {}),
+        ("package.definition_snapshot.output_schema", definition_snapshot.get("output_schema") or {}),
+        ("package.definition_snapshot.policy_requirements", definition_snapshot.get("policy_requirements") or {}),
+        ("package.permission_manifest.approval_policy", (package.permission_manifest or {}).get("approval_policy") or {}),
+        ("package.permission_manifest.requested_permissions", (package.permission_manifest or {}).get("requested_permissions") or []),
+    ):
+        _validate_untrusted_manifest(value if isinstance(value, dict) else {"items": value}, field)
+
     imported_definition = AgentDefinition(
         tenant_id=buyer_tenant_id,
         slug=f"marketplace-{package.slug}-{package.version}-{uuid.uuid4().hex[:8]}"[:120],
