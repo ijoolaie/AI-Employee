@@ -398,3 +398,11 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Issue #1350 comment 6766480757 records the request-boundary test and local evidence.
 - PR #1433 handoff head before this update: 45b9520d24bca6c1aec7a66741c4f55835e09c0f; its Documentation Truth Consistency, CodeQL and Freebuff states must be refreshed after this handoff commit.
 - No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
+
+## 2026-11-10 HTTP request-boundary post-revocation denial refinement
+
+- Extended the FastAPI ASGI request test so, after the in-flight request completes and the competing DemoGrant revoke transaction commits, the same signed JWT makes a second request to the protected route.
+- The second real HTTP request is denied with 402 by get_current_context(); the endpoint is not entered again. This complements the first request's observed PostgreSQL FOR SHARE lock wait through endpoint completion and get_db() commit.
+- Local disposable PostgreSQL 16: focused DemoGrant + tenant-access suite remains 14 passed; the complete HTTP request/revocation race including post-revoke 402 passed 3/3 consecutive repetitions. Ruff check, Ruff format check, Python compile and git diff --check passed.
+- Latest PR #1434 test head is 254c473993ec49be07a6798ae9fc9127b0177509; this new SHA requires fresh CI. Issue #1350 comment 6766547546 records the refinement and evidence.
+- No application behavior changed; no merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
