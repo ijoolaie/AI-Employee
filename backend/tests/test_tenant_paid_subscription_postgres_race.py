@@ -127,8 +127,8 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
                     await asyncio.gather(update_task, return_exceptions=True)
 
         # Lifecycle update owns FOR UPDATE first. The paid-source snapshot may
-        # see the old committed row, but get_subscription must wait and then
-        # reject the newly committed canceled state.
+        # see the old committed period end, but the post-lock entitlement check
+        # must re-read the period and reject after the expiry update commits.
         async with sessions() as reset:
             async with reset.begin():
                 sub = await billing_service.ensure_subscription(reset, tenant_id=tenant_id)
@@ -138,8 +138,7 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
         async with sessions() as updater:
             update_tx = await updater.begin()
             sub = await billing_service.ensure_subscription(updater, tenant_id=tenant_id)
-            sub.status = "canceled"
-            sub.canceled_at = datetime.now(timezone.utc)
+            sub.current_period_end = datetime.now(timezone.utc) - timedelta(days=1)
             await updater.flush()
             update_started = asyncio.Event()
             admission_pid = None
@@ -159,10 +158,9 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
                 await asyncio.wait_for(update_started.wait(), timeout=5)
                 await _wait_for_lock(sessions, admission_pid)
                 assert not admission_task.done(), "admission did not wait for lifecycle update"
-                sub.status = "canceled"
-                sub.canceled_at = datetime.now(timezone.utc)
+                sub.current_period_end = datetime.now(timezone.utc) - timedelta(days=1)
                 await update_tx.commit()
-                with pytest.raises(ConflictError, match="Subscription is not active"):
+                with pytest.raises(ConflictError, match="Tenant access requires"):
                     await asyncio.wait_for(admission_task, timeout=5)
             finally:
                 if not admission_task.done():

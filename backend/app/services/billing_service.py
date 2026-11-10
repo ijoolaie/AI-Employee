@@ -273,6 +273,16 @@ async def _require_tenant_access_source(db: AsyncSession, *, tenant: Tenant) -> 
     return source
 
 
+async def _revalidate_tenant_access_after_subscription_lock(
+    db: AsyncSession, *, tenant: Tenant, subscription: Subscription
+) -> str:
+    """Recheck the entitlement snapshot after the Subscription row is locked."""
+    source = await _require_tenant_access_source(db, tenant=tenant)
+    if source != "demo":
+        _assert_subscription_active(subscription)
+    return source
+
+
 async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     """Enforce paid or Demo access while allowing the root vendor to run its own platform."""
     tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
@@ -281,22 +291,24 @@ async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.
         return
     if tenant is None:
         raise NotFoundError("Tenant not found")
-    access_source = await _require_tenant_access_source(db, tenant=tenant)
+    await _require_tenant_access_source(db, tenant=tenant)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    if access_source != "demo":
-        _assert_subscription_active(sub)
+    await _revalidate_tenant_access_after_subscription_lock(
+        db, tenant=tenant, subscription=sub
+    )
 
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
-    access_source = await _require_tenant_access_source(db, tenant=tenant)
+    await _require_tenant_access_source(db, tenant=tenant)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    if access_source != "demo":
-        _assert_subscription_active(sub)
+    await _revalidate_tenant_access_after_subscription_lock(
+        db, tenant=tenant, subscription=sub
+    )
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["runs"] >= sub.plan.monthly_runs:
         raise ConflictError(f"Monthly run quota exceeded for {sub.plan.code} plan")
@@ -308,10 +320,11 @@ async def enforce_employee_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
-    access_source = await _require_tenant_access_source(db, tenant=tenant)
+    await _require_tenant_access_source(db, tenant=tenant)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    if access_source != "demo":
-        _assert_subscription_active(sub)
+    await _revalidate_tenant_access_after_subscription_lock(
+        db, tenant=tenant, subscription=sub
+    )
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["employees"] >= sub.plan.max_employees:
         raise ConflictError(f"Employee quota exceeded for {sub.plan.code} plan")
@@ -321,10 +334,11 @@ async def enforce_workflow_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> N
     tenant = await _lock_tenant_for_quota(db, tenant_id=tenant_id)
     if tenant.tenant_kind == "vendor":
         return
-    access_source = await _require_tenant_access_source(db, tenant=tenant)
+    await _require_tenant_access_source(db, tenant=tenant)
     sub = await get_subscription(db, tenant_id=tenant_id)
-    if access_source != "demo":
-        _assert_subscription_active(sub)
+    await _revalidate_tenant_access_after_subscription_lock(
+        db, tenant=tenant, subscription=sub
+    )
     usage = await monthly_usage(db, tenant_id=tenant_id)
     if usage["workflows"] >= sub.plan.max_workflows:
         raise ConflictError(f"Workflow quota exceeded for {sub.plan.code} plan")
