@@ -23,13 +23,30 @@ from app.services.agent_governance import assert_publishable_with_evidence, asse
 
 VISIBILITIES = {"private", "unlisted", "public"}
 FORBIDDEN_MANIFEST_KEYS = {"grants_execution", "auto_activate", "bypass_approval", "provider_credentials"}
+SECRET_MANIFEST_KEY_FRAGMENTS = {
+    "api_key", "apikey", "authorization", "credential",
+    "password", "private_key", "secret", "token",
+}
 
 
 def _validate_untrusted_manifest(value: object, field: str) -> None:
     if not isinstance(value, dict):
         raise ValidationAppError(f"{field} must be an object")
-    if FORBIDDEN_MANIFEST_KEYS.intersection(value):
-        raise ValidationAppError(f"{field} contains forbidden execution authority")
+
+    def visit(item: object, path: str) -> None:
+        if isinstance(item, dict):
+            for key, child in item.items():
+                normalized = str(key).strip().lower().replace("-", "_")
+                if normalized in FORBIDDEN_MANIFEST_KEYS:
+                    raise ValidationAppError(f"{field} contains forbidden execution authority: {path}.{key}")
+                if any(fragment in normalized for fragment in SECRET_MANIFEST_KEY_FRAGMENTS):
+                    raise ValidationAppError(f"{field} contains a prohibited secret field: {path}.{key}")
+                visit(child, f"{path}.{key}")
+        elif isinstance(item, (list, tuple)):
+            for index, child in enumerate(item):
+                visit(child, f"{path}[{index}]")
+
+    visit(value, field)
 
 
 async def publish_package(
@@ -79,6 +96,23 @@ async def publish_package(
     )
     if evidence.status.value != "passed":
         raise ValidationAppError("source agent template evaluation is not passed")
+
+    # Marketplace snapshots cross a tenant boundary. Validate every copied
+    # policy/schema/tool document recursively so credentials or execution
+    # authority cannot be smuggled inside nested source metadata.
+    for field, value in (
+        ("template.capability_contract", template.capability_contract or {}),
+        ("template.permission_policy", template.permission_policy or {}),
+        ("template.approval_policy", template.approval_policy or {}),
+        ("template.evaluation_policy", template.evaluation_policy or {}),
+        ("template.install_policy", template.install_policy or {}),
+        ("definition.allowed_tools", source_definition.allowed_tools or []),
+        ("definition.model_policy", source_definition.model_policy or {}),
+        ("definition.input_schema", source_definition.input_schema or {}),
+        ("definition.output_schema", source_definition.output_schema or {}),
+        ("definition.policy_requirements", source_definition.policy_requirements or {}),
+    ):
+        _validate_untrusted_manifest(value if isinstance(value, dict) else {"items": value}, field)
 
     if any(not isinstance(item, str) or not item.strip() for item in skill_package_ids):
         raise ValidationAppError("skill_package_ids must contain non-empty identifiers")
