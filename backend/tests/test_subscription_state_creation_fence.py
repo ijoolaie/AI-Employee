@@ -10,9 +10,7 @@ from app.services import billing_service
 @pytest.mark.asyncio
 @pytest.mark.parametrize("quota_name", ["enforce_employee_quota", "enforce_workflow_quota"])
 @pytest.mark.parametrize("status", ["past_due", "canceled"])
-async def test_resource_quota_rejects_inactive_subscription(
-    monkeypatch, quota_name, status
-):
+async def test_resource_quota_rejects_inactive_subscription(monkeypatch, quota_name, status):
     db = AsyncMock()
     subscription = SimpleNamespace(
         status=status,
@@ -54,9 +52,7 @@ async def test_resource_quota_rejects_inactive_subscription(
 @pytest.mark.asyncio
 @pytest.mark.parametrize("quota_name", ["enforce_employee_quota", "enforce_workflow_quota"])
 @pytest.mark.parametrize("status", ["active", "trialing"])
-async def test_resource_quota_allows_active_subscription_states(
-    monkeypatch, quota_name, status
-):
+async def test_resource_quota_allows_active_subscription_states(monkeypatch, quota_name, status):
     db = AsyncMock()
     subscription = SimpleNamespace(
         status=status,
@@ -92,3 +88,49 @@ async def test_resource_quota_allows_active_subscription_states(
     )
 
     usage.assert_awaited_once()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "quota_name",
+    ["enforce_run_quota", "enforce_employee_quota", "enforce_workflow_quota"],
+)
+async def test_quota_revalidates_access_after_subscription_lock(monkeypatch, quota_name):
+    db = AsyncMock()
+    tenant = SimpleNamespace(tenant_kind="customer")
+    subscription = SimpleNamespace(status="active")
+
+    monkeypatch.setattr(
+        billing_service,
+        "_lock_tenant_for_quota",
+        AsyncMock(return_value=tenant),
+    )
+    access_check = AsyncMock(
+        side_effect=[
+            "paid",
+            ConflictError(
+                "Tenant access requires an approved paid subscription or active Demo grant"
+            ),
+        ]
+    )
+    monkeypatch.setattr(billing_service, "_require_tenant_access_source", access_check)
+    monkeypatch.setattr(
+        billing_service,
+        "get_subscription",
+        AsyncMock(return_value=subscription),
+    )
+    monkeypatch.setattr(
+        billing_service.license_service,
+        "assert_execution_license",
+        AsyncMock(return_value=object()),
+    )
+    usage = AsyncMock(return_value={"runs": 0, "tokens": 0, "employees": 0, "workflows": 0})
+    monkeypatch.setattr(billing_service, "monthly_usage", usage)
+
+    with pytest.raises(ConflictError, match="Tenant access requires"):
+        await getattr(billing_service, quota_name)(
+            db, tenant_id="00000000-0000-0000-0000-000000000001"
+        )
+
+    assert access_check.await_count == 2
+    usage.assert_not_awaited()
