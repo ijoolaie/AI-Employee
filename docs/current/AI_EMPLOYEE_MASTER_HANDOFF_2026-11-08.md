@@ -266,3 +266,15 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Reviewed additive portal test patches: #1428 nested Customer file lifecycle and parent isolation; #1431 delegated Reseller-in-Customer file lifecycle and parent-home isolation; #1432 sibling Customer file enumeration/read/download/delete denial under another Customer's grant.
 - Entitlement race remains open. Candidate `FOR SHARE` on the qualifying Subscription/DemoGrant row is not implemented until PostgreSQL two-session tests prove the ordering and all writer paths are verified.
 - No merge, deployment, migration, persistent-data mutation, or payment activation.
+
+
+## 2026-11-10 acceptance refresh and entitlement-race refinement
+
+- Refreshed all five PRs and their exact current heads: #1428 `ba65814d05dd624d6095d0ce5a8da1be761c0bcf`, #1431 `c32576fec6c11d0fbd5bd79de98729818a35118d`, #1432 `5102b645511ca01083af0bd97db3645d1b3c2f24`, #1433 `79b580aa4770a8594cac753d464f23120c30c716`, #1434 `3d455b3d05049af82bdce4e147951a543b13002d`. All remain open/unmerged.
+- #1428/#1431/#1432/#1434 each have 9/9 GitHub Actions suites successful and GitHub Advanced Security successful. #1433 has Documentation Truth Consistency and CodeQL successful, plus GitHub Advanced Security successful. Freebuff Web remains queued on all five exact heads and is not a pass.
+- All five have zero review threads and zero submitted reviews. No merge/deploy/migration/Production or Staging data mutation/payment activation.
+- Concurrency audit refinement: for paid access, `tenant_access_source()` reads the qualifying Subscription without a row lock, but the subsequent `get_subscription()` -> `ensure_subscription()` locks that Subscription `FOR UPDATE` and checks active status in the same Run transaction. This may already serialize paid cancellation/update admission, but needs exact PostgreSQL race proof including expiry/period transitions.
+- For Demo access, `tenant_access_source()` reads the unrevoked/unexpired TenantDemoGrant without locking it; the later subscription lock is on a different row. Demo-grant revocation can therefore still race admission. Protecting the DemoGrant through the Run transaction remains an open design/test task.
+- Do not blindly add `FOR SHARE` to both entitlement reads: the paid path later requests `FOR UPDATE` on Subscription, so shared-to-exclusive lock upgrade among concurrent admissions could contend or deadlock. No code change made.
+- Required proof remains PostgreSQL two-session barrier tests for DemoGrant revoke-vs-admit and paid Subscription cancel/update-vs-admit, plus writer-path and transaction-commit audit. No dedicated DB URL available in the local environment.
+- Issue #1350 comment 6760491777 records this evidence. Issue #1350 remains open; no acceptance sign-off is claimed.
