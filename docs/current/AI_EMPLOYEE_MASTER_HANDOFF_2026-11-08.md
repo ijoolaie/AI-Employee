@@ -352,3 +352,13 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - PR #1434 test commit: 331b0ca0eabe38a5d4815435facae054262c5dc2. CI must be refreshed on this exact head.
 - Issue #1350 comment 6762754308 records the expanded regression coverage.
 - No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
+
+## 2026-11-10 request and Worker transaction-boundary verification
+
+- Verified FastAPI 0.138.2 dependency cache key includes computed_scope. Both get_current_context() and DbSession declare Depends(get_db, scope="function"), so request auth context and endpoint share the same function-scoped dependency/session. get_db() commits after endpoint completion and rolls back on exception; the DemoGrant FOR SHARE lock is retained through the protected endpoint transaction.
+- Re-read run_worker._run_async(): it opens worker_db_session(), invokes execute_run_locked() inside AgentRuntime.execute(), then refreshes Run, flushes, and commits after Runtime returns. Exception handling also commits after handling. Locks from worker admission therefore remain through Runtime execution until worker commit. The two-session PostgreSQL tests prove transaction-level lock retention but do not run a full mocked AgentRuntime end-to-end test.
+- Latest local disposable PostgreSQL 16 combined targeted suite = 33 passed, including DemoGrant race, paid period-end race, billing admission/quota revalidation, service and lock regressions. Paid expiry race passed three consecutive runs. Ruff lint/format and git diff --check passed.
+- PR #1434 exact head 331b0ca0eabe38a5d4815435facae054262c5dc2: Compile backend and Ruff have passed on CI; backend tests are pending/running, other workflows in progress, Freebuff Web queued. PR remains open/unmerged, zero review threads, zero submitted reviews.
+- PR #1433 handoff exact head 41b0835c779a8d4bdeb8027ad25682307d49baa8; Documentation Truth Consistency and CodeQL have freshly queued, Freebuff queued. #1428/#1431/#1432 remain at previously refreshed heads with Actions and Advanced Security successful; Freebuff queued.
+- Issue #1350 comment 6762778450 records the request/Worker transaction boundary and exact local/CI status.
+- No merge, deployment, shared-environment migration, persistent-data mutation, or payment activation.
