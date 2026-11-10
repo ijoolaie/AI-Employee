@@ -180,3 +180,146 @@ async def test_demo_grant_authorization_and_revocation_serialize_across_sessions
                 await cleanup.execute(delete(User).where(User.id == actor_id))
                 await cleanup.execute(delete(Tenant).where(Tenant.id == tenant_id))
         await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_fastapi_request_holds_demo_grant_lock_until_endpoint_commit(monkeypatch):
+    """Exercise the real FastAPI dependency cache and get_db transaction boundary."""
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        pytest.skip("DATABASE_URL is not configured; PostgreSQL integration test only")
+    assert make_url(database_url).get_backend_name() == "postgresql"
+
+    import httpx
+    from fastapi import FastAPI
+    from app.core import database, deps
+    from app.core.deps import CurrentContext, DbSession
+    from app.core.security import create_access_token
+    from app.models.tenant import Tenant
+    from app.models.tenant_demo_grant import TenantDemoGrant
+    from app.models.user import User
+    from app.services import tenant_access_service
+
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
+    monkeypatch.setattr(database, "AsyncSessionLocal", sessions)
+    monkeypatch.setattr(tenant_access_service.audit_service, "record", AsyncMock())
+
+    suffix = uuid.uuid4().hex
+    tenant_id, actor_id, grant_id = uuid.uuid4(), uuid.uuid4(), uuid.uuid4()
+    endpoint_entered = asyncio.Event()
+    release_endpoint = asyncio.Event()
+    revoke_started = asyncio.Event()
+    access_sessions = []
+    endpoint_sessions = []
+    revoke_pid = None
+
+    original_tenant_has_access = tenant_access_service.tenant_has_access
+
+    async def recording_tenant_has_access(db, *, tenant, now=None):
+        access_sessions.append(db)
+        return await original_tenant_has_access(db, tenant=tenant, now=now)
+
+    monkeypatch.setattr(deps, "tenant_has_access", recording_tenant_has_access)
+
+    app = FastAPI()
+
+    @app.get("/protected")
+    async def protected_endpoint(ctx: CurrentContext, db: DbSession):
+        endpoint_sessions.append(db)
+        endpoint_entered.set()
+        await release_endpoint.wait()
+        return {"tenant_id": str(ctx.tenant_id)}
+
+    async def revoke_after_request_gate():
+        nonlocal revoke_pid
+        async with sessions() as revoker:
+            async with revoker.begin():
+                revoke_pid = await revoker.scalar(text("SELECT pg_backend_pid()"))
+                revoke_started.set()
+                await tenant_access_service.revoke_demo_grant(
+                    revoker,
+                    tenant_id=tenant_id,
+                    grant_id=grant_id,
+                    actor_id=actor_id,
+                )
+
+    revoke_task = None
+    try:
+        async with sessions() as setup:
+            async with setup.begin():
+                setup.add(
+                    Tenant(
+                        id=tenant_id,
+                        name=f"HTTP Demo lock {suffix}",
+                        slug=f"http-demo-lock-{suffix}",
+                        tenant_kind="customer",
+                        status="active",
+                        access_grant_required=True,
+                    )
+                )
+                await setup.flush()
+                setup.add(
+                    User(
+                        id=actor_id,
+                        tenant_id=tenant_id,
+                        email=f"http-demo-lock-{suffix}@example.test",
+                        password_hash="test-only-not-used",
+                        full_name="HTTP Demo lock actor",
+                        is_active=True,
+                        is_superuser=False,
+                        is_platform_admin=False,
+                        auth_token_version=0,
+                    )
+                )
+                await setup.flush()
+                setup.add(
+                    TenantDemoGrant(
+                        id=grant_id,
+                        tenant_id=tenant_id,
+                        granted_by_user_id=actor_id,
+                        reason="FastAPI request transaction test",
+                        expires_at=datetime.now(timezone.utc) + timedelta(days=2),
+                    )
+                )
+
+        token = create_access_token(actor_id, tenant_id)
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            request_task = asyncio.create_task(
+                client.get("/protected", headers={"Authorization": f"Bearer {token}"})
+            )
+            await asyncio.wait_for(endpoint_entered.wait(), timeout=5)
+            assert len(access_sessions) == 1
+            assert len(endpoint_sessions) == 1
+            assert access_sessions[0] is endpoint_sessions[0], (
+                "FastAPI must reuse the same function-scoped get_db session "
+                "for the request guard and endpoint"
+            )
+
+            revoke_task = asyncio.create_task(revoke_after_request_gate())
+            await asyncio.wait_for(revoke_started.wait(), timeout=5)
+            await _wait_until_postgres_lock(sessions, revoke_pid)
+            assert not revoke_task.done(), (
+                "DemoGrant revocation passed the request's active FOR SHARE lock"
+            )
+
+            release_endpoint.set()
+            response = await asyncio.wait_for(request_task, timeout=5)
+            assert response.status_code == 200, response.text
+            assert response.json()["tenant_id"] == str(tenant_id)
+            await asyncio.wait_for(revoke_task, timeout=5)
+            revoke_task = None
+    finally:
+        release_endpoint.set()
+        if revoke_task is not None and not revoke_task.done():
+            revoke_task.cancel()
+            await asyncio.gather(revoke_task, return_exceptions=True)
+        async with sessions() as cleanup:
+            async with cleanup.begin():
+                await cleanup.execute(
+                    delete(TenantDemoGrant).where(TenantDemoGrant.tenant_id == tenant_id)
+                )
+                await cleanup.execute(delete(User).where(User.id == actor_id))
+                await cleanup.execute(delete(Tenant).where(Tenant.id == tenant_id))
+        await engine.dispose()
