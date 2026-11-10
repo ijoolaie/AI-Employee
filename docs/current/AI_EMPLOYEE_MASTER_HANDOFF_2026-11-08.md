@@ -415,3 +415,12 @@ Next work: continue notification/outbox recipient, dispatch, retry/dead-letter t
 - Issue #1350 comment 6766591128 records this expanded evidence.
 - At refresh, PR #1434 exact head 254c473993ec49be07a6798ae9fc9127b0177509 had CI frontend and backend jobs in progress (Playwright browser regressions and full backend tests respectively); Freebuff Web queued. PR #1433 handoff head 458c210df2760577416beb4b875acb6f85be06fd had Documentation Truth Consistency and GitHub Advanced Security successful, CodeQL in progress, and Freebuff queued.
 - No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
+
+## 2026-11-10 exact-head CI backend completion for request-boundary race
+
+- PR #1434 exact head 254c473993ec49be07a6798ae9fc9127b0177509: GitHub Actions CI backend job completed successfully. The full Backend pytest step reports 1,986 passed, 1 deselected, 20 warnings in 50.10s.
+- The exact-head backend log explicitly reports the PostgreSQL DemoGrant two-session race and the new FastAPI request-boundary test as PASSED. It also reports paid Run-admission revocation and all three Stripe webhook race variants (subscription.updated, subscription.deleted, invoice.payment_failed) as PASSED.
+- Backend compile, Ruff, Alembic upgrade/consistency, isolated support DB provisioning/migration, and isolated commercial-license DB provisioning/migration all passed.
+- At refresh, PR #1434 frontend Playwright browser regressions and Workforce Semantic Real-Stack E2E / Public Widget browser/API acceptance were still in progress; Freebuff Web remained queued. No complete PR check pass is claimed.
+- Issue #1350 comment 6766613824 records the exact-head backend CI evidence.
+- No merge, deployment, shared-environment migration, persistent data mutation, or payment activation.
