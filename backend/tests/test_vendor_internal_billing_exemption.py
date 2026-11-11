@@ -13,10 +13,13 @@ class _Result:
     def scalar_one_or_none(self):
         return self.value
 
+    def scalar_one(self):
+        return self.value
+
 
 class _VendorDB:
     async def execute(self, _statement):
-        return _Result(SimpleNamespace(tenant_kind="vendor"))
+        return _Result(SimpleNamespace(tenant_kind="vendor", status="active"))
 
 
 @pytest.mark.asyncio
@@ -43,7 +46,7 @@ async def test_vendor_run_quota_does_not_require_commercial_license_or_subscript
     monkeypatch.setattr(
         billing_service,
         "_lock_tenant_for_quota",
-        AsyncMock(return_value=SimpleNamespace(tenant_kind="vendor")),
+        AsyncMock(return_value=SimpleNamespace(tenant_kind="vendor", status="active")),
     )
 
     await billing_service.enforce_run_quota(object(), tenant_id="vendor-tenant")
@@ -73,7 +76,7 @@ async def test_vendor_employee_quota_does_not_require_subscription_or_plan_quota
     monkeypatch.setattr(
         billing_service,
         "_lock_tenant_for_quota",
-        AsyncMock(return_value=SimpleNamespace(tenant_kind="vendor")),
+        AsyncMock(return_value=SimpleNamespace(tenant_kind="vendor", status="active")),
     )
 
     await billing_service.enforce_employee_quota(object(), tenant_id="vendor-tenant")
@@ -91,7 +94,7 @@ async def test_vendor_workflow_quota_does_not_require_subscription_or_plan_quota
     monkeypatch.setattr(
         billing_service,
         "_lock_tenant_for_quota",
-        AsyncMock(return_value=SimpleNamespace(tenant_kind="vendor")),
+        AsyncMock(return_value=SimpleNamespace(tenant_kind="vendor", status="active")),
     )
 
     await billing_service.enforce_workflow_quota(object(), tenant_id="vendor-tenant")
