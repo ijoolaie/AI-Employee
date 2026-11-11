@@ -18,13 +18,23 @@ def _database_url() -> str:
     if not url:
         raise RuntimeError("Test database URL is required; refusing to run.")
     parsed = make_url(url)
+    local_host = parsed.host in {"127.0.0.1", "localhost"}
+    local_test_database = (
+        parsed.username == "support_test_user"
+        and parsed.port == 15433
+        and bool(parsed.password)
+    )
+    ci_test_database = (
+        os.environ.get("CI", "").lower() == "true"
+        and parsed.username == "aiep"
+        and parsed.port == 5432
+        and parsed.password == "aiep"
+    )
     if (
         parsed.drivername != "postgresql+asyncpg"
-        or parsed.username != "support_test_user"
-        or parsed.host not in {"127.0.0.1", "localhost"}
-        or parsed.port != 15433
+        or not local_host
         or parsed.database != "support_test"
-        or not parsed.password
+        or not (local_test_database or ci_test_database)
     ):
         raise RuntimeError("URL must target the dedicated local support_test database; refusing to run.")
     return url
