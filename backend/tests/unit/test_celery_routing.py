@@ -28,6 +28,7 @@ def test_all_registered_tasks_have_explicit_isolation_routes():
         "test_center.expiration_sweep": CONTROL_QUEUE,
         "outbox.dispatch": OUTBOX_QUEUE,
         "email.send": EMAIL_QUEUE,
+        "whatsapp.send_text": OUTBOX_QUEUE,
     }
     assert {name: route["queue"] for name, route in TASK_ROUTES.items()} == expected
 
@@ -76,3 +77,7 @@ def test_fair_router_extracts_tenant_context_and_adds_bounded_priority(monkeypat
 
 def test_fair_router_does_not_touch_non_tenant_control_tasks():
     assert tenant_fair_route("workflow.schedule_tick", (), {}, {}, None) is None
+
+
+def test_whatsapp_worker_is_registered_for_outbox_queue_consumers():
+    assert "app.workers.whatsapp_worker" in celery_app.conf.include
