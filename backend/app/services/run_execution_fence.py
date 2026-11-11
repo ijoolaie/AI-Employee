@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import logging
 from uuid import UUID
 
 from sqlalchemy import select
@@ -11,6 +12,8 @@ from app.models.run import Run
 from app.models.work_item import WorkItem
 from app.core.exceptions import ConflictError
 from app.services import audit_service, billing_service, run_service
+
+logger = logging.getLogger("app.services.run_execution_fence")
 
 
 async def _lock_work_item_lineage(db: AsyncSession, *, work_item_id: UUID, tenant_id: UUID) -> None:
@@ -37,7 +40,9 @@ async def _lock_work_item_lineage(db: AsyncSession, *, work_item_id: UUID, tenan
         lineage_ids.append(row[0])
         current_id = row[1]
 
+    logger.info("run_fence_phase lineage_ids_resolved count=%s", len(lineage_ids))
     for item_id in reversed(lineage_ids):
+        logger.info("run_fence_phase work_item_lock_begin")
         await db.execute(
             select(WorkItem)
             .where(
@@ -46,6 +51,7 @@ async def _lock_work_item_lineage(db: AsyncSession, *, work_item_id: UUID, tenan
             )
             .with_for_update()
         )
+        logger.info("run_fence_phase work_item_lock_acquired")
 
 
 async def execute_run_locked(db: AsyncSession, *, run_id: UUID) -> Run:
@@ -58,11 +64,16 @@ async def execute_run_locked(db: AsyncSession, *, run_id: UUID) -> Run:
     execution path in the same parent-first order used by cancellation and
     lifecycle projection.
     """
+    logger.info("run_fence_phase run_lookup_begin")
     result = await db.execute(select(Run).where(Run.id == run_id))
     run = result.scalar_one_or_none()
     if run is None:
-        return await run_service.execute_run(db, run_id=run_id)
+        logger.info("run_fence_phase run_service_begin")
+        result = await run_service.execute_run(db, run_id=run_id)
+        logger.info("run_fence_phase run_service_complete")
+        return result
 
+    logger.info("run_fence_phase run_lookup_complete has_work_item=%s", run.work_item_id is not None)
     if run.work_item_id is not None:
         await _lock_work_item_lineage(
             db,
@@ -70,18 +81,25 @@ async def execute_run_locked(db: AsyncSession, *, run_id: UUID) -> Run:
             tenant_id=run.tenant_id,
         )
 
+    logger.info("run_fence_phase run_lock_begin")
     locked_result = await db.execute(
         select(Run).where(Run.id == run_id).with_for_update()
     )
     locked_run = locked_result.scalar_one_or_none()
+    logger.info("run_fence_phase run_lock_complete found=%s", locked_run is not None)
     if locked_run is None:
-        return await run_service.execute_run(db, run_id=run_id)
+        logger.info("run_fence_phase run_service_begin")
+        result = await run_service.execute_run(db, run_id=run_id)
+        logger.info("run_fence_phase run_service_complete")
+        return result
 
     try:
+        logger.info("run_fence_phase entitlement_begin")
         await billing_service.assert_run_execution_entitlement(
             db,
             tenant_id=locked_run.tenant_id,
         )
+        logger.info("run_fence_phase entitlement_complete")
     except ConflictError as exc:
         locked_run.status = "failed"
         locked_run.error_message = str(exc)[:2000]
@@ -99,4 +117,7 @@ async def execute_run_locked(db: AsyncSession, *, run_id: UUID) -> Run:
         await db.flush()
         return locked_run
 
-    return await run_service.execute_run(db, run_id=run_id)
+    logger.info("run_fence_phase run_service_begin")
+    result = await run_service.execute_run(db, run_id=run_id)
+    logger.info("run_fence_phase run_service_complete")
+    return result

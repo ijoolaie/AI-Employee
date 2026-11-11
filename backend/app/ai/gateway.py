@@ -192,7 +192,9 @@ class AIGateway:
         budget_run: Run | None = None
         budget_reservation = Decimal("0")
         if run_id is not None:
+            logger.info("ai_gateway_phase budget_reservation_begin run_id=%s", run_id)
             budget_run, budget_reservation = await _reserve_agent_run_budget(db, run_id=run_id)
+            logger.info("ai_gateway_phase budget_reservation_complete run_id=%s", run_id)
 
         durable_call_id: uuid.UUID | None = None
         if run_id is not None:
@@ -205,17 +207,21 @@ class AIGateway:
                 logical_turn = raw_turn
             else:
                 raise ValidationAppError("run-scoped AI calls require a stable logical model turn")
+            logger.info("ai_gateway_phase durable_prepare_begin run_id=%s", run_id)
             durable_call_id = await _prepare_durable_call(
                 tenant_id=tenant_id, run_id=run_id, logical_turn=logical_turn,
                 provider=provider.name, model=request.model,
                 request_id=req_id, call_metadata=metadata,
             )
+            logger.info("ai_gateway_phase durable_prepare_complete run_id=%s", run_id)
 
         with span("aiep.ai.chat", tenant_id=str(tenant_id), provider=provider.name,
                    model=request.model, run_id=str(run_id) if run_id else None) as ai_span:
             with Timer() as timer:
                 try:
+                    logger.info("ai_gateway_phase provider_chat_begin run_id=%s provider=%s", run_id, provider.name)
                     result = await provider.chat(request)
+                    logger.info("ai_gateway_phase provider_chat_complete run_id=%s provider=%s", run_id, provider.name)
                 except Exception as exc:  # noqa: BLE001
                     if durable_call_id is not None:
                         await _mark_durable_unknown(durable_call_id, str(exc))
@@ -239,6 +245,7 @@ class AIGateway:
                     ai_span.set_attribute("ai.latency_ms", latency_ms)
 
                 if durable_call_id is not None:
+                    logger.info("ai_gateway_phase durable_finalize_begin run_id=%s", run_id)
                     await _finalize_durable_call(
                         call_id=durable_call_id, result=result, provider=provider,
                         model=request.model, prompt_version=prompt_version, request_id=req_id,
@@ -246,6 +253,7 @@ class AIGateway:
                         call_metadata={"budget_reservation_usd": float(budget_reservation), **metadata},
                         latency_ms=latency_ms,
                     )
+                    logger.info("ai_gateway_phase durable_finalize_complete run_id=%s", run_id)
                     call_log = await db.get(AIProviderCall, durable_call_id)
                     if call_log is not None:
                         call_log.run_id = run_id
