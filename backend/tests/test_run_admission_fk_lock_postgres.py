@@ -35,6 +35,7 @@ async def test_run_admission_allows_durable_fk_insert_and_serializes_suspension(
         pytest.skip("DATABASE_URL is not configured; PostgreSQL integration test only")
     assert make_url(database_url).get_backend_name() == "postgresql"
 
+    from app.core.exceptions import ConflictError
     from app.models.ai_provider_call import AIProviderCall
     from app.models.tenant import Tenant
     from app.services import billing_service
@@ -120,6 +121,14 @@ async def test_run_admission_allows_durable_fk_insert_and_serializes_suspension(
             call = await check.get(AIProviderCall, call_id)
             assert tenant is not None and tenant.status == "suspended"
             assert call is not None and call.tenant_id == tenant_id
+
+        # Once suspension commits, a new admission must fail closed.
+        async with sessions() as denied:
+            async with denied.begin():
+                with pytest.raises(ConflictError, match="Tenant is not active"):
+                    await billing_service.assert_run_execution_entitlement(
+                        denied, tenant_id=tenant_id
+                    )
     finally:
         if admission is not None:
             if admission.in_transaction():
