@@ -371,10 +371,17 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Not run locally: PostgreSQL HTTP integration test (no approved `SUPPORT_TEST_DATABASE_URL` is configured) and frontend lint/build (frontend `node_modules` is absent; `eslint` is unavailable). Exact-head CI is required before merge.
 - No DB migration, staging/production change, payment activation, or account mutation was performed.
 
-## Tenant-admin last-active-administrator protection — 2026-11-11
+## Tenant-admin last-active-administrator protection ï¿½ 2026-11-11
 
 - Found a missing defensive guard in `POST /api/v1/tenant-admin/users/{user_id}/status`: unlike the reseller-managed Customer user route, the direct tenant-admin route did not explicitly reject deactivation when the target was the last active tenant-local Admin/Owner/Tenant_Admin.
 - Added tenant-row `FOR UPDATE` serialization before locking the target user and counting active tenant-local administrator memberships. The endpoint now returns HTTP 409 if the database state contains only one active administrator. The existing self-deactivation prohibition remains in force.
 - Added unit regressions for last-admin rejection and the two-admin allowed-deactivation case, plus a PostgreSQL 16 + authenticated FastAPI ASGI acceptance test exercising concurrent deactivation requests and self-deactivation.
 - Validation on the disposable local `support_test` PostgreSQL database (port 15433; tmpfs; migrated to `w33_tenant_action_grants`): focused suite **3 passed**; concurrent HTTP acceptance repeated **3/3 passed**. Ruff, compileall and `git diff --check` passed. Python 3.10 required the repository test shim `enum.StrEnum = enum.Enum` for the current dependency imports.
 - No persistent database, Staging, Production, payment, deployment, or migration target was touched. Committed and pushed to PR #1434 as `47c4a09857b11cebe8c1e8fe788969c37204619e`. Exact-head CI is running; the PR remains unmerged.
+
+## Tenant-admin last-admin CI fixture follow-up â€” 2026-11-11
+
+- Exact-head CI on `8d96014fb813e87c7768fe1a8eb9f8bf8208e30a` ran 1,995 backend tests successfully and failed only the new concurrent tenant-admin HTTP acceptance before connecting: its safety guard accepted the dedicated local Docker credentials/port (`support_test_user`, 15433) but did not recognize CI's separately provisioned isolated `support_test` database (`aiep`, 5432, `CI=true`). This was a test-environment allowlist mismatch, not an application assertion failure.
+- Updated the test guard to accept either (a) the dedicated local `support_test_user`/15433 configuration or (b) the CI-only `aiep`/5432 configuration when `CI=true`; both paths still require `postgresql+asyncpg`, localhost/127.0.0.1, database name exactly `support_test`, and the expected credentials. Other hosts/databases remain rejected.
+- Local disposable PostgreSQL 16 validation: the four-file focused suite **21 passed**; the concurrent authenticated HTTP acceptance passed **3/3 consecutive repetitions**; Ruff, compileall and `git diff --check` passed.
+- Fix committed and pushed to PR #1434 as `52a854497d8538fd8e9f93497f86446404f3a9fd`. A fresh exact-head CI run is required; no green status is claimed yet. No shared Staging/Production database or persistent data was used.
