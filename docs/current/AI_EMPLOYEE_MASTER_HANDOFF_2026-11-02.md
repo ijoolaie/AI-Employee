@@ -370,3 +370,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Local checks: 26 focused backend unit/contract tests passed; Ruff, Python compile and `git diff --check` passed.
 - Not run locally: PostgreSQL HTTP integration test (no approved `SUPPORT_TEST_DATABASE_URL` is configured) and frontend lint/build (frontend `node_modules` is absent; `eslint` is unavailable). Exact-head CI is required before merge.
 - No DB migration, staging/production change, payment activation, or account mutation was performed.
+
+## Tenant-admin last-active-administrator protection — 2026-11-11
+
+- Found a missing defensive guard in `POST /api/v1/tenant-admin/users/{user_id}/status`: unlike the reseller-managed Customer user route, the direct tenant-admin route did not explicitly reject deactivation when the target was the last active tenant-local Admin/Owner/Tenant_Admin.
+- Added tenant-row `FOR UPDATE` serialization before locking the target user and counting active tenant-local administrator memberships. The endpoint now returns HTTP 409 if the database state contains only one active administrator. The existing self-deactivation prohibition remains in force.
+- Added unit regressions for last-admin rejection and the two-admin allowed-deactivation case, plus a PostgreSQL 16 + authenticated FastAPI ASGI acceptance test exercising concurrent deactivation requests and self-deactivation.
+- Validation on the disposable local `support_test` PostgreSQL database (port 15433; tmpfs; migrated to `w33_tenant_action_grants`): focused suite **3 passed**; concurrent HTTP acceptance repeated **3/3 passed**. Ruff, compileall and `git diff --check` passed. Python 3.10 required the repository test shim `enum.StrEnum = enum.Enum` for the current dependency imports.
+- No persistent database, Staging, Production, payment, deployment, or migration target was touched. This is still an uncommitted local change in the PR #1434 worktree pending final diff review and push.
