@@ -284,19 +284,41 @@ async def _revalidate_tenant_access_after_subscription_lock(
 
 
 async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
-    """Enforce paid or Demo access while allowing the root vendor to run its own platform."""
+    """Enforce commercial access and serialize admission with tenant suspension.
+
+    Customer admission locks Subscription before Tenant, matching Stripe's
+    lifecycle lock order. Tenant suspension only locks Tenant, so it can commit
+    before admission's final status check without creating a lock cycle.
+    """
     tenant_result = await db.execute(select(Tenant).where(Tenant.id == tenant_id))
     tenant = tenant_result.scalar_one_or_none()
-    if tenant is not None and tenant.tenant_kind == "vendor":
-        return
     if tenant is None:
         raise NotFoundError("Tenant not found")
+
+    if tenant.tenant_kind == "vendor":
+        locked_tenant = (
+            await db.execute(
+                select(Tenant).where(Tenant.id == tenant_id).with_for_update()
+            )
+        ).scalar_one()
+        if locked_tenant.status != "active":
+            raise ConflictError("Tenant is not active; Run execution is suspended")
+        return
+
     await _require_tenant_access_source(db, tenant=tenant)
     await license_service.assert_execution_license(db, tenant_id=tenant_id)
     sub = await get_subscription(db, tenant_id=tenant_id)
     await _revalidate_tenant_access_after_subscription_lock(
         db, tenant=tenant, subscription=sub
     )
+
+    locked_tenant = (
+        await db.execute(
+            select(Tenant).where(Tenant.id == tenant_id).with_for_update()
+        )
+    ).scalar_one()
+    if locked_tenant.status != "active":
+        raise ConflictError("Tenant is not active; Run execution is suspended")
 
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:

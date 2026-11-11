@@ -392,3 +392,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Local disposable PostgreSQL 16 evidence: the new live sweep passed **3/3 consecutive repetitions**; combined new live test + existing recovery service/worker tests: **9 passed**. Ruff, compileall, and `git diff --check` passed.
 - Test URL allowlist is restricted to the local disposable `support_test` database or CI's isolated `aiep`/5432 support_test configuration; other hosts/databases are rejected. No Staging/Production database or persistent data was used.
 - Test committed and pushed to PR #1434 as `9bafab16980d8347e96151c432a8b5ef30cb6fd1`. Exact-head CI is now running; Freebuff Web remains queued. No merge/deploy/migration/payment activation.
+
+## Tenant suspension versus queued Run admission - 2026-11-11
+
+- Found that worker Run admission validated paid/Demo entitlement but did not reject a suspended/deprovisioned Tenant. Added a final Tenant status check protected by `FOR UPDATE`; suspended or deprovisioned tenants now fail closed before `run_service.execute_run`, including the root Vendor path.
+- Lock ordering is deliberate: customer admission acquires Subscription before Tenant, matching Stripe lifecycle serialization; Vendor admission locks Tenant directly. Tenant suspension only locks Tenant, so it serializes cleanly without introducing a Tenant-to-Subscription / Subscription-to-Tenant deadlock.
+- Added a PostgreSQL race acceptance: an in-flight admission retains the Tenant lock, suspension demonstrably waits in `pg_stat_activity`, then commits; the next admission rejects the suspended tenant. Existing paid-subscription and Stripe webhook race coverage remains green.
+- Disposable local PostgreSQL validation: tenant-suspension race + paid subscription/Stripe lifecycle races + Run execution fence + tenant lifecycle concurrency: **11 passed**. Ruff, compileall and `git diff --check` passed. An initial lock-order experiment exposed a real deadlock against the Stripe lifecycle test; the lock order was corrected before final validation.
+- No Production/Staging database, persistent data, deployment, payment activation, or shared migration was touched. PR #1434 remains unmerged; exact-head CI and Freebuff check must be revalidated after push.

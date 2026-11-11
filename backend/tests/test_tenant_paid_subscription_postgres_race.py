@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from unittest.mock import AsyncMock
 
 import pytest
-from sqlalchemy import delete, text
+from sqlalchemy import delete, select, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
@@ -339,4 +339,74 @@ async def test_stripe_subscription_webhook_serializes_with_paid_run_admission(
                 )
                 await cleanup.execute(delete(Tenant).where(Tenant.id == tenant_id))
                 await cleanup.execute(delete(BillingPlan).where(BillingPlan.id == plan_id))
+        await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_run_admission_serializes_with_tenant_suspension():
+    """A suspension waits for an admitted Run; later admissions fail closed."""
+    database_url = os.getenv("DATABASE_URL")
+    if not database_url:
+        pytest.skip("DATABASE_URL is not configured; PostgreSQL integration test only")
+    assert make_url(database_url).get_backend_name() == "postgresql"
+
+    from app.models.tenant import Tenant
+    from app.services import billing_service
+
+    engine = create_async_engine(database_url, poolclass=NullPool)
+    sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
+    tenant_id = uuid.uuid4()
+    suffix = uuid.uuid4().hex
+    suspension_task = None
+    try:
+        async with sessions() as setup:
+            async with setup.begin():
+                setup.add(Tenant(
+                    id=tenant_id,
+                    name=f"Tenant suspension race {suffix}",
+                    slug=f"tenant-suspension-race-{suffix}",
+                    tenant_kind="vendor",
+                    status="active",
+                    access_grant_required=False,
+                ))
+
+        async with sessions() as admission:
+            admission_tx = await admission.begin()
+            await billing_service.assert_run_execution_entitlement(
+                admission, tenant_id=tenant_id
+            )
+            suspension_started = asyncio.Event()
+            suspension_pid = None
+
+            async def suspend_tenant():
+                nonlocal suspension_pid
+                async with sessions() as suspender:
+                    async with suspender.begin():
+                        suspension_pid = await suspender.scalar(text("SELECT pg_backend_pid()"))
+                        suspension_started.set()
+                        tenant = (await suspender.execute(
+                            select(Tenant).where(Tenant.id == tenant_id).with_for_update()
+                        )).scalar_one()
+                        tenant.status = "suspended"
+
+            suspension_task = asyncio.create_task(suspend_tenant())
+            await asyncio.wait_for(suspension_started.wait(), timeout=5)
+            await _wait_for_lock(sessions, suspension_pid)
+            assert not suspension_task.done(), "tenant suspension passed active Run admission lock"
+            await admission_tx.commit()
+            await asyncio.wait_for(suspension_task, timeout=5)
+            suspension_task = None
+
+        async with sessions() as rejected:
+            with pytest.raises(ConflictError, match="Tenant is not active"):
+                await billing_service.assert_run_execution_entitlement(
+                    rejected, tenant_id=tenant_id
+                )
+    finally:
+        if suspension_task is not None and not suspension_task.done():
+            suspension_task.cancel()
+            await asyncio.gather(suspension_task, return_exceptions=True)
+        async with sessions() as cleanup:
+            async with cleanup.begin():
+                await cleanup.execute(delete(Tenant).where(Tenant.id == tenant_id))
         await engine.dispose()
