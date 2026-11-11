@@ -49,10 +49,14 @@ async def _prepare_durable_call(
     """
     call_id = _durable_call_id(tenant_id=tenant_id, run_id=run_id, logical_turn=logical_turn)
     async with AsyncSessionLocal() as durable_db:
-        if await durable_db.get(AIProviderCall, call_id) is not None:
+        logger.info("ai_gateway_phase durable_prepare_lookup_begin run_id=%s", run_id)
+        existing_call = await durable_db.get(AIProviderCall, call_id)
+        logger.info("ai_gateway_phase durable_prepare_lookup_complete run_id=%s exists=%s", run_id, existing_call is not None)
+        if existing_call is not None:
             raise AIProviderCallAmbiguous(
                 "AI provider call already crossed the execution boundary; refusing blind replay"
             )
+        logger.info("ai_gateway_phase durable_prepare_insert_begin run_id=%s", run_id)
         durable_db.add(AIProviderCall(
             id=call_id,
             tenant_id=tenant_id,
@@ -63,7 +67,12 @@ async def _prepare_durable_call(
             request_id=request_id,
             raw_meta={**call_metadata, "logical_run_id": str(run_id), "logical_turn": logical_turn},
         ))
+        logger.info("ai_gateway_phase durable_prepare_flush_begin run_id=%s", run_id)
+        await durable_db.flush()
+        logger.info("ai_gateway_phase durable_prepare_flush_complete run_id=%s", run_id)
+        logger.info("ai_gateway_phase durable_prepare_commit_begin run_id=%s", run_id)
         await durable_db.commit()
+        logger.info("ai_gateway_phase durable_prepare_commit_complete run_id=%s", run_id)
     return call_id
 
 
