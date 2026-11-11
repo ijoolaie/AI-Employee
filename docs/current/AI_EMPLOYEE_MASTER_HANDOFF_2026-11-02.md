@@ -418,3 +418,10 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - The same exact-head CI also reports two unrelated outstanding acceptance failures: Workforce Semantic Real-Stack E2E (`WorkItem execution timed out`) and Public Widget browser/API (`Deterministic certification result` transcript not visible within the 30-second browser assertion). These remain open investigation items; they are not attributed to or marked fixed by the fixture correction.
 - Local full-suite collection is not supported by the installed Python 3.10 runtime: five unrelated modules require Python 3.11/3.12 APIs (`datetime.UTC`, `asyncio.Barrier`). CI uses its supported runtime and remains authoritative for the complete suite.
 - No production/staging resources, persistent data, migrations, deployment, payment activation or merge were touched.
+
+### Run worker stall diagnostics - 2026-11-11
+
+- The exact-head semantic E2E and public-widget artifacts show the same symptom: the execution worker receives `run.execute`, while the task does not reach a terminal state; the worker also processes the periodic `run.stale_sweep` task. API, PostgreSQL, Redis, and the dependent market-provider were healthy in the semantic stack. Public-widget conversation and message APIs returned HTTP 200, while the persisted transcript remained without an assistant response.
+- Added phase-only structured logs to `run_worker.py` at task receipt, tenant-resource admission, async DB-session entry, Run load, runtime execution entry, and committed completion. No customer message or input payload is logged. This is diagnostic instrumentation only; it does not change execution, retries, locks, or routing.
+- Local targeted Run execution-fence, recovery, and recovery-worker tests: **12 passed**. Ruff, compileall, and `git diff --check` passed.
+- Next CI run should identify the last reached worker phase for both E2E failures. Until that evidence exists, the blocking frame is not claimed as root-caused and no behavioral workaround is applied.
