@@ -36,6 +36,13 @@ class ConflictError(AppError):
         super().__init__("CONFLICT", message, 409)
 
 
+class TenantInactiveError(ConflictError):
+    """A tenant lifecycle fence rejected a new external side effect."""
+
+    def __init__(self, message: str = "Tenant is not active; external delivery is blocked"):
+        super().__init__(message)
+
+
 async def app_error_handler(request: Request, exc: AppError) -> JSONResponse:
     return JSONResponse(
         status_code=exc.status_code,

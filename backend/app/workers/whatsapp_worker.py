@@ -13,7 +13,7 @@ from uuid import UUID
 from sqlalchemy import select
 
 from app.core.database import worker_db_session
-from app.core.exceptions import ValidationAppError
+from app.core.exceptions import TenantInactiveError, ValidationAppError
 from app.models.customer_channel import CustomerChannel
 from app.models.outbox import OutboxMessage
 from app.models.tool_approval import ToolApprovalRequest
@@ -126,6 +126,11 @@ async def _send(outbox_id: str) -> None:
             await db.commit()
             side_effect_started = True
 
+            # Hold the tenant lifecycle row lock from the final status check
+            # through the provider call and durable result commit.
+            from app.services.tenant_access_service import assert_tenant_active_for_side_effect
+            await assert_tenant_active_for_side_effect(db, tenant_id=tenant_id)
+
             # Recheck tenant ownership, channel state, and current Agent policy
             # immediately before the irreversible provider call.
             tenant_id, channel, payload, _approval, _agent_id, _run_id, _delegation_id = await _validate_and_load(db, row)
@@ -152,7 +157,14 @@ async def _send(outbox_id: str) -> None:
                 select(OutboxMessage).where(OutboxMessage.id == _uuid(outbox_id, "row id")).with_for_update()
             )).scalar_one_or_none()
             if row is not None:
-                if side_effect_started:
+                if isinstance(exc, TenantInactiveError):
+                    from datetime import datetime, timezone
+                    row.status = "dead"
+                    row.dead_at = datetime.now(timezone.utc)
+                    row.last_error = str(exc)[:4000]
+                    await db.commit()
+                    logger.warning("WhatsApp delivery blocked by inactive tenant for outbox %s", outbox_id)
+                elif side_effect_started:
                     row.status = "uncertain"
                     row.last_error = f"{type(exc).__name__}: {exc}"[:4000]
                     await db.commit()
