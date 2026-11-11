@@ -11,6 +11,18 @@ from app.workers import email_worker
 from app.workers.email_worker import _build_email
 
 
+@pytest.fixture(autouse=True)
+def _allow_active_tenant_in_worker_unit_tests(monkeypatch):
+    async def assert_active(_db, *, tenant_id):
+        return SimpleNamespace(id=tenant_id, status="active")
+
+    monkeypatch.setattr(
+        "app.services.tenant_access_service.assert_tenant_active_for_side_effect",
+        assert_active,
+    )
+
+
+
 class _Result:
     def __init__(self, rows):
         self._rows = rows
