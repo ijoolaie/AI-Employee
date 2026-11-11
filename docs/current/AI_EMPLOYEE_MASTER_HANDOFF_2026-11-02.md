@@ -371,7 +371,7 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Not run locally: PostgreSQL HTTP integration test (no approved `SUPPORT_TEST_DATABASE_URL` is configured) and frontend lint/build (frontend `node_modules` is absent; `eslint` is unavailable). Exact-head CI is required before merge.
 - No DB migration, staging/production change, payment activation, or account mutation was performed.
 
-## Tenant-admin last-active-administrator protection � 2026-11-11
+## Tenant-admin last-active-administrator protection - 2026-11-11
 
 - Found a missing defensive guard in `POST /api/v1/tenant-admin/users/{user_id}/status`: unlike the reseller-managed Customer user route, the direct tenant-admin route did not explicitly reject deactivation when the target was the last active tenant-local Admin/Owner/Tenant_Admin.
 - Added tenant-row `FOR UPDATE` serialization before locking the target user and counting active tenant-local administrator memberships. The endpoint now returns HTTP 409 if the database state contains only one active administrator. The existing self-deactivation prohibition remains in force.
@@ -391,4 +391,4 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Seeds two independent tenant roots, tenant-owned Employees/EmployeeVersions, and stale running Runs; invokes the real sweep; asserts both durable Runs transition to failed and each `run.execution_recovered` audit record carries the matching Run resource ID and owning tenant ID. No provider calls exist in the fixture, so this specifically verifies durable multi-tenant selection/recovery/audit scoping without replaying external work.
 - Local disposable PostgreSQL 16 evidence: the new live sweep passed **3/3 consecutive repetitions**; combined new live test + existing recovery service/worker tests: **9 passed**. Ruff, compileall, and `git diff --check` passed.
 - Test URL allowlist is restricted to the local disposable `support_test` database or CI's isolated `aiep`/5432 support_test configuration; other hosts/databases are rejected. No Staging/Production database or persistent data was used.
-- Added test is pending commit/push and exact-head CI. Existing PR #1434 exact head `bf026a7217165de92f816ec67b468aed6779ce7c` has all GitHub Actions and Advanced Security suites successful; Freebuff Web remains queued. No merge/deploy/migration/payment activation.
+- Test committed and pushed to PR #1434 as `9bafab16980d8347e96151c432a8b5ef30cb6fd1`. Exact-head CI is now running; Freebuff Web remains queued. No merge/deploy/migration/payment activation.
