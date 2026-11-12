@@ -370,3 +370,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Local checks: 26 focused backend unit/contract tests passed; Ruff, Python compile and `git diff --check` passed.
 - Not run locally: PostgreSQL HTTP integration test (no approved `SUPPORT_TEST_DATABASE_URL` is configured) and frontend lint/build (frontend `node_modules` is absent; `eslint` is unavailable). Exact-head CI is required before merge.
 - No DB migration, staging/production change, payment activation, or account mutation was performed.
+
+## Delegated portal usage, invoice and Report Employee attribution acceptance - 2026-11-12
+
+- Dedicated disposable PostgreSQL portal integration (`support_test`, localhost port 15433) passed `tests/test_portal_access_live_api.py` once (1 passed, 138.56s). It verifies delegated Usage Optimization/Cost Forecast tenant context, invoice list/summary/PDF ownership, sibling and cross-Vendor invoice denial, and grant-revocation denial for Customer invoice/file access. It does not execute Report Employee.
+- Inspection found ToolRegistry's `analyze_dataset` branch discarded the Run creator and passed `actor_id=None` to Report Employee. `run_service` already passes `Run.created_by`; the registry now forwards that actor ID so generated PDF/XLSX/chart FileObjects can retain correct `uploaded_by` attribution.
+- Added a focused ToolRegistry regression test. Latest local validation: 1 passed (1.92s), Ruff passed, compileall passed, and `git diff --check` passed.
+- This is handler-level actor propagation evidence, not delegated portal/PostgreSQL Report Employee artifact acceptance. That matrix row remains open pending an authenticated delegated Run that generates and verifies PDF/XLSX/chart artifacts and proves sibling/parent access denial.
+- No migration/backfill against shared data, Staging/Production access, merge, deployment, payment activation, or visual Desktop/Mobile acceptance was performed.

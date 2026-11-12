@@ -300,7 +300,7 @@ class ToolRegistry:
             result = await report_service.analyze_dataset(
                 db,
                 tenant_id=tenant_id,
-                actor_id=None,
+                actor_id=actor_id,
                 file_id=arguments["file_id"],
             )
         elif name == "analyze_document":

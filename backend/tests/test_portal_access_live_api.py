@@ -39,6 +39,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.core.database import get_db
     from app.core.security import create_access_token
     from app.main import app
+    from app.api.v1 import usage as usage_api
 
     # This integration test makes many authenticated requests; shared CI Redis
     # buckets can otherwise rate-limit it based on unrelated parallel tests.
@@ -152,6 +153,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 invoice_read_permission = Permission(code="invoices.read", description="Read invoices")
                 session.add(invoice_read_permission)
                 await session.flush()
+            invoice_export_pdf_permission = (
+                await session.execute(select(Permission).where(Permission.code == "invoices.export_pdf"))
+            ).scalar_one_or_none()
+            if invoice_export_pdf_permission is None:
+                invoice_export_pdf_permission = Permission(
+                    code="invoices.export_pdf", description="Export invoice PDF"
+                )
+                session.add(invoice_export_pdf_permission)
+                await session.flush()
             run_read_permission = (
                 await session.execute(select(Permission).where(Permission.code == "run.read"))
             ).scalar_one_or_none()
@@ -189,17 +199,20 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
             reader_role.permissions = [
                 permission, *file_permissions, workflow_execute_permission,
-                workflow_read_permission, invoice_read_permission, run_read_permission, audit_read_permission,
+                workflow_read_permission, invoice_read_permission, invoice_export_pdf_permission,
+                run_read_permission, audit_read_permission,
             ]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
             vendor_b_grantor.roles = [vendor_b_admin_role]
             vendor_b_reader_role.permissions = [
                 *file_permissions, workflow_execute_permission, workflow_read_permission,
-                invoice_read_permission, run_read_permission, audit_read_permission,
+                invoice_read_permission, invoice_export_pdf_permission, run_read_permission, audit_read_permission,
             ]
             vendor_b_actor.roles = [vendor_b_reader_role]
-            reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
+            reseller_admin_role.permissions = [
+                *file_permissions, workflow_write_permission, invoice_export_pdf_permission,
+            ]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
             direct_customer_file = FileObject(
@@ -279,9 +292,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 issue_date=today, subtotal=9900, tax_rate=0, tax_amount=0,
                 total=9900, line_items=[{"description": "vendor-b-secret", "quantity": 1, "unit_price": 9900}],
             )
+            customer_invoice = BusinessInvoice(
+                tenant_id=customer_a.id, number=f"CUSTOMER-{run_id}", status="paid",
+                currency="USD", customer_name="Customer Portal Invoice",
+                issue_date=today, subtotal=45, tax_rate=0, tax_amount=0,
+                total=45, line_items=[{"description": "customer-only", "quantity": 1, "unit_price": 45}],
+            )
             session.add_all([
                 target_dead_letter, sibling_dead_letter, vendor_b_dead_letter,
-                target_invoice, sibling_invoice, vendor_b_invoice,
+                target_invoice, sibling_invoice, vendor_b_invoice, customer_invoice,
             ])
             test_center_rows = []
             for tenant, marker in ((target, "target"), (sibling, "sibling"), (reseller_b, "vendor-b")):
@@ -847,6 +866,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert vendor_b_summary_data["total_invoices"] == 1
                 assert vendor_b_summary_data["counts_by_status"] == {"paid": 1}
                 assert vendor_b_summary_data["currency_breakdown"]["USD"]["collected"] == 9900.0
+                vendor_b_pdf_export = await client.post(
+                    f"/api/v1/invoices/{vendor_b_invoice.id}/export-pdf",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_pdf_export.status_code == 200, vendor_b_pdf_export.text
+                vendor_b_pdf_id = vendor_b_pdf_export.json()["data"]["pdf_file_id"]
+                async with sessions() as session:
+                    vendor_b_pdf_row = await session.get(FileObject, uuid.UUID(vendor_b_pdf_id))
+                    assert vendor_b_pdf_row is not None
+                    assert vendor_b_pdf_row.tenant_id == reseller_b.id
+                    assert vendor_b_pdf_row.uploaded_by == vendor_b_actor.id
 
                 vendor_b_verification = await client.get(
                     f"/api/v1/test-center/runs/{vendor_b_test_run.id}/verification-record",
@@ -1006,10 +1036,27 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert reseller_activated.status_code == 200, reseller_activated.text
                 customer_portal_token = reseller_activated.json()["data"]["access_token"]
+                customer_portal_headers = {"Authorization": f"Bearer {customer_portal_token}"}
                 customer_portal_me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {customer_portal_token}"})
                 assert customer_portal_me.status_code == 200, customer_portal_me.text
                 assert customer_portal_me.json()["data"]["tenant"]["id"] == str(customer_a.id)
                 assert customer_portal_me.json()["data"]["user"]["tenant_id"] == str(target.id)
+                customer_invoice_export = await client.post(
+                    f"/api/v1/invoices/{customer_invoice.id}/export-pdf",
+                    headers=customer_portal_headers,
+                )
+                assert customer_invoice_export.status_code == 200, customer_invoice_export.text
+                customer_pdf_id = customer_invoice_export.json()["data"]["pdf_file_id"]
+                async with sessions() as session:
+                    customer_pdf_row = await session.get(FileObject, uuid.UUID(customer_pdf_id))
+                    assert customer_pdf_row is not None
+                    assert customer_pdf_row.tenant_id == customer_a.id
+                    assert customer_pdf_row.uploaded_by == reseller_actor.id
+                customer_parent_invoice_export = await client.post(
+                    f"/api/v1/invoices/{target_invoice.id}/export-pdf",
+                    headers=customer_portal_headers,
+                )
+                assert customer_parent_invoice_export.status_code == 404, customer_parent_invoice_export.text
                 # Customer portal resources must resolve against the effective
                 # Customer context, not the actor's home Reseller tenant.
                 customer_visible_files = await client.get(
@@ -1017,7 +1064,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert customer_visible_files.status_code == 200, customer_visible_files.text
-                assert [item["id"] for item in customer_visible_files.json()["data"]] == [str(customer_file.id)]
+                assert {item["id"] for item in customer_visible_files.json()["data"]} == {
+                    str(customer_file.id), customer_pdf_id,
+                }
                 customer_file_download = await client.get(
                     f"/api/v1/files/{customer_file.id}/download",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
@@ -1060,38 +1109,14 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert customer_portal_export.json()["data"]["customer"]["id"] == str(customer_portal_customer.id)
                 reseller_private_export = await client.get(
                     f"/api/v1/privacy/customers/{reseller_private_customer.id}/export",
-                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    headers=customer_portal_headers,
                 )
                 assert reseller_private_export.status_code == 404, reseller_private_export.text
-
-                # Revoking a Reseller-to-Customer grant must invalidate the
-                # already-issued Customer portal token immediately.
-                reseller_customer_revoked = await client.delete(
-                    f"/api/v1/edition/reseller/portal-access-grants/{reseller_grant_id}",
-                    headers=reseller_grantor_headers,
+                customer_pdf_download = await client.get(
+                    f"/api/v1/files/{customer_pdf_id}/download", headers=customer_portal_headers,
                 )
-                assert reseller_customer_revoked.status_code == 200, reseller_customer_revoked.text
-                reseller_customer_revoked_token = await client.get(
-                    "/api/v1/auth/me",
-                    headers={"Authorization": f"Bearer {customer_portal_token}"},
-                )
-                assert reseller_customer_revoked_token.status_code == 403, (
-                    reseller_customer_revoked_token.text
-                )
-                revoked_customer_portal_files = await client.get(
-                    "/api/v1/files",
-                    headers={"Authorization": f"Bearer {customer_portal_token}"},
-                )
-                assert revoked_customer_portal_files.status_code == 403, (
-                    revoked_customer_portal_files.text
-                )
-                revoked_customer_portal_download = await client.get(
-                    f"/api/v1/files/{customer_file.id}/download",
-                    headers={"Authorization": f"Bearer {customer_portal_token}"},
-                )
-                assert revoked_customer_portal_download.status_code == 403, (
-                    revoked_customer_portal_download.text
-                )
+                assert customer_pdf_download.status_code == 200, customer_pdf_download.text
+                assert customer_pdf_download.headers.get("content-type", "").startswith("application/pdf")
 
                 # Customer identities cannot enumerate or create Vendor/Reseller
                 # portal grants, even when targeting an otherwise related tenant.
@@ -1326,6 +1351,91 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert usage_data["total_tokens"] == 12
                 assert usage_data["cost_usd"] == 0.01
 
+                optimization_contexts = []
+                forecast_contexts = []
+
+                async def portal_optimization(_db, *, tenant_id):
+                    optimization_contexts.append(tenant_id)
+                    return {
+                        "period_start": datetime(2026, 11, 1, tzinfo=timezone.utc),
+                        "plan": "business",
+                        "usage": {"runs": 2, "tokens": 30},
+                        "cost_usd": 0.12,
+                        "successful_work_items": 2,
+                        "cost_per_successful_work_item_usd": 0.06,
+                        "budget": {
+                            "state": "ok", "run_utilization": 0.1, "token_utilization": 0.2,
+                            "remaining_runs": 18, "remaining_tokens": 970,
+                        },
+                        "optimization_actions": [],
+                    }
+
+                async def portal_forecast(_db, *, tenant_id):
+                    forecast_contexts.append(tenant_id)
+                    return {
+                        "as_of": datetime(2026, 11, 12, tzinfo=timezone.utc),
+                        "current_daily_cost_usd": 0.02, "baseline_daily_cost_usd": 0.01,
+                        "anomaly": False, "anomaly_score": 1.0,
+                        "month_to_date_cost_usd": 0.12, "projected_month_cost_usd": 0.31,
+                        "baseline_days": 7, "actions": ["Continue observing spend."],
+                    }
+
+                monkeypatch.setattr(usage_api.optimization_service, "tenant_optimization_summary", portal_optimization)
+                monkeypatch.setattr(usage_api.cost_anomaly_service, "tenant_cost_anomaly_forecast", portal_forecast)
+                for portal_headers_for_usage, expected_tenant in (
+                    (portal_headers, target.id),
+                    (vendor_b_portal_headers, reseller_b.id),
+                    (customer_portal_headers, customer_a.id),
+                ):
+                    optimization = await client.get(
+                        "/api/v1/usage/optimization", headers=portal_headers_for_usage,
+                    )
+                    assert optimization.status_code == 200, optimization.text
+                    assert optimization.json()["data"]["plan"] == "business"
+                    forecast = await client.get(
+                        "/api/v1/usage/cost-forecast", headers=portal_headers_for_usage,
+                    )
+                    assert forecast.status_code == 200, forecast.text
+                    assert forecast.json()["data"]["baseline_days"] == 7
+                    assert optimization_contexts[-1] == expected_tenant
+                    assert forecast_contexts[-1] == expected_tenant
+
+                # Revoking a Reseller-to-Customer grant must invalidate the
+                # already-issued Customer portal token immediately.
+                reseller_customer_revoked = await client.delete(
+                    f"/api/v1/edition/reseller/portal-access-grants/{reseller_grant_id}",
+                    headers=reseller_grantor_headers,
+                )
+                assert reseller_customer_revoked.status_code == 200, reseller_customer_revoked.text
+                reseller_customer_revoked_token = await client.get(
+                    "/api/v1/auth/me",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert reseller_customer_revoked_token.status_code == 403, (
+                    reseller_customer_revoked_token.text
+                )
+                revoked_customer_invoice_export = await client.post(
+                    f"/api/v1/invoices/{customer_invoice.id}/export-pdf",
+                    headers=customer_portal_headers,
+                )
+                assert revoked_customer_invoice_export.status_code == 403, (
+                    revoked_customer_invoice_export.text
+                )
+                revoked_customer_portal_files = await client.get(
+                    "/api/v1/files",
+                    headers=customer_portal_headers,
+                )
+                assert revoked_customer_portal_files.status_code == 403, (
+                    revoked_customer_portal_files.text
+                )
+                revoked_customer_portal_download = await client.get(
+                    f"/api/v1/files/{customer_file.id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert revoked_customer_portal_download.status_code == 403, (
+                    revoked_customer_portal_download.text
+                )
+
                 # Invoice list, detail, and financial aggregates must use the
                 # validated portal tenant, not the Vendor actor's home or sibling tenants.
                 invoices = await client.get("/api/v1/invoices", headers=portal_headers)
@@ -1371,10 +1481,28 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     f"/api/v1/invoices/{sibling_invoice.id}", headers=portal_headers,
                 )
                 assert sibling_invoice_read.status_code == 404, sibling_invoice_read.text
+                sibling_invoice_export = await client.post(
+                    f"/api/v1/invoices/{sibling_invoice.id}/export-pdf", headers=portal_headers,
+                )
+                assert sibling_invoice_export.status_code == 404, sibling_invoice_export.text
                 vendor_b_invoice_read = await client.get(
                     f"/api/v1/invoices/{vendor_b_invoice.id}", headers=portal_headers,
                 )
                 assert vendor_b_invoice_read.status_code == 404, vendor_b_invoice_read.text
+                vendor_b_invoice_export_denied = await client.post(
+                    f"/api/v1/invoices/{vendor_b_invoice.id}/export-pdf", headers=portal_headers,
+                )
+                assert vendor_b_invoice_export_denied.status_code == 404, vendor_b_invoice_export_denied.text
+                target_pdf_export = await client.post(
+                    f"/api/v1/invoices/{target_invoice.id}/export-pdf", headers=portal_headers,
+                )
+                assert target_pdf_export.status_code == 200, target_pdf_export.text
+                target_pdf_id = target_pdf_export.json()["data"]["pdf_file_id"]
+                async with sessions() as session:
+                    target_pdf_row = await session.get(FileObject, uuid.UUID(target_pdf_id))
+                    assert target_pdf_row is not None
+                    assert target_pdf_row.tenant_id == target.id
+                    assert target_pdf_row.uploaded_by == actor.id
 
                 # Operations metrics and dead-letter payloads are tenant data too:
                 # expose only the validated Reseller context, never sibling or Vendor B.
@@ -1538,6 +1666,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     json={"refresh_token": rotated_context_refresh},
                 )
                 assert revoked_context_refresh.status_code == 401, revoked_context_refresh.text
+                revoked_vendor_invoice_export = await client.post(
+                    f"/api/v1/invoices/{target_invoice.id}/export-pdf", headers=portal_headers,
+                )
+                assert revoked_vendor_invoice_export.status_code == 403, revoked_vendor_invoice_export.text
                 revoked_vendor_portal_files = await client.get("/api/v1/files", headers=portal_headers)
                 assert revoked_vendor_portal_files.status_code == 403, (
                     revoked_vendor_portal_files.text
