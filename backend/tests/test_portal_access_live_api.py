@@ -215,6 +215,43 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             ]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
+
+            # Reproduce the worker identity mismatch using real PostgreSQL rows:
+            # the portal actor exists only in the Vendor home tenant, while the
+            # delegated Run is scoped to the Reseller tenant.
+            from app.services import run_service
+
+            delegated_actor_lookup = await session.execute(
+                select(User).where(User.id == actor.id, User.tenant_id == target.id)
+            )
+            assert delegated_actor_lookup.scalar_one_or_none() is None
+            home_actor_lookup = await session.execute(
+                select(User).where(User.id == actor.id, User.tenant_id == vendor.id)
+            )
+            persisted_actor = home_actor_lookup.scalar_one()
+            assert run_read_permission.code in run_service._effective_run_tool_permissions(
+                persisted_actor, vendor.id
+            )
+            assert run_read_permission.code not in run_service._effective_run_tool_permissions(
+                persisted_actor, target.id
+            )
+
+            # The same identity/role mismatch exists one level deeper:
+            # a Reseller actor operating in its granted Customer tenant.
+            delegated_customer_lookup = await session.execute(
+                select(User).where(User.id == reseller_actor.id, User.tenant_id == customer_a.id)
+            )
+            assert delegated_customer_lookup.scalar_one_or_none() is None
+            reseller_home_lookup = await session.execute(
+                select(User).where(User.id == reseller_actor.id, User.tenant_id == target.id)
+            )
+            persisted_reseller_actor = reseller_home_lookup.scalar_one()
+            assert audit_read_permission.code in run_service._effective_run_tool_permissions(
+                persisted_reseller_actor, target.id
+            )
+            assert audit_read_permission.code not in run_service._effective_run_tool_permissions(
+                persisted_reseller_actor, customer_a.id
+            )
             direct_customer_file = FileObject(
                 tenant_id=direct_customer.id,
                 uploaded_by=direct_customer_actor.id,
