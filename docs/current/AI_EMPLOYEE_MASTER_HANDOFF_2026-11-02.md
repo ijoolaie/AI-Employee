@@ -370,3 +370,11 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Local checks: 26 focused backend unit/contract tests passed; Ruff, Python compile and `git diff --check` passed.
 - Not run locally: PostgreSQL HTTP integration test (no approved `SUPPORT_TEST_DATABASE_URL` is configured) and frontend lint/build (frontend `node_modules` is absent; `eslint` is unavailable). Exact-head CI is required before merge.
 - No DB migration, staging/production change, payment activation, or account mutation was performed.
+
+## Delegated usage and invoice export context acceptance - 2026-11-12
+
+- Added `backend/tests/test_usage_portal_tenant_context.py` to assert that `GET /usage/optimization`, `GET /usage/cost-forecast`, and the invoice PDF export handler forward the validated context tenant ID to their tenant-scoped service calls.
+- Focused validation: 3 passed; Ruff, Python compileall, and `git diff --check` passed.
+- PR #1450 is a Draft. This is unit-level handler context-propagation evidence only; it does not replace authenticated PostgreSQL acceptance for Vendor-to-Reseller and Reseller-to-Customer topologies, sibling denial, or post-revocation behavior.
+- Exact-head CI is pending/in progress and Freebuff Web remains queued. No merge.
+- No runtime behavior, schema, migration, persistent data, deployment, or payment state changed.
