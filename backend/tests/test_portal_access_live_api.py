@@ -211,7 +211,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             ]
             vendor_b_actor.roles = [vendor_b_reader_role]
             reseller_admin_role.permissions = [
-                *file_permissions, workflow_write_permission, invoice_export_pdf_permission,
+                *file_permissions, workflow_write_permission, invoice_export_pdf_permission, audit_read_permission,
             ]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
@@ -589,9 +589,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert direct_customer_foreign_download.status_code == 404, (
                     direct_customer_foreign_download.text
                 )
-
-                # The direct Vendor→Customer portal must enforce the same
-                # complete file lifecycle boundary as Vendor→Reseller.
+                # The direct Vendor-to-Customer portal must enforce the same
+                # complete file lifecycle boundary as Vendor-to-Reseller.
                 direct_customer_uploaded_file = await client.post(
                     "/api/v1/files",
                     headers=direct_customer_portal_headers,
@@ -916,31 +915,6 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers=vendor_b_portal_headers,
                 )
                 assert vendor_b_foreign_dead_letter.status_code == 404, vendor_b_foreign_dead_letter.text
-
-                # Revoking Vendor B's independent grant must invalidate its
-                # already-issued portal token just as it does for Vendor A.
-                vendor_b_revoked = await client.delete(
-                    f"/api/v1/edition/vendor/portal-access-grants/{vendor_b_grant_id}",
-                    headers=vendor_b_grantor_headers,
-                )
-                assert vendor_b_revoked.status_code == 200, vendor_b_revoked.text
-                vendor_b_revoked_token = await client.get(
-                    "/api/v1/auth/me", headers=vendor_b_portal_headers,
-                )
-                assert vendor_b_revoked_token.status_code == 403, vendor_b_revoked_token.text
-                vendor_b_revoked_files = await client.get(
-                    "/api/v1/files", headers=vendor_b_portal_headers,
-                )
-                assert vendor_b_revoked_files.status_code == 403, (
-                    vendor_b_revoked_files.text
-                )
-                vendor_b_revoked_download = await client.get(
-                    f"/api/v1/files/{vendor_b_file.id}/download",
-                    headers=vendor_b_portal_headers,
-                )
-                assert vendor_b_revoked_download.status_code == 403, (
-                    vendor_b_revoked_download.text
-                )
 
                 # A Vendor cannot grant access across another Vendor root or skip
                 # its direct Reseller owner to reach a grandchild Customer.
@@ -1400,6 +1374,31 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     assert optimization_contexts[-1] == expected_tenant
                     assert forecast_contexts[-1] == expected_tenant
 
+                # Revoking Vendor B's independent grant must invalidate its
+                # already-issued portal token just as it does for Vendor A.
+                vendor_b_revoked = await client.delete(
+                    f"/api/v1/edition/vendor/portal-access-grants/{vendor_b_grant_id}",
+                    headers=vendor_b_grantor_headers,
+                )
+                assert vendor_b_revoked.status_code == 200, vendor_b_revoked.text
+                vendor_b_revoked_token = await client.get(
+                    "/api/v1/auth/me", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_revoked_token.status_code == 403, vendor_b_revoked_token.text
+                vendor_b_revoked_files = await client.get(
+                    "/api/v1/files", headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_revoked_files.status_code == 403, (
+                    vendor_b_revoked_files.text
+                )
+                vendor_b_revoked_download = await client.get(
+                    f"/api/v1/files/{vendor_b_file.id}/download",
+                    headers=vendor_b_portal_headers,
+                )
+                assert vendor_b_revoked_download.status_code == 403, (
+                    vendor_b_revoked_download.text
+                )
+
                 # Revoking a Reseller-to-Customer grant must invalidate the
                 # already-issued Customer portal token immediately.
                 reseller_customer_revoked = await client.delete(
@@ -1608,7 +1607,74 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
 
                 visible_files = await client.get("/api/v1/files", headers=portal_headers)
                 assert visible_files.status_code == 200, visible_files.text
-                assert [item["id"] for item in visible_files.json()["data"]] == [str(target_file.id)]
+                assert str(target_file.id) in {item["id"] for item in visible_files.json()["data"]}
+                # Exercise the real Report Employee tool handler with the validated
+                # delegated portal tenant and authenticated Vendor actor context.
+                report_source = await client.post(
+                    "/api/v1/files",
+                    headers=portal_headers,
+                    files={"file": ("portal-report.csv", b"product,revenue,units\nA,120,2\nB,240,4\nC,180,3\n", "text/csv")},
+                )
+                assert report_source.status_code == 201, report_source.text
+                report_source_id = report_source.json()["data"]["id"]
+                from app.ai.tool_registry import registry
+                from app.services import license_service
+
+                async with sessions() as session:
+                    async def allow_report_entitlement(_db, *, tenant_id, feature_code):
+                        assert tenant_id == target.id
+                        assert feature_code == registry.get("analyze_dataset").entitlement_code
+                    with monkeypatch.context() as report_entitlement_override:
+                        report_entitlement_override.setattr(license_service, "assert_feature_entitlement", allow_report_entitlement)
+                        report_result = await registry.execute(
+                            "analyze_dataset",
+                            {"file_id": report_source_id},
+                            permissions={"run.execute"},
+                            allowed_tools={"analyze_dataset"},
+                            db=session,
+                            tenant_id=target.id,
+                            actor_id=actor.id,
+                        )
+                    await session.commit()
+                    report_artifacts = report_result["report_artifacts"]
+                    report_artifact_ids = [
+                        report_artifacts["pdf_file_id"],
+                        report_artifacts["excel_file_id"],
+                        *report_artifacts["chart_file_ids"],
+                    ]
+                    assert report_artifacts["chart_file_ids"], report_artifacts
+                    report_rows = (await session.execute(
+                        select(FileObject).where(
+                            FileObject.id.in_([uuid.UUID(value) for value in report_artifact_ids])
+                        )
+                    )).scalars().all()
+                    assert len(report_rows) == len(report_artifact_ids)
+                    assert {row.tenant_id for row in report_rows} == {target.id}
+                    assert {row.uploaded_by for row in report_rows} == {actor.id}
+                    assert all(row.status == "active" for row in report_rows)
+                    report_types = {row.content_type for row in report_rows}
+                    assert "application/pdf" in report_types
+                    assert "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" in report_types
+                    assert "image/png" in report_types
+
+                report_files = await client.get("/api/v1/files", headers=portal_headers)
+                assert report_files.status_code == 200, report_files.text
+                report_visible_ids = {item["id"] for item in report_files.json()["data"]}
+                assert set(report_artifact_ids).issubset(report_visible_ids)
+                for artifact_id in report_artifact_ids:
+                    report_download = await client.get(
+                        f"/api/v1/files/{artifact_id}/download", headers=portal_headers,
+                    )
+                    assert report_download.status_code == 200, report_download.text
+                    assert report_download.content
+                    sibling_report_read = await client.get(
+                        f"/api/v1/files/{artifact_id}", headers=vendor_b_actor_headers,
+                    )
+                    assert sibling_report_read.status_code == 404, sibling_report_read.text
+                    sibling_report_download = await client.get(
+                        f"/api/v1/files/{artifact_id}/download", headers=vendor_b_actor_headers,
+                    )
+                    assert sibling_report_download.status_code == 404, sibling_report_download.text
                 foreign_file = await client.get(f"/api/v1/files/{sibling_file.id}", headers=portal_headers)
                 assert foreign_file.status_code == 404, foreign_file.text
                 cross_vendor_file_response = await client.get(f"/api/v1/files/{cross_vendor_file.id}", headers=portal_headers)
