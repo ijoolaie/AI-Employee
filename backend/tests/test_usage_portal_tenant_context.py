@@ -4,6 +4,7 @@ from uuid import uuid4
 
 import pytest
 
+from app.api.v1 import invoices as invoices_api
 from app.api.v1 import usage as usage_api
 
 
@@ -68,3 +69,28 @@ async def test_usage_cost_forecast_uses_validated_portal_tenant(monkeypatch):
     assert response.success is True
     assert response.data.baseline_days == 7
     assert calls == [tenant_id]
+
+@pytest.mark.asyncio
+async def test_invoice_pdf_export_uses_validated_portal_tenant(monkeypatch):
+    tenant_id = uuid4()
+    invoice_id = uuid4()
+    actor_id = uuid4()
+    calls = []
+
+    async def export_pdf(_db, *, tenant_id, actor_id, invoice_id):
+        calls.append((tenant_id, actor_id, invoice_id))
+        return {"pdf_file_id": "tenant-scoped-pdf"}
+
+    monkeypatch.setattr(usage_api.invoice_service if hasattr(usage_api, "invoice_service") else __import__("app.api.v1.invoices", fromlist=["invoice_service"]).invoice_service, "export_pdf", export_pdf)
+    from app.api.v1 import invoices as invoices_api
+
+    response = await invoices_api.export_pdf(
+        invoice_id,
+        SimpleNamespace(tenant_id=tenant_id, user=SimpleNamespace(id=actor_id)),
+        object(),
+    )
+
+    assert response.success is True
+    assert response.data["pdf_file_id"] == "tenant-scoped-pdf"
+    assert calls == [(tenant_id, actor_id, str(invoice_id))]
+
