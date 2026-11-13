@@ -185,3 +185,43 @@ async def test_cross_tenant_run_ownership_is_denied_before_artifact_lookup(monke
     db = FakeDB([])
     with pytest.raises(NotFoundError):
         await runs_api.list_run_artifacts(RUN_A, SimpleNamespace(tenant_id=TENANT_B), db)
+
+
+@pytest.mark.asyncio
+async def test_cross_tenant_run_artifact_download_is_denied_before_lookup(monkeypatch):
+    async def tenant_scoped_run(db, *, run_id, tenant_id):
+        if run_id == RUN_A and tenant_id == TENANT_B:
+            raise NotFoundError("Run not found")
+        return SimpleNamespace(id=run_id, tenant_id=tenant_id)
+
+    monkeypatch.setattr(runs_api.run_read_service, "get_run", tenant_scoped_run)
+    db = FakeDB([])
+    with pytest.raises(NotFoundError):
+        await runs_api.download_run_artifact(
+            RUN_A, "artifact-1", SimpleNamespace(tenant_id=TENANT_B), db
+        )
+
+
+@pytest.mark.asyncio
+async def test_foreign_run_artifact_audit_pointer_cannot_be_downloaded(monkeypatch):
+    from fastapi import HTTPException
+
+    key = f"{TENANT_A}/foreign-run.json"
+    monkeypatch.setattr(
+        runs_api.storage,
+        "get_storage_backend",
+        lambda: MemoryStorage({key: artifact_bytes()}),
+    )
+
+    async def owned_run(db, *, run_id, tenant_id):
+        return SimpleNamespace(id=run_id, tenant_id=tenant_id)
+
+    monkeypatch.setattr(runs_api.run_read_service, "get_run", owned_run)
+    db = FakeDB([
+        audit_row(tenant_id=TENANT_A, run_id=RUN_B, artifact_id="foreign-run", storage_key=key)
+    ])
+    with pytest.raises(HTTPException) as exc:
+        await runs_api.download_run_artifact(
+            RUN_A, "foreign-run", SimpleNamespace(tenant_id=TENANT_A), db
+        )
+    assert exc.value.status_code == 404

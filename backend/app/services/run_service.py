@@ -675,6 +675,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                 model=settings.ai_default_model,
                 tools=assembly.tools,
             )
+            logger.info("run_service_phase gateway_chat_begin run_id=%s", run.id)
             result = await gateway.chat(
                 db,
                 request,
@@ -688,6 +689,7 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
                     "rag_result_count": len(retrieved_context),
                 },
             )
+            logger.info("run_service_phase gateway_chat_complete run_id=%s", run.id)
             total_prompt_tokens += result.prompt_tokens
             total_completion_tokens += result.completion_tokens
             total_cost_usd += result.cost_usd

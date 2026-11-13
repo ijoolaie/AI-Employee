@@ -1,4 +1,6 @@
+from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from uuid import uuid4
 from unittest.mock import AsyncMock
 
 import pytest
@@ -187,3 +189,55 @@ async def test_registry_keeps_legacy_local_execution_without_db_context():
         permissions={"run.execute"},
     )
     assert result["result"] == 4
+
+
+@pytest.mark.asyncio
+async def test_get_active_license_expires_row_and_scopes_lookup_to_tenant():
+    tenant_id = uuid4()
+    expired = SimpleNamespace(
+        tenant_id=tenant_id,
+        status="active",
+        expires_at=datetime.now(timezone.utc) - timedelta(seconds=1),
+    )
+
+    class _Rows:
+        def scalars(self):
+            return self
+
+        def first(self):
+            return expired
+
+    class _ExpiryDB:
+        statement = None
+        flush_count = 0
+
+        async def execute(self, statement):
+            self.statement = statement
+            return _Rows()
+
+        async def flush(self):
+            self.flush_count += 1
+
+    db = _ExpiryDB()
+    result = await license_service.get_active_license(db, tenant_id=tenant_id)
+
+    assert result is None
+    assert expired.status == "expired"
+    assert db.flush_count == 1
+    params = db.statement.compile().params
+    assert tenant_id in params.values()
+
+
+@pytest.mark.asyncio
+async def test_execution_license_fails_closed_when_no_active_license(monkeypatch):
+    monkeypatch.setattr(
+        license_service,
+        "get_active_license",
+        AsyncMock(return_value=None),
+    )
+
+    with pytest.raises(ConflictError, match="missing, expired, or revoked"):
+        await license_service.assert_execution_license(
+            _DB(),
+            tenant_id=uuid4(),
+        )

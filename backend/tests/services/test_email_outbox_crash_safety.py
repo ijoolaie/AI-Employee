@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import pytest
@@ -8,6 +9,18 @@ import pytest
 from app.services import outbox_service
 from app.workers import email_worker
 from app.workers.email_worker import _build_email
+
+
+@pytest.fixture(autouse=True)
+def _allow_active_tenant_in_worker_unit_tests(monkeypatch):
+    async def assert_active(_db, *, tenant_id):
+        return SimpleNamespace(id=tenant_id, status="active")
+
+    monkeypatch.setattr(
+        "app.services.tenant_access_service.assert_tenant_active_for_side_effect",
+        assert_active,
+    )
+
 
 
 class _Result:
@@ -367,3 +380,101 @@ async def test_email_success_metric_is_not_emitted_when_final_commit_fails(monke
 
     assert metric_events == []
     assert db.commits == 2
+
+
+
+@pytest.mark.asyncio
+async def test_governed_email_rejects_cross_tenant_row_binding_before_smtp(monkeypatch):
+    row_tenant_id = uuid4()
+    proof_tenant_id = uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        status="processing",
+        attempts=1,
+        tenant_id=row_tenant_id,
+        last_error=None,
+        payload={
+            "to": ["private@example.test"],
+            "subject": "Tenant-bound message",
+            "body": "must not send",
+            "_agent_governance": {
+                "tenant_id": str(proof_tenant_id),
+                "agent_instance_id": str(uuid4()),
+                "run_id": str(uuid4()),
+                "tool_name": "email.send",
+            },
+        },
+    )
+    db = _DB([row])
+    authorization = AsyncMock()
+    smtp_attempts = []
+
+    class _UnexpectedSMTP:
+        def __init__(self, *args, **kwargs):
+            smtp_attempts.append((args, kwargs))
+            raise AssertionError("cross-tenant email must be rejected before SMTP")
+
+    async def mark_retry(_db, message, *_args, **_kwargs):
+        message.status = "pending"
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorization)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _UnexpectedSMTP)
+    monkeypatch.setattr(outbox_service, "mark_retry", mark_retry)
+
+    await email_worker._send(str(row.id))
+
+    authorization.assert_not_awaited()
+    assert smtp_attempts == []
+    assert row.status == "pending"
+
+
+@pytest.mark.asyncio
+async def test_governed_email_revocation_after_uncertain_commit_blocks_smtp(monkeypatch):
+    tenant_id = uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        status="processing",
+        attempts=1,
+        tenant_id=tenant_id,
+        last_error=None,
+        payload={
+            "to": ["private@example.test"],
+            "subject": "Tenant-bound message",
+            "body": "must not send after revocation",
+            "_agent_governance": {
+                "tenant_id": str(tenant_id),
+                "agent_instance_id": str(uuid4()),
+                "run_id": str(uuid4()),
+                "tool_name": "email.send",
+            },
+        },
+    )
+    db = _DB([row])
+    authorization_calls = 0
+    smtp_attempts = []
+
+    async def authorize(*_args, **_kwargs):
+        nonlocal authorization_calls
+        authorization_calls += 1
+        if authorization_calls == 2:
+            raise RuntimeError("delegated authority revoked before SMTP")
+
+    class _UnexpectedSMTP:
+        def __init__(self, *args, **kwargs):
+            smtp_attempts.append((args, kwargs))
+            raise AssertionError("revoked email must not reach SMTP")
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _UnexpectedSMTP)
+
+    await email_worker._send(str(row.id))
+
+    assert authorization_calls == 2
+    assert smtp_attempts == []
+    assert row.status == "uncertain"
+    assert "revoked before SMTP" in row.last_error
+    assert db.commits >= 2

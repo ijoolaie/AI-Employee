@@ -234,6 +234,36 @@ def main() -> int:
         assert replay_data["idempotent_replay"] is True
         print("MARKETPLACE PURCHASE HTTP IDEMPOTENCY PASS")
 
+        changed_employee_payload = {
+            **payload,
+            "employee_id": "00000000-0000-4000-8000-000000000001",
+        }
+        status, changed_employee_replay = request(
+            "POST",
+            "/skill-marketplace/publications/purchases",
+            changed_employee_payload,
+            token=buyer_token,
+        )
+        assert_status(
+            status, 409, "idempotency key reuse with a different employee", changed_employee_replay
+        )
+        print("MARKETPLACE PURCHASE CHANGED-EMPLOYEE IDEMPOTENCY CONFLICT PASS")
+
+        changed_publication_payload = {
+            **payload,
+            "publication_id": "00000000-0000-4000-8000-000000000002",
+        }
+        status, changed_publication_replay = request(
+            "POST",
+            "/skill-marketplace/publications/purchases",
+            changed_publication_payload,
+            token=buyer_token,
+        )
+        assert_status(
+            status, 409, "idempotency key reuse with a different publication", changed_publication_replay
+        )
+        print("MARKETPLACE PURCHASE CHANGED-PUBLICATION IDEMPOTENCY CONFLICT PASS")
+
         status, own_purchase = request(
             "POST",
             "/skill-marketplace/publications/purchases",
