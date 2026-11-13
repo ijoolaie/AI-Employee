@@ -298,7 +298,7 @@ async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.
     if tenant.tenant_kind == "vendor":
         locked_tenant = (
             await db.execute(
-                select(Tenant).where(Tenant.id == tenant_id).with_for_update()
+                select(Tenant).where(Tenant.id == tenant_id).with_for_update(key_share=True)
             )
         ).scalar_one()
         if locked_tenant.status != "active":
@@ -314,7 +314,7 @@ async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.
 
     locked_tenant = (
         await db.execute(
-            select(Tenant).where(Tenant.id == tenant_id).with_for_update()
+            select(Tenant).where(Tenant.id == tenant_id).with_for_update(key_share=True)
         )
     ).scalar_one()
     if locked_tenant.status != "active":

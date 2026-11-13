@@ -40,6 +40,7 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
     assert make_url(database_url).get_backend_name() == "postgresql"
 
     from app.core.database import worker_db_session
+    from app.models.ai_provider_call import AIProviderCall
     from app.models.billing import BillingPlan, Subscription
     from app.models.tenant import Tenant
     from app.services import billing_service
@@ -117,6 +118,24 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
         async with worker_db_session() as admission:
             tx = await admission.begin()
             await billing_service.assert_run_execution_entitlement(admission, tenant_id=tenant_id)
+
+            # The worker retains this Tenant lock while AIGateway writes its durable
+            # AIProviderCall through an independent session. The tenant FK check must
+            # not block behind the admission lock.
+            async def write_durable_provider_call():
+                async with sessions() as durable:
+                    async with durable.begin():
+                        durable.add(
+                            AIProviderCall(
+                                tenant_id=tenant_id,
+                                run_id=None,
+                                provider="lock-probe",
+                                model="lock-probe",
+                                status="success",
+                            )
+                        )
+
+            await asyncio.wait_for(write_durable_provider_call(), timeout=2)
             update_task = asyncio.create_task(update_after_admission())
             try:
                 await asyncio.wait_for(update_started.wait(), timeout=5)
@@ -177,6 +196,9 @@ async def test_paid_run_admission_serializes_with_subscription_revocation(monkey
     finally:
         async with sessions() as cleanup:
             async with cleanup.begin():
+                await cleanup.execute(
+                    delete(AIProviderCall).where(AIProviderCall.tenant_id == tenant_id)
+                )
                 await cleanup.execute(
                     delete(Subscription).where(Subscription.tenant_id == tenant_id)
                 )
@@ -350,6 +372,7 @@ async def test_run_admission_serializes_with_tenant_suspension():
         pytest.skip("DATABASE_URL is not configured; PostgreSQL integration test only")
     assert make_url(database_url).get_backend_name() == "postgresql"
 
+    from app.models.ai_provider_call import AIProviderCall
     from app.models.tenant import Tenant
     from app.services import billing_service
 
@@ -375,6 +398,20 @@ async def test_run_admission_serializes_with_tenant_suspension():
             await billing_service.assert_run_execution_entitlement(
                 admission, tenant_id=tenant_id
             )
+
+            # The durable AI-call transaction must pass its tenant FK check while
+            # admission holds the Tenant lock; suspension must still wait below.
+            async with sessions() as durable:
+                async with durable.begin():
+                    durable.add(
+                        AIProviderCall(
+                            tenant_id=tenant_id,
+                            run_id=None,
+                            provider="lock-probe",
+                            model="lock-probe",
+                            status="success",
+                        )
+                    )
             suspension_started = asyncio.Event()
             suspension_pid = None
 
@@ -408,5 +445,8 @@ async def test_run_admission_serializes_with_tenant_suspension():
             await asyncio.gather(suspension_task, return_exceptions=True)
         async with sessions() as cleanup:
             async with cleanup.begin():
+                await cleanup.execute(
+                    delete(AIProviderCall).where(AIProviderCall.tenant_id == tenant_id)
+                )
                 await cleanup.execute(delete(Tenant).where(Tenant.id == tenant_id))
         await engine.dispose()
