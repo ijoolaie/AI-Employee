@@ -181,3 +181,161 @@ async def test_user_action_grant_enables_scoped_provisioning_and_revocation():
                 app.dependency_overrides[get_db] = previous
     finally:
         await engine.dispose()
+
+@pytest.mark.asyncio
+async def test_vendor_reseller_and_reseller_customer_action_grant_symmetry():
+    """Exercise both delegated action-grant APIs and their tenant/user ceilings on PostgreSQL."""
+    db_url = _dedicated_test_database_url()
+    from app.core.database import get_db
+    from app.core.security import create_access_token
+    from app.main import app
+    from app.models.role import Permission, Role
+    from app.models.tenant import Tenant
+    from app.models.tenant_action_grant import TenantActionGrant
+    from app.models.user import User
+
+    engine = create_async_engine(db_url, poolclass=NullPool)
+    sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
+    run_id = uuid.uuid4().hex
+    vendor = Tenant(name=f"Symmetry vendor {run_id}", slug=f"sym-vendor-{run_id}", status="active", tenant_kind="vendor", settings={})
+    reseller = Tenant(name=f"Symmetry reseller {run_id}", slug=f"sym-reseller-{run_id}", status="active", tenant_kind="reseller", settings={}, parent=vendor)
+    outsider = Tenant(name=f"Symmetry outsider {run_id}", slug=f"sym-outsider-{run_id}", status="active", tenant_kind="customer", settings={}, parent=reseller)
+    try:
+        async with sessions() as session:
+            session.add_all([vendor, reseller, outsider])
+            await session.flush()
+
+            async def make_user(tenant, label):
+                user = User(
+                    tenant_id=tenant.id,
+                    email=f"{label}-{run_id}@example.com",
+                    password_hash="not-used",
+                    full_name=label,
+                    is_active=True,
+                    is_superuser=False,
+                    is_platform_admin=False,
+                    roles=[],
+                )
+                session.add(user)
+                await session.flush()
+                return user
+
+            vendor_grantor = await make_user(vendor, "Vendor Grantor")
+            vendor_delegate = await make_user(vendor, "Vendor Delegate")
+            reseller_grantor = await make_user(reseller, "Reseller Grantor")
+            reseller_delegate = await make_user(reseller, "Reseller Delegate")
+            outsider_user = await make_user(outsider, "Outsider User")
+
+            async def permission(code):
+                row = (await session.execute(select(Permission).where(Permission.code == code))).scalar_one_or_none()
+                if row is None:
+                    row = Permission(code=code, description=f"Action grant acceptance: {code}")
+                    session.add(row)
+                    await session.flush()
+                return row
+
+            vendor_role = Role(tenant_id=vendor.id, name="Admin", description="Vendor action grant test")
+            vendor_role.permissions = [await permission("vendor.reseller.create")]
+            vendor_grantor.roles = [vendor_role]
+            reseller_role = Role(tenant_id=reseller.id, name="Admin", description="Reseller action grant test")
+            reseller_role.permissions = [await permission("reseller.customer.create")]
+            reseller_grantor.roles = [reseller_role]
+            session.add_all([vendor_role, reseller_role])
+            await session.commit()
+
+        async def override_get_db() -> AsyncIterator[AsyncSession]:
+            async with sessions() as session:
+                try:
+                    yield session
+                    await session.commit()
+                except Exception:
+                    await session.rollback()
+                    raise
+
+        missing = object()
+        previous = app.dependency_overrides.get(get_db, missing)
+        app.dependency_overrides[get_db] = override_get_db
+        try:
+            def headers(user):
+                token = create_access_token(
+                    subject=user.id,
+                    tenant_id=user.tenant_id,
+                    extra_claims={"auth_token_version": user.auth_token_version},
+                )
+                return {"Authorization": f"Bearer {token}"}
+
+            async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as client:
+                vendor_payload = {
+                    "user_id": str(vendor_delegate.id),
+                    "action_code": "vendor.reseller.create",
+                    "reason": "Symmetric Vendor-to-Reseller delegation acceptance",
+                    "expires_in_days": 30,
+                }
+                vendor_created = await client.post("/api/v1/edition/vendor/action-grants", headers=headers(vendor_grantor), json=vendor_payload)
+                assert vendor_created.status_code == 201, vendor_created.text
+                vendor_grant_id = vendor_created.json()["data"]["id"]
+
+                vendor_cross_tenant_target = await client.post(
+                    "/api/v1/edition/vendor/action-grants",
+                    headers=headers(vendor_grantor),
+                    json={**vendor_payload, "user_id": str(outsider_user.id)},
+                )
+                assert vendor_cross_tenant_target.status_code == 404, vendor_cross_tenant_target.text
+
+                vendor_unauthorized_grantor = await client.post(
+                    "/api/v1/edition/vendor/action-grants",
+                    headers=headers(vendor_delegate),
+                    json={**vendor_payload, "user_id": str(vendor_grantor.id)},
+                )
+                assert vendor_unauthorized_grantor.status_code == 403, vendor_unauthorized_grantor.text
+
+                vendor_revoked = await client.delete(
+                    f"/api/v1/edition/vendor/action-grants/{vendor_grant_id}",
+                    headers=headers(vendor_grantor),
+                )
+                assert vendor_revoked.status_code == 200, vendor_revoked.text
+
+                reseller_payload = {
+                    "user_id": str(reseller_delegate.id),
+                    "action_code": "reseller.customer.create",
+                    "reason": "Symmetric Reseller-to-Customer delegation acceptance",
+                    "expires_in_days": 30,
+                }
+                reseller_created = await client.post("/api/v1/edition/reseller/action-grants", headers=headers(reseller_grantor), json=reseller_payload)
+                assert reseller_created.status_code == 201, reseller_created.text
+                reseller_grant_id = reseller_created.json()["data"]["id"]
+
+                reseller_cross_tenant_target = await client.post(
+                    "/api/v1/edition/reseller/action-grants",
+                    headers=headers(reseller_grantor),
+                    json={**reseller_payload, "user_id": str(outsider_user.id)},
+                )
+                assert reseller_cross_tenant_target.status_code == 404, reseller_cross_tenant_target.text
+
+                reseller_unauthorized_grantor = await client.post(
+                    "/api/v1/edition/reseller/action-grants",
+                    headers=headers(reseller_delegate),
+                    json={**reseller_payload, "user_id": str(reseller_grantor.id)},
+                )
+                assert reseller_unauthorized_grantor.status_code == 403, reseller_unauthorized_grantor.text
+
+                reseller_revoked = await client.delete(
+                    f"/api/v1/edition/reseller/action-grants/{reseller_grant_id}",
+                    headers=headers(reseller_grantor),
+                )
+                assert reseller_revoked.status_code == 200, reseller_revoked.text
+
+            async with sessions() as session:
+                vendor_grant = (await session.execute(select(TenantActionGrant).where(TenantActionGrant.id == vendor_grant_id))).scalar_one()
+                reseller_grant = (await session.execute(select(TenantActionGrant).where(TenantActionGrant.id == reseller_grant_id))).scalar_one()
+                assert vendor_grant.revoked_at is not None
+                assert reseller_grant.revoked_at is not None
+                assert vendor_grant.tenant_id == vendor.id
+                assert reseller_grant.tenant_id == reseller.id
+        finally:
+            if previous is missing:
+                app.dependency_overrides.pop(get_db, None)
+            else:
+                app.dependency_overrides[get_db] = previous
+    finally:
+        await engine.dispose()
