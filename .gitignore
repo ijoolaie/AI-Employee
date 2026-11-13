@@ -49,3 +49,6 @@ artifacts/
 
 # Local runtime storage
 /var/storage/
+
+# Local Git worktrees (registered in .git; never commit their contents)
+.worktrees/
