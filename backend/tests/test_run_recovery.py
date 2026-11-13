@@ -99,6 +99,7 @@ async def test_stale_running_run_marks_inflight_provider_call_unknown(monkeypatc
     assert db.flushed is True
     assert db.execute_calls == 2
     assert audits[0]["action"] == "run.execution_recovered"
+    assert audits[0]["tenant_id"] == run.tenant_id
     assert audits[0]["metadata"]["replay_blocked"] is True
 
 
