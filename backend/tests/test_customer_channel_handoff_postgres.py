@@ -319,3 +319,78 @@ async def test_handoff_outbox_retry_and_dead_letter_states_persist_in_postgres(m
     finally:
         await engine.dispose()
 
+
+@pytest.mark.asyncio
+async def test_handoff_notification_recipient_is_exact_tenant_in_hierarchy():
+    """A Vendor/Reseller/Customer must never inherit another tenant's destination."""
+    from app.models.tenant import Tenant
+    from app.services.customer_channel_service import _tenant_handoff_notification_email
+
+    engine = create_async_engine(_support_test_database_url(), poolclass=NullPool)
+    sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
+    suffix = uuid.uuid4().hex
+    try:
+        async with sessions() as session:
+            async with session.begin():
+                vendor = Tenant(
+                    id=uuid.uuid4(), name=f"Notification vendor {suffix}",
+                    slug=f"notification-vendor-{suffix}", tenant_kind="vendor",
+                    status="active",
+                    settings={"customer_handoff_notification_email": f"vendor-{suffix}@example.test"},
+                )
+                session.add(vendor)
+                await session.flush()
+
+                reseller = Tenant(
+                    id=uuid.uuid4(), name=f"Notification reseller {suffix}",
+                    slug=f"notification-reseller-{suffix}", tenant_kind="reseller",
+                    status="active", parent_tenant_id=vendor.id,
+                    settings={"customer_handoff_notification_email": f"reseller-{suffix}@example.test"},
+                )
+                sibling_reseller = Tenant(
+                    id=uuid.uuid4(), name=f"Notification sibling reseller {suffix}",
+                    slug=f"notification-sibling-reseller-{suffix}", tenant_kind="reseller",
+                    status="active", parent_tenant_id=vendor.id,
+                    settings={"customer_handoff_notification_email": f"sibling-reseller-{suffix}@example.test"},
+                )
+                session.add_all([reseller, sibling_reseller])
+                await session.flush()
+
+                customer = Tenant(
+                    id=uuid.uuid4(), name=f"Notification customer {suffix}",
+                    slug=f"notification-customer-{suffix}", tenant_kind="customer",
+                    status="active", parent_tenant_id=reseller.id,
+                    settings={"customer_handoff_notification_email": f"customer-{suffix}@example.test"},
+                )
+                unconfigured_customer = Tenant(
+                    id=uuid.uuid4(), name=f"Notification unconfigured customer {suffix}",
+                    slug=f"notification-unconfigured-customer-{suffix}",
+                    tenant_kind="customer", status="active", parent_tenant_id=reseller.id,
+                    settings={},
+                )
+                sibling_customer = Tenant(
+                    id=uuid.uuid4(), name=f"Notification sibling customer {suffix}",
+                    slug=f"notification-sibling-customer-{suffix}",
+                    tenant_kind="customer", status="active", parent_tenant_id=sibling_reseller.id,
+                    settings={"customer_handoff_notification_email": f"sibling-customer-{suffix}@example.test"},
+                )
+                session.add_all([customer, unconfigured_customer, sibling_customer])
+                await session.flush()
+
+                expected = {
+                    vendor.id: f"vendor-{suffix}@example.test",
+                    reseller.id: f"reseller-{suffix}@example.test",
+                    sibling_reseller.id: f"sibling-reseller-{suffix}@example.test",
+                    customer.id: f"customer-{suffix}@example.test",
+                    sibling_customer.id: f"sibling-customer-{suffix}@example.test",
+                }
+                for tenant_id, address in expected.items():
+                    assert await _tenant_handoff_notification_email(session, tenant_id) == address
+
+                # No implicit parent fallback: an unconfigured child has no
+                # destination even though its Reseller and Vendor are configured.
+                assert await _tenant_handoff_notification_email(
+                    session, unconfigured_customer.id
+                ) is None
+    finally:
+        await engine.dispose()
