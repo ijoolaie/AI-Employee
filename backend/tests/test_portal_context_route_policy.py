@@ -32,6 +32,8 @@ def test_portal_context_rejects_control_plane_and_account_routes(path: str):
         "/api/v1/editionary/example",
         "/api/v1/administered/example",
         "/api/v1/usage/summary",
+        "/api/v1/usage/optimization",
+        "/api/v1/usage/cost-forecast",
         "/api/v1/usageful/example",
     ],
 )

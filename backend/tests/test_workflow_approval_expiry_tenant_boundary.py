@@ -68,8 +68,9 @@ async def test_approval_expiry_does_not_cross_tenant_or_step_boundary(monkeypatc
     import app.core.database as database
     import app.services.audit_service as audit_service
 
+    audit_record = AsyncMock()
     monkeypatch.setattr(database, "worker_db_session", lambda: _DbContext(db))
-    monkeypatch.setattr(audit_service, "record", AsyncMock())
+    monkeypatch.setattr(audit_service, "record", audit_record)
 
     count = await workflow_trigger_worker._expire_workflow_approvals_async()
 
@@ -77,3 +78,6 @@ async def test_approval_expiry_does_not_cross_tenant_or_step_boundary(monkeypatc
     assert approval.status == "expired"
     assert run.status == "waiting_approval"
     assert step.status == "waiting"
+    audit_record.assert_awaited_once()
+    assert audit_record.await_args.kwargs["tenant_id"] == approval.tenant_id
+    assert audit_record.await_args.kwargs["resource_id"] == approval.id

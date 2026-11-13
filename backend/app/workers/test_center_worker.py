@@ -67,10 +67,14 @@ def expiration_sweep_task() -> int:
     return asyncio.run(_expire_stale_runs_async())
 
 
-async def _execute_run_async(run_id: UUID) -> str:
+async def _execute_run_async(run_id: UUID, tenant_id: UUID) -> str:
     async with worker_db_session() as db:
         service = TestCenterService(db)
-        run = (await db.execute(select(TestRun).where(TestRun.id == run_id))).scalar_one_or_none()
+        run = (
+            await db.execute(
+                select(TestRun).where(TestRun.id == run_id, TestRun.tenant_id == tenant_id)
+            )
+        ).scalar_one_or_none()
         if run is None:
             raise TestCenterError("test run not found")
 
@@ -140,10 +144,12 @@ async def _execute_run_async(run_id: UUID) -> str:
 
 
 @celery_app.task(name="test_center.execute_run", acks_late=True)
-def execute_run_task(run_id: str) -> str:
-    """Execute one queued Test Center run through the backend worker boundary."""
+def execute_run_task(run_id: str, tenant_id: str) -> str:
+    """Execute one queued Test Center run within its dispatched tenant boundary."""
     try:
-        return asyncio.run(_execute_run_async(UUID(run_id)))
+        parsed_run_id = UUID(run_id)
+        parsed_tenant_id = UUID(tenant_id)
+        return asyncio.run(_execute_run_async(parsed_run_id, parsed_tenant_id))
     except Exception:
         logger.exception("test_center_execution_failed", extra={"run_id": run_id})
         raise

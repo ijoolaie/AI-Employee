@@ -824,3 +824,37 @@ async def test_commercial_tool_requires_both_db_and_tenant_context():
                 approval_granted=True,
                 db="db-context",
             )
+
+@pytest.mark.asyncio
+async def test_analyze_dataset_forwards_run_actor_identity(monkeypatch):
+    from uuid import uuid4
+    from app.services import report_service
+    from app.services import license_service
+
+    async def allow_entitlement(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(license_service, 'assert_feature_entitlement', allow_entitlement)
+
+    tenant_id = uuid4()
+    actor_id = uuid4()
+    file_id = str(uuid4())
+    calls = []
+
+    async def analyze_dataset(db, *, tenant_id, actor_id, file_id):
+        calls.append({"db": db, "tenant_id": tenant_id, "actor_id": actor_id, "file_id": file_id})
+        return {"report_artifacts": {"pdf_file_id": "pdf", "excel_file_id": "xlsx", "chart_file_ids": ["chart"]}}
+
+    monkeypatch.setattr(report_service, "analyze_dataset", analyze_dataset)
+    result = await registry.execute(
+        "analyze_dataset",
+        {"file_id": file_id},
+        permissions={"run.execute"},
+        allowed_tools={"analyze_dataset"},
+        db="db-context",
+        tenant_id=tenant_id,
+        actor_id=actor_id,
+    )
+
+    assert result["report_artifacts"]["pdf_file_id"] == "pdf"
+    assert calls == [{"db": "db-context", "tenant_id": tenant_id, "actor_id": actor_id, "file_id": file_id}]
