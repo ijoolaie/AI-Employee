@@ -71,6 +71,7 @@ test.describe("commercial portal sign-in routing", () => {
               slug: "portal-test",
               status: "active",
               tenant_kind: scenario.kind,
+              access_granted: true,
             },
           },
         }),
@@ -92,6 +93,16 @@ test.describe("commercial portal sign-in routing", () => {
       await page.getByLabel("Password").fill("test-password-only");
       await page.getByRole("button", { name: "Sign in" }).click();
       await expect.poll(() => new URL(page.url()).pathname).toBe(scenario.expectedPath);
+      if (scenario.kind === "reseller") {
+        await page.setViewportSize({ width: 390, height: 844 });
+        const mobileNavigation = page.getByRole("combobox", { name: "Reseller navigation" });
+        await expect(mobileNavigation).toBeVisible();
+        await expect(mobileNavigation.locator("option")).toHaveCount(13);
+        await expect(mobileNavigation).toHaveValue("/reseller/dashboard");
+        await mobileNavigation.selectOption("/reseller/integrations");
+        await expect.poll(() => new URL(page.url()).pathname).toBe("/reseller/integrations");
+        await expect(mobileNavigation).toHaveValue("/reseller/integrations");
+      }
       if (scenario.expectedPath === "/vendor/dashboard") {
         await expect(page.getByRole("heading", { name: "Vendor portal" })).toBeVisible();
       }

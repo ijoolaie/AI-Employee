@@ -19,6 +19,19 @@ from app.services.workforce_sales_payment_provider import create_sales_checkout_
 from app.services import audit_service
 
 
+def _assert_idempotent_replay(
+    existing: SkillMarketplacePurchase,
+    *,
+    employee_id: uuid.UUID,
+    publication_id: uuid.UUID,
+) -> None:
+    """Reject reuse of a buyer-scoped key for a different purchase intent."""
+    if existing.employee_id != employee_id or existing.publication_id != publication_id:
+        raise ConflictError(
+            "skill marketplace purchase idempotency key was already used for a different request"
+        )
+
+
 async def prepare_purchase(
     db: AsyncSession,
     *,
@@ -44,6 +57,9 @@ async def prepare_purchase(
         )
     ).scalar_one_or_none()
     if existing is not None:
+        _assert_idempotent_replay(
+            existing, employee_id=employee_id, publication_id=publication_id
+        )
         deal = (
             await db.execute(
                 select(BusinessDeal).where(

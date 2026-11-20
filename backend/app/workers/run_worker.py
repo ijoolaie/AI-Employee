@@ -36,8 +36,10 @@ logger = logging.getLogger("app.workers.run")
 
 async def _run_async(run_id: str, tenant_id: str) -> None:
     """Execute a Run only when the queued tenant context matches its owner."""
+    logger.info("run_worker_phase phase=db_session_open_begin", extra={"phase": "db_session_open_begin", "run_id": run_id, "tenant_id": tenant_id})
     with span("aiep.employee_run.execute", run_id=run_id, tenant_id=tenant_id):
         async with worker_db_session() as db:
+            logger.info("run_worker_phase phase=db_session_opened", extra={"phase": "db_session_opened", "run_id": run_id, "tenant_id": tenant_id})
             try:
                 parsed_run_id = UUID(run_id)
                 parsed_tenant_id = UUID(tenant_id)
@@ -47,7 +49,9 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             result = await db.execute(select(Run).where(Run.id == parsed_run_id))
             run = result.scalar_one_or_none()
             if run is None:
+                logger.error("run_worker_phase", extra={"phase": "run_not_found", "run_id": run_id, "tenant_id": tenant_id})
                 raise NotFoundError("Run not found")
+            logger.info("run_worker_phase phase=run_loaded", extra={"phase": "run_loaded", "run_id": run_id, "tenant_id": tenant_id, "run_status": str(run.status)})
             if run.tenant_id != parsed_tenant_id:
                 raise ValidationAppError("Worker tenant context does not match Run tenant", details={"run_id": run_id})
 
@@ -162,6 +166,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             runtime = AgentRuntime(contract)
 
             try:
+                logger.info("run_worker_phase phase=runtime_execute_begin", extra={"phase": "runtime_execute_begin", "run_id": run_id, "tenant_id": tenant_id})
                 if run.agent_instance_id is not None:
                     async with governed_agent_execution(
                         tenant_id=run.tenant_id,
@@ -180,6 +185,7 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                     completed_run.total_tokens = int(completed_run.prompt_tokens or 0) + int(completed_run.completion_tokens or 0)
                     await db.flush()
                 await db.commit()
+                logger.info("run_worker_phase phase=runtime_execute_committed", extra={"phase": "runtime_execute_committed", "run_id": run_id, "tenant_id": tenant_id})
             except Exception:
                 await db.commit()
                 logger.exception("run_execution_failed", extra={"run_id": run_id, "tenant_id": tenant_id})
@@ -191,14 +197,18 @@ def execute_run_task(self, run_id: str, tenant_id: str) -> None:
     """Execute one Run after acquiring its tenant resource share."""
     if not tenant_id:
         raise ValidationAppError("tenant_id is required for run.execute")
+    logger.info("run_worker_phase phase=task_received", extra={"phase": "task_received", "run_id": run_id, "tenant_id": tenant_id})
     try:
         lease = acquire_tenant_resource(tenant_id)
     except TenantResourceUnavailableError as exc:
         raise self.retry(exc=exc, countdown=min(60, 5 * (2 ** self.request.retries)))
     if lease is None:
+        logger.warning("run_worker_phase", extra={"phase": "tenant_capacity_exhausted", "run_id": run_id, "tenant_id": tenant_id})
         raise self.retry(exc=RuntimeError("Tenant execution capacity is currently exhausted"), countdown=min(60, 5 * (2 ** self.request.retries)))
+    logger.info("run_worker_phase phase=tenant_resource_acquired", extra={"phase": "tenant_resource_acquired", "run_id": run_id, "tenant_id": tenant_id})
     try:
         asyncio.run(_run_async(run_id, tenant_id))
+        logger.info("run_worker_phase", extra={"phase": "async_run_returned", "run_id": run_id, "tenant_id": tenant_id})
     except ValidationAppError:
         raise
     except Exception as exc:

@@ -4,6 +4,8 @@ from __future__ import annotations
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, HTTPException, status
+
+from app.core.exceptions import ValidationAppError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_db
@@ -21,9 +23,14 @@ router = APIRouter(prefix="/employee-marketplace", tags=["employee-marketplace"]
 
 def _err(exc: Exception) -> HTTPException:
     msg = str(exc)
-    code = status.HTTP_404_NOT_FOUND if "not found" in msg.lower() else (
-        status.HTTP_422_UNPROCESSABLE_ENTITY if "invalid" in msg.lower() or "must" in msg.lower() else status.HTTP_409_CONFLICT
-    )
+    if isinstance(exc, ValidationAppError):
+        code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    elif "not found" in msg.lower():
+        code = status.HTTP_404_NOT_FOUND
+    elif "invalid" in msg.lower() or "must" in msg.lower():
+        code = status.HTTP_422_UNPROCESSABLE_CONTENT
+    else:
+        code = status.HTTP_409_CONFLICT
     return HTTPException(status_code=code, detail=msg)
 
 

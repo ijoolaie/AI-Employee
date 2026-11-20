@@ -3,6 +3,7 @@
 The provider adapter is mocked: this test verifies durable approval/outbox/worker
 coordination without sending a real WhatsApp message.
 """
+
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
@@ -27,6 +28,8 @@ from app.workers import whatsapp_worker
 async def test_postgres_persists_exact_call_approval_and_worker_dispatches_once(monkeypatch):
     tenant_id, employee_id, version_id, run_id = (uuid4() for _ in range(4))
     channel_id, approval_id, outbox_id, agent_id = (uuid4() for _ in range(4))
+    forged_outbox_id = uuid4()
+    foreign_tenant_id = uuid4()
     tool_call_id = f"call_{uuid4().hex}"
     slug = f"wa-approval-{uuid4().hex[:16]}"
     recipient = "+15551234567"
@@ -164,6 +167,32 @@ async def test_postgres_persists_exact_call_approval_and_worker_dispatches_once(
         ):
             await whatsapp_worker._validate_and_load(db, tampered)
 
+        # A durable row whose governance proof names a different tenant must
+        # fail closed in the actual worker before the provider boundary.
+        forged_payload = {
+            **payload,
+            "_agent_governance": {**proof, "tenant_id": str(foreign_tenant_id)},
+        }
+        db.add(
+            OutboxMessage(
+                id=forged_outbox_id,
+                tenant_id=tenant_id,
+                kind="whatsapp.send_text",
+                payload=forged_payload,
+                status="processing",
+                attempts=1,
+            )
+        )
+        await db.commit()
+
+    await whatsapp_worker._send(str(forged_outbox_id))
+    async with AsyncSessionLocal() as db:
+        forged_final = await db.get(OutboxMessage, forged_outbox_id)
+        assert forged_final is not None
+        assert forged_final.status == "pending"
+        assert "governance binding mismatch" in (forged_final.last_error or "")
+    assert provider_calls == []
+
     # The real worker path runs its DB validations and status transitions, while
     # the provider boundary is a local stub and cannot send an external message.
     await whatsapp_worker._send(str(outbox_id))
@@ -174,15 +203,18 @@ async def test_postgres_persists_exact_call_approval_and_worker_dispatches_once(
         assert final_outbox.status == "dispatched"
         assert final_outbox.payload["provider_message_id"] == "mock-wamid-acceptance"
         assert final_outbox.payload["provider_status"] == "accepted"
-        assert await db.scalar(
-            select(ToolApprovalRequest.id).where(
-                ToolApprovalRequest.id == approval_id,
-                ToolApprovalRequest.tenant_id == tenant_id,
-                ToolApprovalRequest.run_id == run_id,
-                ToolApprovalRequest.tool_call_id == tool_call_id,
-                ToolApprovalRequest.status == "consumed",
+        assert (
+            await db.scalar(
+                select(ToolApprovalRequest.id).where(
+                    ToolApprovalRequest.id == approval_id,
+                    ToolApprovalRequest.tenant_id == tenant_id,
+                    ToolApprovalRequest.run_id == run_id,
+                    ToolApprovalRequest.tool_call_id == tool_call_id,
+                    ToolApprovalRequest.status == "consumed",
+                )
             )
-        ) == approval_id
+            == approval_id
+        )
 
     assert len(provider_calls) == 1
     assert provider_calls[0]["tenant_id"] == tenant_id
@@ -192,7 +224,9 @@ async def test_postgres_persists_exact_call_approval_and_worker_dispatches_once(
 
     # Remove only this test's mutable rows. The test uses a unique tenant slug.
     async with AsyncSessionLocal() as db:
-        await db.execute(delete(OutboxMessage).where(OutboxMessage.id == outbox_id))
+        await db.execute(
+            delete(OutboxMessage).where(OutboxMessage.id.in_([outbox_id, forged_outbox_id]))
+        )
         await db.execute(delete(ToolApprovalRequest).where(ToolApprovalRequest.id == approval_id))
         await db.execute(delete(Run).where(Run.id == run_id))
         await db.execute(delete(CustomerChannel).where(CustomerChannel.id == channel_id))

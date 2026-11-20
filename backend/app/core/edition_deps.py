@@ -13,6 +13,9 @@ from app.services.edition_service import require_edition, EDITION_CUSTOMER, EDIT
 EDITION_SCOPE_ALLOWLIST_BY_KIND: dict[str, set[str]] = {
     EDITION_VENDOR: {
         "edition.vendor.tenants.read",
+        "edition.vendor.users.read",
+        "edition.vendor.users.manage",
+
         "edition.vendor.resellers.read",
         "edition.vendor.resellers.create",
         "edition.vendor.resellers.manage",
@@ -55,6 +58,13 @@ EDITION_SCOPE_ALLOWLIST_BY_KIND: dict[str, set[str]] = {
 # cannot accidentally inherit broad control-plane access.
 EDITION_ROUTE_SCOPES: dict[tuple[str, str], str] = {
     ("GET", "/edition/vendor/tenants"): "edition.vendor.tenants.read",
+    ("GET", "/edition/vendor/tenants/{target_tenant_id}/users"): "edition.vendor.users.read",
+    ("GET", "/edition/vendor/tenants/{target_tenant_id}/users/roles"): "edition.vendor.users.read",
+    ("POST", "/edition/vendor/tenants/{target_tenant_id}/users/invitations"): "edition.vendor.users.manage",
+    ("POST", "/edition/vendor/tenants/{target_tenant_id}/users/invitations/{invitation_id}/revoke"): "edition.vendor.users.manage",
+    ("POST", "/edition/vendor/tenants/{target_tenant_id}/users/{user_id}/status"): "edition.vendor.users.manage",
+    ("POST", "/edition/vendor/tenants/{target_tenant_id}/users/{user_id}/roles"): "edition.vendor.users.manage",
+
     ("GET", "/edition/vendor/resellers"): "edition.vendor.resellers.read",
     ("POST", "/edition/vendor/resellers"): "edition.vendor.resellers.create",
     ("POST", "/edition/vendor/resellers/{reseller_id}/suspend"): "edition.vendor.resellers.manage",

@@ -473,5 +473,16 @@ test("delegated portal switching is wired to user-bound grants and session rotat
   }
 });
 
+test("reseller layout provides mobile navigation on every reseller route", () => {
+  const layout = read("app/(reseller)/layout.tsx");
+  const sidebar = read("components/layout/reseller-sidebar.tsx");
+  if (!layout.includes('aria-label="Reseller navigation"')) throw new Error("missing accessible mobile navigation label");
+  if (!layout.includes('className="h-9 max-w-[42vw] rounded-lg border border-slate-200 bg-white px-2 text-xs md:hidden"')) throw new Error("mobile navigation must be visible below md breakpoint");
+  if (!layout.includes('onChange={(event) => router.push(event.target.value)}')) throw new Error("mobile navigation must navigate on selection");
+  for (const href of ["/reseller/dashboard", "/reseller/clients", "/reseller/team", "/reseller/ai-employees", "/reseller/test-center", "/reseller/support", "/reseller/workflows", "/reseller/usage", "/reseller/integrations", "/reseller/billing", "/reseller/reports", "/reseller/settings", "/reseller/security"]) {
+    if (!layout.includes(href) || !sidebar.includes(href)) throw new Error("missing mobile route option: " + href);
+  }
+});
+
 console.log("\nResult: " + passed + " passed, " + failed + " failed\n");
 process.exit(failed ? 1 : 0);

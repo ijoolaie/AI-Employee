@@ -178,6 +178,9 @@ async def test_run_scoped_provider_failure_fences_blind_replay(monkeypatch):
         def add(self, item):
             durable_rows[item.id] = item
 
+        async def flush(self):
+            return None
+
         async def commit(self):
             return None
 

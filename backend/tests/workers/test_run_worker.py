@@ -256,3 +256,43 @@ async def test_run_worker_scopes_employee_version_to_run_employee_and_tenant(mon
     assert "employee_versions.employee_id =" in version_query
     assert "employees.tenant_id =" in version_query
     assert "employees.tenant_id IS NULL" in version_query
+
+
+@pytest.mark.asyncio
+async def test_run_worker_blocks_delayed_run_after_delegation_revocation(monkeypatch):
+    run_id = uuid4()
+    tenant_id = uuid4()
+    agent_instance_id = uuid4()
+    run = _run(run_id, tenant_id, agent_instance_id=agent_instance_id)
+    instance = _agent_instance(tenant_id, agent_instance_id)
+    identity = _agent_identity(tenant_id, agent_instance_id)
+    db = _Db(run, _employee_version(), instance, identity)
+    events = []
+
+    async def _kill_switch(*_args, **_kwargs):
+        events.append("kill_switch")
+
+    async def _revoked_authority(_db, _run):
+        events.append("authorize")
+        raise ValidationAppError("delegated grant revoked before worker execution")
+
+    async def _memory(*_args, **_kwargs):
+        events.append("memory")
+        raise AssertionError("runtime memory must not load after delegation revocation")
+
+    async def _execute(*_args, **_kwargs):
+        events.append("execute")
+        raise AssertionError("Run execution must not start after delegation revocation")
+
+    monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(run_worker, "span", _span)
+    monkeypatch.setattr(run_worker, "assert_not_killed", _kill_switch)
+    monkeypatch.setattr(run_worker, "authorize_agent_run", _revoked_authority)
+    monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
+    monkeypatch.setattr(run_worker, "execute_run_locked", _execute)
+
+    with pytest.raises(ValidationAppError, match="delegated grant revoked"):
+        await run_worker._run_async(str(run_id), str(tenant_id))
+
+    assert events == ["kill_switch", "authorize"]
+    assert db.committed is False

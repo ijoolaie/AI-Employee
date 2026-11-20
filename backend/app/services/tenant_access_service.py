@@ -4,7 +4,7 @@ import uuid
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
+from app.core.exceptions import ConflictError, NotFoundError, TenantInactiveError, ValidationAppError
 from app.models.billing import BillingPlan, Subscription
 from app.models.tenant import Tenant
 from app.models.tenant_demo_grant import TenantDemoGrant
@@ -29,12 +29,30 @@ async def tenant_access_source(db: AsyncSession, *, tenant: Tenant, now: datetim
     grant = (await db.execute(select(TenantDemoGrant.id).where(
         TenantDemoGrant.tenant_id == tenant.id, TenantDemoGrant.revoked_at.is_(None),
         TenantDemoGrant.expires_at > now,
-    ).limit(1))).scalar_one_or_none()
+    ).limit(1).with_for_update(read=True))).scalar_one_or_none()
     return "demo" if grant is not None else None
 
 
 async def tenant_has_access(db: AsyncSession, *, tenant: Tenant, now: datetime | None = None) -> bool:
     return await tenant_access_source(db, tenant=tenant, now=now) is not None
+
+
+async def assert_tenant_active_for_side_effect(db: AsyncSession, *, tenant_id: uuid.UUID) -> Tenant:
+    """Lock the tenant lifecycle row through an irreversible provider call.
+
+    Call only after the outbox uncertain fence is committed. The caller must
+    keep this transaction open until the provider result is durably recorded.
+    Tenant lifecycle transitions take the same row lock, giving suspension
+    and delivery a single PostgreSQL serialization point.
+    """
+    tenant = (await db.execute(
+        select(Tenant).where(Tenant.id == tenant_id).with_for_update()
+    )).scalar_one_or_none()
+    if tenant is None:
+        raise TenantInactiveError("Tenant no longer exists; external delivery is blocked")
+    if tenant.status != "active":
+        raise TenantInactiveError()
+    return tenant
 
 async def create_demo_grant(db: AsyncSession, *, tenant_id: uuid.UUID, actor_id: uuid.UUID, reason: str, expires_in_days: int) -> TenantDemoGrant:
     if not reason.strip() or expires_in_days < 1 or expires_in_days > 90:

@@ -54,3 +54,26 @@ def test_marketplace_purchase_http_schema_is_explicit():
     fields = SkillMarketplacePurchaseCreate.model_fields
     assert set(fields) == {"publication_id", "employee_id", "idempotency_key"}
     assert fields["idempotency_key"].is_required()
+
+
+def test_purchase_idempotency_replay_requires_same_employee_and_publication():
+    from types import SimpleNamespace
+
+    from app.core.exceptions import ConflictError
+    from app.services.skill_marketplace_purchase_service import _assert_idempotent_replay
+
+    employee_id, publication_id = uuid4(), uuid4()
+    existing = SimpleNamespace(employee_id=employee_id, publication_id=publication_id)
+    _assert_idempotent_replay(
+        existing, employee_id=employee_id, publication_id=publication_id
+    )
+    for changed in (
+        {"employee_id": uuid4(), "publication_id": publication_id},
+        {"employee_id": employee_id, "publication_id": uuid4()},
+    ):
+        try:
+            _assert_idempotent_replay(existing, **changed)
+        except ConflictError as exc:
+            assert "different request" in str(exc)
+        else:
+            raise AssertionError("idempotency key reuse with changed purchase intent must conflict")

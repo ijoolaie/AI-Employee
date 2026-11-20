@@ -3,11 +3,11 @@ import re
 from uuid import UUID
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field, field_validator
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import selectinload
 from app.core.deps import CurrentContext, DbSession
 from app.models.user import User
-from app.models.role import Role
+from app.models.role import Role, user_roles
 from app.models.tenant import Tenant
 from app.schemas.common import APIResponse
 from app.schemas.edition import TenantInvitationCreateRequest, TenantInvitationResponse, TenantInvitationRevokedResponse
@@ -143,9 +143,38 @@ async def update_user_status(user_id: UUID, payload: UserStatusUpdate, ctx: Curr
     await require_tenant_admin(ctx, permission="tenant.users.manage")
     if user_id == ctx.user_id and not payload.is_active:
         raise HTTPException(status_code=400, detail="You cannot deactivate your own account")
+    # Serialize tenant-admin status changes so concurrent requests cannot
+    # deactivate multiple administrators based on the same stale count.
+    tenant_result = await db.execute(
+        select(Tenant).where(Tenant.id == ctx.tenant_id).with_for_update()
+    )
+    if tenant_result.scalar_one_or_none() is None:
+        raise HTTPException(status_code=404, detail="Tenant not found")
     result = await db.execute(select(User).options(selectinload(User.roles)).where(User.id == user_id, User.tenant_id == ctx.tenant_id).with_for_update())
     user = result.scalar_one_or_none()
     if user is None: raise HTTPException(status_code=404, detail="User not found")
+    if user.is_active and not payload.is_active and any(
+        role.tenant_id == ctx.tenant_id
+        and role.name.lower() in {"admin", "owner", "tenant_admin"}
+        for role in user.roles
+    ):
+        active_admin_count = (await db.execute(
+            select(func.count(func.distinct(User.id)))
+            .select_from(User)
+            .join(user_roles, user_roles.c.user_id == User.id)
+            .join(Role, Role.id == user_roles.c.role_id)
+            .where(
+                User.tenant_id == ctx.tenant_id,
+                User.is_active.is_(True),
+                Role.tenant_id == ctx.tenant_id,
+                func.lower(Role.name).in_({"admin", "owner", "tenant_admin"}),
+            )
+        )).scalar_one()
+        if active_admin_count <= 1:
+            raise HTTPException(
+                status_code=409,
+                detail="Cannot deactivate the last active tenant administrator",
+            )
     user.is_active = payload.is_active
     await audit_service.record(db, action="tenant.user_status_updated", actor_type="user", actor_id=ctx.user_id, tenant_id=ctx.tenant_id, resource_type="user", resource_id=str(user.id), metadata={"is_active": payload.is_active})
     await db.commit(); await db.refresh(user)

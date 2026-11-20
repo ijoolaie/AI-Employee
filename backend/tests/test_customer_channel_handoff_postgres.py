@@ -76,6 +76,7 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                 tenant_b = Tenant(
                     id=uuid.uuid4(), name=f"Handoff tenant B {suffix}",
                     slug=f"handoff-b-{suffix}", tenant_kind="customer", status="active",
+                    settings={"customer_handoff_notification_email": "support-b@example.test"},
                 )
                 session.add_all([tenant_a, tenant_b])
                 await session.flush()
@@ -117,7 +118,28 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                     customer_token_hash=_hash_token(handoff_token), customer_name="Synthetic customer",
                     status="open", handoff_requested=False,
                 )
-                session.add(conversation)
+                employee_b = Employee(
+                    id=uuid.uuid4(), tenant_id=tenant_b.id,
+                    slug=f"handoff-agent-b-{suffix}", name="Handoff tenant B agent",
+                    kind="custom", is_active=True,
+                )
+                session.add(employee_b)
+                await session.flush()
+                channel_b = CustomerChannel(
+                    id=uuid.uuid4(), tenant_id=tenant_b.id, employee_id=employee_b.id,
+                    name="PostgreSQL handoff tenant B", channel_type="web_widget",
+                    public_key=f"pk_handoff_b_{suffix}", config={}, is_active=True,
+                )
+                session.add(channel_b)
+                await session.flush()
+                handoff_token_b = f"handoff-token-b-{suffix}"
+                conversation_b = CustomerConversation(
+                    id=uuid.uuid4(), tenant_id=tenant_b.id,
+                    employee_id=employee_b.id, channel_id=channel_b.id,
+                    customer_token_hash=_hash_token(handoff_token_b), customer_name="Synthetic customer B",
+                    status="open", handoff_requested=False,
+                )
+                session.add_all([conversation, conversation_b])
                 await session.flush()
 
                 with pytest.raises(NotFoundError, match="Assigned user not found"):
@@ -196,6 +218,31 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                 assert str(tenant_a.id) in outbox_row.payload["body"]
                 assert str(conversation.id) in outbox_row.payload["body"]
                 assert str(channel.id) in outbox_row.payload["body"]
+
+                # A second tenant with a different configured destination must
+                # resolve its own address from its own Tenant.settings. The
+                # recipient and body must not inherit Tenant A's routing data.
+                routed_b, run_b = await send_message(
+                    session,
+                    conversation_id=conversation_b.id,
+                    token=handoff_token_b,
+                    content="Please connect me to a human",
+                )
+                assert run_b is None
+                assert routed_b.tenant_id == tenant_b.id
+                tenant_b_outbox = (
+                    await session.execute(
+                        select(OutboxMessage).where(
+                            OutboxMessage.tenant_id == tenant_b.id,
+                            OutboxMessage.dedupe_key == f"customer-handoff:{conversation_b.id}",
+                        )
+                    )
+                ).scalar_one()
+                assert tenant_b_outbox.payload["to"] == ["support-b@example.test"]
+                assert str(tenant_b.id) in tenant_b_outbox.payload["body"]
+                assert str(conversation_b.id) in tenant_b_outbox.payload["body"]
+                assert str(channel_b.id) in tenant_b_outbox.payload["body"]
+                assert tenant_b_outbox.payload["to"] != outbox_row.payload["to"]
 
                 # Re-enqueuing the same logical handoff must return the existing
                 # row instead of creating a second notification.

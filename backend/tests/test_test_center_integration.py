@@ -30,7 +30,14 @@ async def test_center_setup():
             workspace_key="ops",
             enabled=True,
         )
-        db.add(definition_a)
+        definition_b = TestDefinition(
+            tenant_id=tenant_b.id,
+            code=f"smoke-{uuid4().hex}",
+            name="Tenant B private smoke",
+            workspace_key="ops",
+            enabled=True,
+        )
+        db.add_all([definition_a, definition_b])
         await db.flush()
         await db.commit()
 
@@ -38,6 +45,7 @@ async def test_center_setup():
             "tenant_a": tenant_a.id,
             "tenant_b": tenant_b.id,
             "definition_a": definition_a.id,
+            "definition_b": definition_b.id,
         }
 
     try:
@@ -45,7 +53,9 @@ async def test_center_setup():
     finally:
         async with AsyncSessionLocal() as db:
             await db.execute(delete(TestRun).where(TestRun.tenant_id.in_([data["tenant_a"], data["tenant_b"]])))
-            await db.execute(delete(TestDefinition).where(TestDefinition.id == data["definition_a"]))
+            await db.execute(delete(TestDefinition).where(TestDefinition.id.in_([
+                data["definition_a"], data["definition_b"],
+            ])))
             await db.execute(delete(Tenant).where(Tenant.id.in_([data["tenant_a"], data["tenant_b"]])))
             await db.commit()
 
@@ -146,3 +156,35 @@ async def test_expired_transition_is_persisted_and_blocks_finish(test_center_set
     async with AsyncSessionLocal() as db:
         with pytest.raises(TestCenterError, match="only running"):
             await TestCenterService(db).finish_run(run_id=run_id, tenant_id=data["tenant_a"], passed=True)
+
+
+@pytest.mark.asyncio
+async def test_worker_rejects_run_linked_to_another_tenants_definition(test_center_setup):
+    """The worker must validate the definition tenant before starting a durable run."""
+    from app.workers.test_center_worker import _execute_run_async
+
+    data = test_center_setup
+    async with AsyncSessionLocal() as db:
+        run = TestRun(
+            tenant_id=data["tenant_a"],
+            test_definition_id=data["definition_b"],
+            workspace_key="ops",
+            status=TestRunStatus.QUEUED,
+            executor_type="backend",
+            fixtures={},
+            evidence={},
+        )
+        db.add(run)
+        await db.commit()
+        run_id = run.id
+
+    with pytest.raises(TestCenterError, match="test definition not found"):
+        await _execute_run_async(run_id)
+
+    async with AsyncSessionLocal() as db:
+        persisted = (
+            await db.execute(select(TestRun).where(TestRun.id == run_id))
+        ).scalar_one()
+        assert persisted.tenant_id == data["tenant_a"]
+        assert persisted.status is TestRunStatus.QUEUED
+        assert persisted.started_at is None

@@ -1,4 +1,4 @@
-﻿"""Real HTTP + PostgreSQL tests for commercial license boundaries.
+"""Real HTTP + PostgreSQL tests for commercial license boundaries.
 
 Fail closed: only the dedicated aiep_license_test database is accepted.
 This test deliberately leaves uniquely named rows and audit entries in that
@@ -153,8 +153,20 @@ async def test_license_http_hierarchy_revocation_and_audit():
             )
             role_a = Role(id=role_a_id, tenant_id=vendor_a_id, name="admin")
             role_a.permissions = [vendor_reseller_read]
+            reseller_customer_read = (
+                await session.execute(
+                    select(Permission).where(Permission.code == "reseller.customer.read")
+                )
+            ).scalar_one_or_none()
+            if reseller_customer_read is None:
+                reseller_customer_read = Permission(
+                    code="reseller.customer.read",
+                    description="Read own direct customers",
+                )
+                session.add(reseller_customer_read)
+                await session.flush()
             role_reseller = Role(tenant_id=reseller_a_id, name="admin")
-            role_reseller.permissions = [Permission(code="reseller.customer.read", description="Read own direct customers")]
+            role_reseller.permissions = [reseller_customer_read]
             role_customer = Role(tenant_id=customer_a_id, name="admin")
             role_b = Role(id=role_b_id, tenant_id=vendor_b_id, name="admin")
             role_b.permissions = [vendor_reseller_read]

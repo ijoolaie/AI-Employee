@@ -1,5 +1,7 @@
 """PostgreSQL-backed portal grant, context, and immediate revocation contract."""
 
+import hashlib
+import json
 import os
 import uuid
 from io import BytesIO
@@ -53,7 +55,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.workflow import WorkflowRun
     from app.models.file import FileObject
     from app.models.customer import Customer
-    from app.models.employee import Employee
+    from app.models.employee import Employee, EmployeeVersion
+    from app.models.run import Run
+    from app.models.audit_log import AuditLog
     from app.models.meeting import Meeting, MeetingParticipant
     from app.models.knowledge import KnowledgeChunk, KnowledgeDocument
     from app.rag import service as rag_service
@@ -61,7 +65,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.tenant import Tenant
     from app.models.tenant_demo_grant import TenantDemoGrant
     from app.models.user import User
-    from app.services import audit_service, customer_dashboard_service, storage as storage_service
+    from app.services import audit_service, customer_dashboard_service, license_service, storage as storage_service
+    from app.ai.tool_registry import registry
+    from app.core.exceptions import NotFoundError
 
     engine = create_async_engine(db_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
@@ -152,6 +158,17 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 invoice_read_permission = Permission(code="invoices.read", description="Read invoices")
                 session.add(invoice_read_permission)
                 await session.flush()
+            invoice_export_pdf_permission = (
+                await session.execute(
+                    select(Permission).where(Permission.code == "invoices.export_pdf")
+                )
+            ).scalar_one_or_none()
+            if invoice_export_pdf_permission is None:
+                invoice_export_pdf_permission = Permission(
+                    code="invoices.export_pdf", description="Export invoice PDFs"
+                )
+                session.add(invoice_export_pdf_permission)
+                await session.flush()
             run_read_permission = (
                 await session.execute(select(Permission).where(Permission.code == "run.read"))
             ).scalar_one_or_none()
@@ -199,7 +216,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 invoice_read_permission, run_read_permission, audit_read_permission,
             ]
             vendor_b_actor.roles = [vendor_b_reader_role]
-            reseller_admin_role.permissions = [*file_permissions, workflow_write_permission]
+            reseller_admin_role.permissions = [
+                *file_permissions, workflow_write_permission,
+                invoice_read_permission, invoice_export_pdf_permission, run_read_permission,
+            ]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
             direct_customer_file = FileObject(
@@ -221,6 +241,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 status="active",
             )
             target_file = FileObject(tenant_id=target.id, uploaded_by=actor.id, filename="target-policy.txt", content_type="text/plain", size_bytes=10, storage_key=f"{target.id}/target-policy.txt", status="active")
+            customer_report_source = FileObject(
+                tenant_id=customer_a.id, uploaded_by=customer_actor.id,
+                filename="customer-sales.csv", content_type="text/csv",
+                size_bytes=57, storage_key=f"{customer_a.id}/customer-sales.csv", status="active",
+            )
             sibling_file = FileObject(tenant_id=sibling.id, uploaded_by=actor.id, filename="sibling-secret.txt", content_type="text/plain", size_bytes=12, storage_key=f"{sibling.id}/sibling-secret.txt", status="active")
             cross_vendor_file = FileObject(tenant_id=reseller_b.id, uploaded_by=actor.id, filename="vendor-b-secret.txt", content_type="text/plain", size_bytes=15, storage_key=f"{reseller_b.id}/vendor-b-secret.txt", status="active")
             vendor_b_file = FileObject(
@@ -229,7 +254,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 size_bytes=17, storage_key=f"{reseller_b.id}/vendor-b-target-policy.txt",
                 status="active",
             )
-            session.add_all([direct_customer_file, customer_file, target_file, sibling_file, cross_vendor_file, vendor_b_file])
+            session.add_all([direct_customer_file, customer_file, customer_report_source, target_file, sibling_file, cross_vendor_file, vendor_b_file])
             target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
             sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
             customer_portal_customer = Customer(tenant_id=customer_a.id, external_key=f"customer-portal-customer-{run_id}", name="Customer portal record", email="portal-customer@example.com", notes="customer-portal-private-note")
@@ -267,6 +292,12 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 issue_date=today, subtotal=120, tax_rate=0, tax_amount=0,
                 total=120, line_items=[{"description": "target-only", "quantity": 1, "unit_price": 120}],
             )
+            customer_invoice = BusinessInvoice(
+                tenant_id=customer_a.id, number=f"CUSTOMER-{run_id}", status="paid",
+                currency="USD", customer_name="Customer Portal Invoice",
+                issue_date=today, subtotal=75, tax_rate=0, tax_amount=0,
+                total=75, line_items=[{"description": "customer-only", "quantity": 1, "unit_price": 75}],
+            )
             sibling_invoice = BusinessInvoice(
                 tenant_id=sibling.id, number=f"SIBLING-{run_id}", status="paid",
                 currency="USD", customer_name="Sibling Reseller Secret",
@@ -281,7 +312,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             )
             session.add_all([
                 target_dead_letter, sibling_dead_letter, vendor_b_dead_letter,
-                target_invoice, sibling_invoice, vendor_b_invoice,
+                target_invoice, sibling_invoice, vendor_b_invoice, customer_invoice,
             ])
             test_center_rows = []
             for tenant, marker in ((target, "target"), (sibling, "sibling"), (reseller_b, "vendor-b")):
@@ -322,8 +353,71 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 tenant_id=sibling.id, slug=f"sibling-dashboard-{run_id}",
                 name="Sibling dashboard secret", kind="custom", is_active=True,
             )
-            session.add_all([target_dashboard_employee, sibling_dashboard_employee])
+            customer_run_employee = Employee(
+                tenant_id=customer_a.id, slug=f"customer-run-{run_id}",
+                name="Customer Run Employee", kind="custom", is_active=True,
+            )
+            session.add_all([target_dashboard_employee, sibling_dashboard_employee, customer_run_employee])
             await session.flush()
+            target_run_version = EmployeeVersion(
+                employee_id=target_dashboard_employee.id, version_number=1, is_current=True,
+                input_schema={}, output_schema={}, prompt_template="", allowed_tools=[], rules={},
+            )
+            sibling_run_version = EmployeeVersion(
+                employee_id=sibling_dashboard_employee.id, version_number=1, is_current=True,
+                input_schema={}, output_schema={}, prompt_template="", allowed_tools=[], rules={},
+            )
+            customer_run_version = EmployeeVersion(
+                employee_id=customer_run_employee.id, version_number=1, is_current=True,
+                input_schema={}, output_schema={}, prompt_template="", allowed_tools=[], rules={},
+            )
+            session.add_all([target_run_version, sibling_run_version, customer_run_version])
+            await session.flush()
+            target_run = Run(
+                tenant_id=target.id, employee_id=target_dashboard_employee.id,
+                employee_version_id=target_run_version.id, created_by=reseller_actor.id,
+                status="completed", input_data={"private": "parent-run"},
+            )
+            sibling_run = Run(
+                tenant_id=sibling.id, employee_id=sibling_dashboard_employee.id,
+                employee_version_id=sibling_run_version.id, created_by=actor.id,
+                status="completed", input_data={"private": "sibling-run"},
+            )
+            customer_run = Run(
+                tenant_id=customer_a.id, employee_id=customer_run_employee.id,
+                employee_version_id=customer_run_version.id, created_by=customer_actor.id,
+                status="completed", input_data={"private": "customer-run"},
+            )
+            session.add_all([target_run, sibling_run, customer_run])
+            await session.flush()
+            customer_run_artifact_id = f"customer-artifact-{run_id}"
+            customer_run_artifact_key = f"{customer_a.id}/workforce-artifacts/{customer_run_artifact_id}.json"
+            sibling_run_artifact_id = f"sibling-artifact-{run_id}"
+            sibling_run_artifact_key = f"{sibling.id}/workforce-artifacts/{sibling_run_artifact_id}.json"
+            session.add_all([
+                AuditLog(
+                    tenant_id=customer_a.id, actor_type="user", actor_id=customer_actor.id,
+                    action="tool.call", resource_type="run", resource_id=str(customer_run.id),
+                    status="success",
+                    metadata_={"persisted_workforce_artifact": {
+                        "artifact_id": customer_run_artifact_id,
+                        "payload_artifact_id": customer_run_artifact_id,
+                        "storage_key_sha256": hashlib.sha256(customer_run_artifact_key.encode("utf-8")).hexdigest(),
+                        "tool": "workforce_keyword_research",
+                    }},
+                ),
+                AuditLog(
+                    tenant_id=sibling.id, actor_type="user", actor_id=actor.id,
+                    action="tool.call", resource_type="run", resource_id=str(sibling_run.id),
+                    status="success",
+                    metadata_={"persisted_workforce_artifact": {
+                        "artifact_id": sibling_run_artifact_id,
+                        "payload_artifact_id": sibling_run_artifact_id,
+                        "storage_key_sha256": hashlib.sha256(sibling_run_artifact_key.encode("utf-8")).hexdigest(),
+                        "tool": "workforce_keyword_research",
+                    }},
+                ),
+            ])
             target_meeting = Meeting(
                 tenant_id=target.id, title=f"Target reseller meeting {run_id}",
                 description="Target tenant meeting",
@@ -438,7 +532,10 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             return [[1.0] + [0.0] * 63 for _ in _texts]
 
         monkeypatch.setattr(rag_service, "embed_texts", deterministic_test_embedding)
-        monkeypatch.setattr(rag_service, "extract_text", lambda _file: "target tenant knowledge")
+        monkeypatch.setattr(
+            rag_service, "extract_text",
+            lambda file: "customer tenant knowledge" if file.filename == "customer-policy.txt" else "target tenant knowledge",
+        )
         # Seeded FileObject rows intentionally avoid provider-specific storage.
         # This deterministic backend lets the live API test exercise the actual
         # authenticated streaming-download route and its tenant/context guards.
@@ -456,10 +553,33 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     return BytesIO(self.objects[key])
                 return BytesIO(f"portal-file-content:{key}".encode())
 
+            def exists(self, key):
+                return key in self.objects
+
+            def list_prefix(self, prefix):
+                return [key for key in self.objects if key.startswith(prefix)]
+
             def delete(self, key):
                 self.objects.pop(key, None)
 
         test_storage_backend = _PortalTestStorageBackend()
+        customer_run_artifact_payload = json.dumps({
+            "kind": "keyword_research_artifact",
+            "artifact_id": customer_run_artifact_id,
+            "operation": "keyword_research",
+            "status": "completed",
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "provider_execution": "not_configured",
+            "external_side_effect": False,
+        }).encode("utf-8")
+        test_storage_backend.objects[customer_run_artifact_key] = customer_run_artifact_payload
+        test_storage_backend.objects[sibling_run_artifact_key] = json.dumps({
+            "kind": "keyword_research_artifact", "artifact_id": sibling_run_artifact_id,
+        }).encode("utf-8")
+        test_storage_backend.objects[f"{customer_a.id}/customer-sales.csv"] = (
+            b"date,region,revenue\n2026-01-01,North,100\n2026-01-02,South,200\n"
+            b"2026-01-03,North,150\n"
+        )
         monkeypatch.setattr(
             storage_service, "get_storage_backend", lambda: test_storage_backend
         )
@@ -571,8 +691,8 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     direct_customer_foreign_download.text
                 )
 
-                # The direct Vendor→Customer portal must enforce the same
-                # complete file lifecycle boundary as Vendor→Reseller.
+                # The direct Vendor-to-Customer portal must enforce the same
+                # complete file lifecycle boundary as Vendor-to-Reseller.
                 direct_customer_uploaded_file = await client.post(
                     "/api/v1/files",
                     headers=direct_customer_portal_headers,
@@ -1017,7 +1137,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert customer_visible_files.status_code == 200, customer_visible_files.text
-                assert [item["id"] for item in customer_visible_files.json()["data"]] == [str(customer_file.id)]
+                assert {item["id"] for item in customer_visible_files.json()["data"]} == {
+                    str(customer_file.id), str(customer_report_source.id),
+                }
                 customer_file_download = await client.get(
                     f"/api/v1/files/{customer_file.id}/download",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
@@ -1026,6 +1148,171 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert customer_file_download.content == (
                     f"portal-file-content:{customer_file.storage_key}".encode()
                 )
+                customer_knowledge_index = await client.post(
+                    "/api/v1/knowledge/index",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    json={"file_id": str(customer_file.id)},
+                )
+                assert customer_knowledge_index.status_code == 201, customer_knowledge_index.text
+                customer_knowledge_search = await client.post(
+                    "/api/v1/knowledge/search",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    json={"query": "tenant policy", "top_k": 20},
+                )
+                assert customer_knowledge_search.status_code == 200, customer_knowledge_search.text
+                customer_knowledge_content = [
+                    item["content"] for item in customer_knowledge_search.json()["data"]
+                ]
+                assert "customer tenant knowledge" in customer_knowledge_content
+                assert "target tenant knowledge" not in customer_knowledge_content
+                assert "sibling tenant secret" not in customer_knowledge_content
+                # Execute the real Report Employee tool with the effective
+                # Customer tenant resolved by the delegated portal grant.
+                async def allow_report_tool_entitlement(_db, *, tenant_id, feature_code):
+                    assert tenant_id == customer_a.id
+                    assert feature_code == "tool:analyze_dataset"
+                    return None
+
+                monkeypatch.setattr(
+                    license_service, "assert_feature_entitlement", allow_report_tool_entitlement
+                )
+                async with sessions() as report_session:
+                    report_result = await registry.execute(
+                        "analyze_dataset",
+                        {"file_id": str(customer_report_source.id)},
+                        permissions={"run.execute"},
+                        allowed_tools={"analyze_dataset"},
+                        db=report_session,
+                        tenant_id=customer_a.id,
+                        actor_id=customer_actor.id,
+                    )
+                    await report_session.commit()
+                report_artifacts = report_result["report_artifacts"]
+                report_file_ids = [
+                    report_artifacts["pdf_file_id"],
+                    report_artifacts["excel_file_id"],
+                    *report_artifacts["chart_file_ids"],
+                ]
+                assert report_result["row_count"] == 3
+                assert len(report_file_ids) >= 2
+                customer_files_after_report = await client.get(
+                    "/api/v1/files",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_files_after_report.status_code == 200, customer_files_after_report.text
+                listed_report_ids = {
+                    item["id"] for item in customer_files_after_report.json()["data"]
+                }
+                assert set(report_file_ids).issubset(listed_report_ids)
+                pdf_download = await client.get(
+                    f"/api/v1/files/{report_artifacts['pdf_file_id']}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert pdf_download.status_code == 200, pdf_download.text
+                assert pdf_download.content.startswith(b"%PDF-")
+                excel_download = await client.get(
+                    f"/api/v1/files/{report_artifacts['excel_file_id']}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert excel_download.status_code == 200, excel_download.text
+                assert excel_download.content[:2] == b"PK"
+                customer_run_headers = {"Authorization": f"Bearer {customer_portal_token}"}
+                customer_run_artifacts = await client.get(
+                    f"/api/v1/runs/{customer_run.id}/artifacts", headers=customer_run_headers,
+                )
+                assert customer_run_artifacts.status_code == 200, customer_run_artifacts.text
+                customer_run_artifact_rows = customer_run_artifacts.json()["data"]
+                assert [row["artifact_id"] for row in customer_run_artifact_rows] == [
+                    customer_run_artifact_id
+                ]
+                assert customer_run_artifact_rows[0]["kind"] == "keyword_research_artifact"
+                assert "storage_key" not in str(customer_run_artifact_rows)
+                customer_run_artifact_download = await client.get(
+                    f"/api/v1/runs/{customer_run.id}/artifacts/{customer_run_artifact_id}/download",
+                    headers=customer_run_headers,
+                )
+                assert customer_run_artifact_download.status_code == 200, customer_run_artifact_download.text
+                assert json.loads(customer_run_artifact_download.content)["artifact_id"] == customer_run_artifact_id
+                parent_run_artifacts = await client.get(
+                    f"/api/v1/runs/{target_run.id}/artifacts", headers=customer_run_headers,
+                )
+                assert parent_run_artifacts.status_code == 404, parent_run_artifacts.text
+                sibling_run_artifacts = await client.get(
+                    f"/api/v1/runs/{sibling_run.id}/artifacts", headers=customer_run_headers,
+                )
+                assert sibling_run_artifacts.status_code == 404, sibling_run_artifacts.text
+                sibling_run_artifact_download = await client.get(
+                    f"/api/v1/runs/{sibling_run.id}/artifacts/{sibling_run_artifact_id}/download",
+                    headers=customer_run_headers,
+                )
+                assert sibling_run_artifact_download.status_code == 404, sibling_run_artifact_download.text
+
+                customer_invoice_list = await client.get(
+                    "/api/v1/invoices",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_invoice_list.status_code == 200, customer_invoice_list.text
+                assert [row["id"] for row in customer_invoice_list.json()["data"]] == [
+                    str(customer_invoice.id)
+                ]
+                parent_invoice_read = await client.get(
+                    f"/api/v1/invoices/{target_invoice.id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert parent_invoice_read.status_code == 404, parent_invoice_read.text
+                sibling_invoice_read = await client.get(
+                    f"/api/v1/invoices/{sibling_invoice.id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert sibling_invoice_read.status_code == 404, sibling_invoice_read.text
+                customer_invoice_export = await client.post(
+                    f"/api/v1/invoices/{customer_invoice.id}/export-pdf",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert customer_invoice_export.status_code == 200, customer_invoice_export.text
+                invoice_pdf_id = customer_invoice_export.json()["data"]["pdf_file_id"]
+                invoice_pdf_download = await client.get(
+                    f"/api/v1/files/{invoice_pdf_id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert invoice_pdf_download.status_code == 200, invoice_pdf_download.text
+                assert invoice_pdf_download.content.startswith(b"%PDF-")
+                parent_invoice_export = await client.post(
+                    f"/api/v1/invoices/{target_invoice.id}/export-pdf",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert parent_invoice_export.status_code == 404, parent_invoice_export.text
+
+                async with sessions() as report_session:
+                    report_rows = (
+                        await report_session.execute(
+                            select(FileObject).where(FileObject.id.in_(
+                                [uuid.UUID(value) for value in report_file_ids]
+                            ))
+                        )
+                    ).scalars().all()
+                    assert {str(row.id) for row in report_rows} == set(report_file_ids)
+                    assert {row.tenant_id for row in report_rows} == {customer_a.id}
+                    with pytest.raises(NotFoundError):
+                        await registry.execute(
+                            "analyze_dataset",
+                            {"file_id": str(target_file.id)},
+                            permissions={"run.execute"},
+                            allowed_tools={"analyze_dataset"},
+                            db=report_session,
+                            tenant_id=customer_a.id,
+                            actor_id=customer_actor.id,
+                        )
+                    with pytest.raises(NotFoundError):
+                        await registry.execute(
+                            "analyze_dataset",
+                            {"file_id": str(sibling_file.id)},
+                            permissions={"run.execute"},
+                            allowed_tools={"analyze_dataset"},
+                            db=report_session,
+                            tenant_id=customer_a.id,
+                            actor_id=customer_actor.id,
+                        )
                 reseller_file_from_customer = await client.get(
                     f"/api/v1/files/{target_file.id}",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
@@ -1091,6 +1378,34 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert revoked_customer_portal_download.status_code == 403, (
                     revoked_customer_portal_download.text
+                )
+                revoked_customer_knowledge_search = await client.post(
+                    "/api/v1/knowledge/search",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                    json={"query": "tenant policy", "top_k": 20},
+                )
+                assert revoked_customer_knowledge_search.status_code == 403, (
+                    revoked_customer_knowledge_search.text
+                )
+                revoked_customer_run_artifacts = await client.get(
+                    f"/api/v1/runs/{customer_run.id}/artifacts", headers=customer_run_headers,
+                )
+                assert revoked_customer_run_artifacts.status_code == 403, (
+                    revoked_customer_run_artifacts.text
+                )
+                revoked_customer_run_artifact_download = await client.get(
+                    f"/api/v1/runs/{customer_run.id}/artifacts/{customer_run_artifact_id}/download",
+                    headers=customer_run_headers,
+                )
+                assert revoked_customer_run_artifact_download.status_code == 403, (
+                    revoked_customer_run_artifact_download.text
+                )
+                revoked_customer_invoice_export = await client.post(
+                    f"/api/v1/invoices/{customer_invoice.id}/export-pdf",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert revoked_customer_invoice_export.status_code == 403, (
+                    revoked_customer_invoice_export.text
                 )
 
                 # Customer identities cannot enumerate or create Vendor/Reseller
@@ -1541,6 +1856,14 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 revoked_vendor_portal_files = await client.get("/api/v1/files", headers=portal_headers)
                 assert revoked_vendor_portal_files.status_code == 403, (
                     revoked_vendor_portal_files.text
+                )
+                revoked_knowledge_search = await client.post(
+                    "/api/v1/knowledge/search",
+                    headers=portal_headers,
+                    json={"query": "tenant policy", "top_k": 20},
+                )
+                assert revoked_knowledge_search.status_code == 403, (
+                    revoked_knowledge_search.text
                 )
 
                 async with sessions() as session:

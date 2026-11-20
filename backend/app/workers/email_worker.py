@@ -12,7 +12,7 @@ from sqlalchemy import select
 from app.core.config import get_settings
 from app.core.database import worker_db_session
 from app.core.metrics import OUTBOX_EMAIL_DELIVERY
-from app.core.exceptions import ValidationAppError
+from app.core.exceptions import TenantInactiveError, ValidationAppError
 from app.models.outbox import OutboxMessage
 from app.services.agent_policy_engine import PolicyRequest, assert_authorized
 from app.workers.celery_app import celery_app
@@ -91,6 +91,12 @@ async def _send(outbox_id: str) -> None:
             await db.commit()
             side_effect_started = True
 
+            # Tenant lifecycle lock is acquired after the uncertain fence and
+            # held through SMTP plus the final durable outbox commit. Suspension
+            # takes the same Tenant row lock and therefore serializes with send.
+            from app.services.tenant_access_service import assert_tenant_active_for_side_effect
+            await assert_tenant_active_for_side_effect(db, tenant_id=row.tenant_id)
+
             # The commit above releases transaction-scoped advisory locks.
             # Re-enter a fresh transaction, revalidate Agent authority (which
             # reacquires the same kill-switch scope locks), and hold that lock
@@ -126,7 +132,13 @@ async def _send(outbox_id: str) -> None:
                 )
             metric_outcome = "success"
         except Exception as exc:
-            if side_effect_started:
+            if isinstance(exc, TenantInactiveError):
+                row.status = "dead"
+                from datetime import datetime, timezone
+                row.dead_at = datetime.now(timezone.utc)
+                row.last_error = str(exc)[:4000]
+                metric_outcome = "dead"
+            elif side_effect_started:
                 # The provider may have accepted the message even when the
                 # client observed an exception. Never convert that uncertainty
                 # into an automatic retry.
