@@ -1,4 +1,4 @@
-﻿"""Disposable-PostgreSQL HTTP acceptance for Vendor subtree user lifecycle."""
+"""Disposable-PostgreSQL HTTP acceptance for Vendor subtree user lifecycle."""
 
 import os
 import uuid
@@ -15,7 +15,9 @@ from sqlalchemy.pool import NullPool
 
 def _disposable_database_url() -> str:
     url = os.environ.get("LIFECYCLE_TEST_DATABASE_URL", "")
-    parsed = make_url(url) if url else None
+    if not url:
+        pytest.skip("Requires the isolated disposable PostgreSQL 16 lifecycle database")
+    parsed = make_url(url)
     if (
         parsed is None
         or parsed.drivername != "postgresql+asyncpg"
