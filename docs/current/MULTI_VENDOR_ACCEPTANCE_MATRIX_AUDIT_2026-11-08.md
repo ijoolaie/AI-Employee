@@ -536,3 +536,8 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Targeted Ruff across the corresponding production services/workers and test modules: **All checks passed**. `git diff --check` passed. No production or test source was changed in this verification slice; no database or provider was contacted.
 - This extends the bounded worker/delivery evidence. It does not close the full actor x hierarchy x delivery-kind matrix, prove immutable AuditLog transition coverage, or settle the unresolved failure/error privacy and transaction-coupling policy. Do not add speculative audit writes or change error persistence until that policy is approved.
 - The 81 pre-existing local worktree paths remain preserved and unstaged. Issue #1350 remains OPEN. Remaining gates include the audit/failure policy, sanitized historical Vendor permission-backfill snapshot review, human visual Portal acceptance, and remaining matrix cells.
+## 2026-11-20 - Hierarchical handoff notification destination evidence
+
+- Added PostgreSQL-backed `test_handoff_notification_recipient_is_exact_tenant_in_hierarchy` on current main. It verifies exact configured destinations for Vendor, sibling Resellers, and Customers, and verifies an unconfigured Customer has no implicit parent fallback.
+- Disposable PostgreSQL 16 / Alembic head `w33_tenant_action_grants`: **1 passed in 1.45s**; targeted Ruff and `git diff --check` passed. Temporary container/network removed.
+- Matrix remains **Partial**: exact-tenant destination resolution is now evidenced, but end-to-end dispatch/retry/dead-letter, revoked/stale delegated context, and notification-content isolation across every actor/topology still require proof.
