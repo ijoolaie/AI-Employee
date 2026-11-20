@@ -105,3 +105,29 @@ async def test_handoff_does_not_claim_notification_configured_without_smtp(monke
     assert calls == []
     assert "not configured" in db.added[-1].content
     assert conversation.status == "human"
+
+@pytest.mark.asyncio
+async def test_handoff_destination_lookup_is_scoped_to_each_tenant():
+    tenant_a, tenant_b = uuid4(), uuid4()
+    destinations = {
+        tenant_a: {"customer_handoff_notification_email": "a-ops@example.test"},
+        tenant_b: {"customer_handoff_notification_email": "b-ops@example.test"},
+    }
+    queried_tenants = []
+
+    class DB:
+        async def execute(self, statement):
+            tenant_id = statement.compile().params["id_1"]
+            queried_tenants.append(tenant_id)
+            return SimpleNamespace(
+                scalar_one_or_none=lambda: destinations.get(tenant_id)
+            )
+
+    db = DB()
+    destination_a = await customer_channel_service._tenant_handoff_notification_email(db, tenant_a)
+    destination_b = await customer_channel_service._tenant_handoff_notification_email(db, tenant_b)
+
+    assert queried_tenants == [tenant_a, tenant_b]
+    assert destination_a == "a-ops@example.test"
+    assert destination_b == "b-ops@example.test"
+    assert destination_a != destination_b
