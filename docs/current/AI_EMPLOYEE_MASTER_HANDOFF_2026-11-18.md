@@ -458,3 +458,9 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Extended the disposable PostgreSQL HTTP acceptance to exercise `GET .../users/roles`, reject role IDs belonging to a different tenant (**400**), and reject the global `Platform Admin` system role (**403**) while retaining successful target-tenant role assignment.
 - Re-ran the full migration-to-head + HTTP lifecycle acceptance on a fresh PostgreSQL 16.15 tmpfs database: **1 passed in 5.74s**. Observed and asserted the new 400/403 denials, alongside existing subtree, invitation, activation, last-admin and audit-ledger checks.
 - The dedicated temporary container and network were removed after the run. This test extension is local pending publication and fresh exact-head CI.
+
+### Final Vendor role-boundary exact-head CI confirmation - 2026-11-20
+- The role-boundary extension is published in commit `a175f107bf69d7cd3c00df9180df55305c9cb97e` on PR #1434. Fresh PostgreSQL 16.15 live acceptance passed **1/1 in 5.74s**, including global Platform Admin denial (403), foreign tenant role rejection (400), and target role-list read (200).
+- PR #1434 exact-head check rollup for `a175f107bf69d7cd3c00df9180df55305c9cb97e`: **35 SUCCESS, 0 failures, 0 pending**. Includes Backend, Frontend, Security/Privacy, CodeQL (Python and JS/TS), Architecture, Runtime Isolation/RBAC, DAST, Recovery, Infrastructure, and real-stack E2E suites.
+- The branch is synchronized with origin. The remaining 81 local dirty/untracked paths are unrelated ongoing Agent/Outbox/AssignmentCommand work; they have not been staged, reset, cleaned, or bundled into PR #1434.
+- This confirms the current Vendor user-administration slice, not final Issue #1350 acceptance. Issue #1350 remains OPEN; human portal UX acceptance and the separately tracked historical migration/audit-policy items remain open.
