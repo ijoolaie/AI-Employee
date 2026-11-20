@@ -41,7 +41,18 @@ _PORTAL_CONTEXT_DENIED_PREFIXES = (
 
 def _portal_context_path_is_denied(path: str) -> bool:
     """Keep account/control-plane APIs outside a delegated portal session."""
-    if path in {"/api/v1/auth/me", "/api/v1/operations/audit-logs", "/api/v1/operations/metrics", "/api/v1/usage/summary"} or path == "/api/v1/operations/dead-letters" or path.startswith("/api/v1/operations/dead-letters/"):
+    if (
+        path in {
+            "/api/v1/auth/me",
+            "/api/v1/operations/audit-logs",
+            "/api/v1/operations/metrics",
+            "/api/v1/usage/summary",
+            "/api/v1/usage/optimization",
+            "/api/v1/usage/cost-forecast",
+        }
+        or path == "/api/v1/operations/dead-letters"
+        or path.startswith("/api/v1/operations/dead-letters/")
+    ):
         return False
     return path == "/api/v1/analytics/roi" or any(
         path == prefix or path.startswith(f"{prefix}/")
