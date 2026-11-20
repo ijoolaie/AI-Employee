@@ -607,3 +607,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - `test_center_worker._execute_run_async` now invokes the existing `billing_service.assert_run_execution_entitlement` guard after validating the durable Run and enabled same-tenant definition, and before `start_run` or the QUEUED→RUNNING transition. This reuses the established subscription/license/tenant-suspension admission policy and its lock ordering; no new entitlement model or migration.
 - PostgreSQL 16 disposable tmpfs integration module `test_test_center_integration.py`: **5 passed in 4.08s**. The worker test proves wrong-tenant dispatch is rejected before entitlement evaluation; an inactive entitlement leaves the Run QUEUED with no `started_at`; after entitlement is restored the matching tenant executes successfully. Targeted Ruff and `git diff --check` passed. Temporary DB container/network removed.
 - Exact-head CI is pending in PR #1459. The shared billing guard's own PostgreSQL race coverage remains separate; this test proves Test Center calls it at the delayed execution boundary.
+
+### 2026-11-20 - Email Outbox delivery-kind validation
+
+- email_worker._send now fails closed unless the durable row kind is exactly email.send, before it commits the uncertain fence or contacts SMTP. This aligns its task boundary with the dedicated WhatsApp worker's kind check.
+- Regression: invoking the email task with a whatsapp.send_text row performs no SMTP attempt and leaves the row unchanged. Red/green confirmed.
+- Validation: focused email/WhatsApp/generic Outbox worker tests **19 passed**; Agent Outbox governance, handoff enqueue and legacy Outbox contract tests **11 passed**; targeted Ruff and git diff --check passed.
+- This is one delivery-kind dispatch-boundary cell only. Full end-to-end retry/dead-letter, stale/revoked delegated context, and actor/hierarchy/provider permutations remain incomplete. PR/CI evidence pending; Issue #1350 remains OPEN.
