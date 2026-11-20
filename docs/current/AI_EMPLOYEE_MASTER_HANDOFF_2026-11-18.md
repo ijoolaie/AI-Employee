@@ -575,3 +575,9 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Added `audit.read` to the Reseller test role because both endpoints require `AuditReadContext`. Existing Vendor B and Customer grant revocation assertions remain after the new active-grant checks; no revocation behavior was weakened.
 - Validation: route-policy module **20 passed in 0.67s**; live PostgreSQL 16 portal HTTP test **1 passed in 30.89s** on disposable tmpfs + dedicated Docker network, Alembic head `w33_tenant_action_grants`; targeted Ruff and `git diff --check` passed.
 - Temporary PostgreSQL container/network removed. Staging PostgreSQL/Redis untouched. This proves the two read endpoints' delegated tenant context across the three portal topologies; it does not complete the entire usage/finance matrix or persisted Run/worker execution. Included in PR #1457; exact-head CI will rerun after push.
+
+## 2026-11-20 - Global worker sweeper tenant attribution
+
+- Ported the bounded tenant-attribution regression cases from stale PR #1451 onto current main without changing worker runtime code: Test Center global expiration sweep audits each transitioned Run with that Run's tenant/resource ID; Workflow timeout sweep audits each timed-out Run with its own tenant; Run stale recovery audit uses the locked Run tenant; Workflow approval expiry audit uses the approval tenant/resource and does not mutate the unrelated cross-tenant Run/Step.
+- Validation: `test_worker_sweeper_tenant_attribution.py`, `test_run_recovery.py`, and `test_workflow_approval_expiry_tenant_boundary.py`: **9 passed in 1.61s**. Targeted Ruff and `git diff --check` passed. These are deterministic fake-session/unit proofs; no database or provider was contacted.
+- This does not complete every worker/dispatch/retry path or the delegated Run actor/grant provenance lifecycle. Included in PR #1457; exact-head CI required.

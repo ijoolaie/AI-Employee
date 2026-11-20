@@ -561,3 +561,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Authenticated PostgreSQL portal test exercises both endpoints under Vendor A→Reseller, Vendor B→Reseller, and Reseller→Customer grants; captured service `tenant_id` must equal the delegated resource tenant in each case. Reseller fixture role includes required `audit.read`.
 - Route-policy tests: **20 passed in 0.67s**. PostgreSQL 16 disposable tmpfs live HTTP test: **1 passed in 30.89s**, Alembic `w33_tenant_action_grants`; targeted Ruff/diff check passed. Temporary container/network removed.
 - Included in PR #1457. Other usage/finance routes, full Run/worker execution, and revocation delivery remain separately gated.
+
+## 2026-11-20 - Global worker sweeper tenant attribution
+
+- Added deterministic regression coverage for Test Center expiration, Workflow timeout, Run stale recovery, and Workflow approval expiry audit tenant/resource attribution. Cross-tenant approval expiry must not mutate the unrelated Run/Step.
+- Focused modules: **9 passed in 1.61s**; Ruff and `git diff --check` passed. Fake-session unit tests only; no database/provider access.
+- Remaining worker lifecycle and delegated Run/grant provenance gates remain open. Included in PR #1457; exact-head CI required.
