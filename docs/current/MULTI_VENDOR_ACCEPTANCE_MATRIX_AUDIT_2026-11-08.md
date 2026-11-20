@@ -541,3 +541,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Current main already covers full Vendor-to-direct-Customer and Reseller-to-Customer file lifecycle; PR #1428 adds no missing lifecycle behavior against the current test body and is treated as redundant.
 - Remaining #1432 gap was sibling Customer file isolation. A distinct unentitled Customer file is now seeded in the live PostgreSQL portal test, and the granted sibling Customer context asserts: file omitted from list; GET by ID = 404; download = 404; delete = 404.
 - Disposable PostgreSQL 16 / Alembic head `w33_tenant_action_grants`; live HTTP acceptance **1 passed in 34.24s**; targeted Ruff and `git diff --check` passed. Exact-head CI is pending publication; do not mark the matrix cell fully accepted until CI completes.
+
+## 2026-11-20 - Merged tenant notification and symmetric action-grant coverage
+
+- PR #1449 merged at `8829373a092c1fb446c747822e4097985c171f68` after 12/12 exact-head checks passed.
+- PR #1453 merged at `b82a5f0b368bf532c21e2aba07e9995aef4ad6f8` after 12/12 exact-head checks passed on its rebased head.
+- Both are integrated into current `main`; remaining unrelated acceptance gates stay open.

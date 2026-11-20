@@ -553,3 +553,9 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - PR #1448 (`fix: register and route WhatsApp outbox delivery`) completed all **16/16** exact-head checks successfully on `33d12bd12dc6cbb4b49d4f335885d8342eb3f2cb`, based on `8829373a092c1fb446c747822e4097985c171f68`, and was merged using a merge commit.
 - Merge commit and resulting `main` head: `d1a8a794d4bd4474c03ce436c735d552586c44b4`. The PR state was verified as MERGED.
 - This does not close Issue #1350 or resolve the separate audit-policy, historical migration snapshot, human UX, and remaining matrix gates.
+
+## 2026-11-20 - Tenant notification and action-grant PR merges
+
+- PR #1449 (`test: verify customer handoff notification tenant scoping`) completed all **12/12** exact-head checks successfully on `874afda1c9318c852a204d008668eb2aa33f3397`, based on `6e17d8a611e4194b684daff4341098455c76d5a7`; merged commit `8829373a092c1fb446c747822e4097985c171f68`.
+- PR #1453 (`test: cover symmetric tenant action grant delegation`) completed all **12/12** exact-head checks successfully on rebased head `e9d34899aad5035c938330b90f14d65c664c8d8e`, based on `d1a8a794d4bd4474c03ce436c735d552586c44b4`; merged commit `b82a5f0b368bf532c21e2aba07e9995aef4ad6f8`.
+- Both PR states were verified MERGED and `main` advanced to `b82a5f0b368bf532c21e2aba07e9995aef4ad6f8`. Issue #1350 remains OPEN; these merges do not resolve the outstanding audit-policy, historical migration snapshot, human UX, or remaining matrix gates.
