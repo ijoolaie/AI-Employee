@@ -540,3 +540,22 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Targeted Ruff across the corresponding production services/workers and test modules: **All checks passed**. `git diff --check` passed. No production or test source was changed in this verification slice; no database or provider was contacted.
 - This extends the bounded worker/delivery evidence. It does not close the full actor x hierarchy x delivery-kind matrix, prove immutable AuditLog transition coverage, or settle the unresolved failure/error privacy and transaction-coupling policy. Do not add speculative audit writes or change error persistence until that policy is approved.
 - The 81 pre-existing local worktree paths remain preserved and unstaged. Issue #1350 remains OPEN. Remaining gates include the audit/failure policy, sanitized historical Vendor permission-backfill snapshot review, human visual Portal acceptance, and remaining matrix cells.
+## 2026-11-20 - Reseller-to-Customer sibling file isolation acceptance
+
+- Compared the outstanding file-portal PRs #1428 and #1432 against current `main` (`8829373a092c1fb446c747822e4097985c171f68`). The current live API test already exercises Vendor-to-direct-Customer file upload/get/download/delete and Reseller-to-Customer upload/get/download/delete, including home-tenant isolation and post-delete 404. PR #1428's lifecycle scenarios are therefore already represented; do not duplicate them.
+- Added the one uncovered sibling-Customer file boundary to `backend/tests/test_portal_access_live_api.py`: a distinct unentitled Customer under the same Reseller owns a seeded file; the granted Customer portal must omit that file from listing and receive 404 for get, download, and delete. Existing direct/nested lifecycle assertions were retained.
+- Validation: PostgreSQL 16 disposable tmpfs database on dedicated Docker network, Alembic migrated to `w33_tenant_action_grants`; live HTTP test `test_portal_grant_activates_context_and_revocation_invalidates_it`: **1 passed in 34.24s**. Ruff for the changed test file passed; `git diff --check` passed.
+- Test isolation: only the uniquely named temporary PostgreSQL container/network were used. Staging PostgreSQL (`15434`) and Redis (`16379`) were not touched. Python 3.10 is below the project's runtime requirement for `enum.StrEnum`; the test was correctly rerun and passed under Python 3.12. The initial Python 3.10 invocation did not execute the test body.
+- The consolidated sibling-isolation change is prepared on a clean branch based on current `main`; exact-head GitHub CI is still required before merge. PR #1428 is redundant against current main; PR #1432's missing sibling assertions are represented by this focused addition. Issue #1350 remains OPEN.
+
+## 2026-11-20 - PR #1448 WhatsApp outbox merge
+
+- PR #1448 (`fix: register and route WhatsApp outbox delivery`) completed all **16/16** exact-head checks successfully on `33d12bd12dc6cbb4b49d4f335885d8342eb3f2cb`, based on `8829373a092c1fb446c747822e4097985c171f68`, and was merged using a merge commit.
+- Merge commit and resulting `main` head: `d1a8a794d4bd4474c03ce436c735d552586c44b4`. The PR state was verified as MERGED.
+- This does not close Issue #1350 or resolve the separate audit-policy, historical migration snapshot, human UX, and remaining matrix gates.
+
+## 2026-11-20 - Tenant notification and action-grant PR merges
+
+- PR #1449 (`test: verify customer handoff notification tenant scoping`) completed all **12/12** exact-head checks successfully on `874afda1c9318c852a204d008668eb2aa33f3397`, based on `6e17d8a611e4194b684daff4341098455c76d5a7`; merged commit `8829373a092c1fb446c747822e4097985c171f68`.
+- PR #1453 (`test: cover symmetric tenant action grant delegation`) completed all **12/12** exact-head checks successfully on rebased head `e9d34899aad5035c938330b90f14d65c664c8d8e`, based on `d1a8a794d4bd4474c03ce436c735d552586c44b4`; merged commit `b82a5f0b368bf532c21e2aba07e9995aef4ad6f8`.
+- Both PR states were verified MERGED and `main` advanced to `b82a5f0b368bf532c21e2aba07e9995aef4ad6f8`. Issue #1350 remains OPEN; these merges do not resolve the outstanding audit-policy, historical migration snapshot, human UX, or remaining matrix gates.

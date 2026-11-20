@@ -113,8 +113,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reseller_grantor = User(tenant_id=target.id, email=f"reseller-grantor-{run_id}@example.com", password_hash="x", full_name="Reseller Grantor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
             reseller_actor = User(tenant_id=target.id, email=f"reseller-actor-{run_id}@example.com", password_hash="x", full_name="Reseller Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
             customer_actor = User(tenant_id=customer_a.id, email=f"customer-actor-{run_id}@example.com", password_hash="x", full_name="Customer Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
+            unentitled_customer_actor = User(tenant_id=unentitled_customer.id, email=f"unentitled-customer-actor-{run_id}@example.com", password_hash="x", full_name="Unentitled Customer Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
             direct_customer_actor = User(tenant_id=direct_customer.id, email=f"direct-customer-actor-{run_id}@example.com", password_hash="x", full_name="Direct Customer Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[])
-            session.add_all([grantor, actor, vendor_b_grantor, vendor_b_actor, reseller_grantor, reseller_actor, customer_actor, direct_customer_actor])
+            session.add_all([grantor, actor, vendor_b_grantor, vendor_b_actor, reseller_grantor, reseller_actor, customer_actor, unentitled_customer_actor, direct_customer_actor])
             await session.flush()
             session.add(TenantDemoGrant(
                 tenant_id=direct_customer.id,
@@ -241,6 +242,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 status="active",
             )
             target_file = FileObject(tenant_id=target.id, uploaded_by=actor.id, filename="target-policy.txt", content_type="text/plain", size_bytes=10, storage_key=f"{target.id}/target-policy.txt", status="active")
+            unentitled_sibling_customer_file = FileObject(
+                tenant_id=unentitled_customer.id,
+                uploaded_by=unentitled_customer_actor.id,
+                filename="unentitled-sibling-customer-secret.txt",
+                content_type="text/plain",
+                size_bytes=29,
+                storage_key=f"{unentitled_customer.id}/unentitled-sibling-customer-secret.txt",
+                status="active",
+            )
             customer_report_source = FileObject(
                 tenant_id=customer_a.id, uploaded_by=customer_actor.id,
                 filename="customer-sales.csv", content_type="text/csv",
@@ -254,7 +264,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 size_bytes=17, storage_key=f"{reseller_b.id}/vendor-b-target-policy.txt",
                 status="active",
             )
-            session.add_all([direct_customer_file, customer_file, customer_report_source, target_file, sibling_file, cross_vendor_file, vendor_b_file])
+            session.add_all([direct_customer_file, customer_file, customer_report_source, unentitled_sibling_customer_file, target_file, sibling_file, cross_vendor_file, vendor_b_file])
             target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
             sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
             customer_portal_customer = Customer(tenant_id=customer_a.id, external_key=f"customer-portal-customer-{run_id}", name="Customer portal record", email="portal-customer@example.com", notes="customer-portal-private-note")
@@ -1140,6 +1150,26 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert {item["id"] for item in customer_visible_files.json()["data"]} == {
                     str(customer_file.id), str(customer_report_source.id),
                 }
+                # A valid grant to one Customer must not expose a sibling
+                # Customer under the same Reseller, including by ID lookup.
+                assert str(unentitled_sibling_customer_file.id) not in {
+                    item["id"] for item in customer_visible_files.json()["data"]
+                }
+                sibling_customer_file_get = await client.get(
+                    f"/api/v1/files/{unentitled_sibling_customer_file.id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert sibling_customer_file_get.status_code == 404, sibling_customer_file_get.text
+                sibling_customer_file_download = await client.get(
+                    f"/api/v1/files/{unentitled_sibling_customer_file.id}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert sibling_customer_file_download.status_code == 404, sibling_customer_file_download.text
+                sibling_customer_file_delete = await client.delete(
+                    f"/api/v1/files/{unentitled_sibling_customer_file.id}",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert sibling_customer_file_delete.status_code == 404, sibling_customer_file_delete.text
                 customer_file_download = await client.get(
                     f"/api/v1/files/{customer_file.id}/download",
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
