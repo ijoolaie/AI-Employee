@@ -296,6 +296,10 @@ async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.
         raise NotFoundError("Tenant not found")
 
     if tenant.tenant_kind == "vendor":
+        # NO KEY UPDATE still serializes lifecycle changes, while remaining
+        # compatible with KEY SHARE taken by FK checks in the durable AI-call
+        # session. A stronger FOR UPDATE here can block the worker's own
+        # independently committed ai_provider_calls insert.
         locked_tenant = (
             await db.execute(
                 select(Tenant).where(Tenant.id == tenant_id).with_for_update(key_share=True)
