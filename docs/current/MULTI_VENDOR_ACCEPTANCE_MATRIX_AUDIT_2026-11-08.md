@@ -614,3 +614,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Regression: invoking the email task with a whatsapp.send_text row performs no SMTP attempt and leaves the row unchanged. Red/green confirmed.
 - Validation: focused email/WhatsApp/generic Outbox worker tests **19 passed**; Agent Outbox governance, handoff enqueue and legacy Outbox contract tests **11 passed**; targeted Ruff and git diff --check passed.
 - This is one delivery-kind dispatch-boundary cell only. Full end-to-end retry/dead-letter, stale/revoked delegated context, and actor/hierarchy/provider permutations remain incomplete. PR/CI evidence pending; Issue #1350 remains OPEN.
+
+## 2026-11-20 - Outbox claim/replay concurrency evidence
+
+- Added claim-time recovery lease coverage, replay retry-budget/terminal-metadata reset coverage, tenant-scoped SQL row-lock contract, and a PostgreSQL integration test for concurrent dead-letter replay.
+- Disposable PostgreSQL 16 tmpfs validation: **4 passed in 1.98s**. One replay commits; the concurrent replay observes the new `pending` state and returns HTTP 409. No duplicate replay transition is persisted.
+- The Notifications/Outbox acceptance row remains PARTIAL: end-to-end actor/hierarchy/delivery-kind retry exhaustion, revoked-context handling, and provider-boundary permutations are still required. Immutable audit policy remains a separate decision. Issue #1350 stays OPEN.
