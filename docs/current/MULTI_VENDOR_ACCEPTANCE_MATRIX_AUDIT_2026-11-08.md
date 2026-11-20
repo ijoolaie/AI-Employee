@@ -576,3 +576,8 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added deterministic regression coverage for Test Center expiration, Workflow timeout, Run stale recovery, and Workflow approval expiry audit tenant/resource attribution. Cross-tenant approval expiry must not mutate the unrelated Run/Step.
 - Focused modules: **9 passed in 1.61s**; Ruff and `git diff --check` passed. Fake-session unit tests only; no database/provider access.
 - Remaining worker lifecycle and delegated Run/grant provenance gates remain open.
+
+## 2026-11-20 - Delegated invoice PDF / Report Employee artifact ownership
+
+- Live portal acceptance now checks Vendor A, Vendor B, and Customer invoice PDF rows have the delegated resource tenant and the actual portal actor as `uploaded_by`; foreign Vendor invoice export is 404 and revoked Vendor export is 403.
+- Report Employee `analyze_dataset` generated files are asserted to have the Customer tenant and Customer actor. Updated PostgreSQL 16 disposable live HTTP test: **1 passed**; Ruff and `git diff --check` passed. Temporary DB container/network removed.

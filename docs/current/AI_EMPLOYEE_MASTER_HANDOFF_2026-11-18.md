@@ -592,3 +592,10 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Ported the bounded tenant-attribution regression cases from stale PR #1451 onto current main without changing worker runtime code: Test Center global expiration sweep audits each transitioned Run with that Run's tenant/resource ID; Workflow timeout sweep audits each timed-out Run with its own tenant; Run stale recovery audit uses the locked Run tenant; Workflow approval expiry audit uses the approval tenant/resource and does not mutate the unrelated cross-tenant Run/Step.
 - Validation: `test_worker_sweeper_tenant_attribution.py`, `test_run_recovery.py`, and `test_workflow_approval_expiry_tenant_boundary.py`: **9 passed in 1.61s**. Targeted Ruff and `git diff --check` passed. These are deterministic fake-session/unit proofs; no database or provider was contacted.
 - This does not complete every worker/dispatch/retry path or the delegated Run actor/grant provenance lifecycle. Included in PR #1457; exact-head CI required.
+
+## 2026-11-20 - Delegated invoice PDF and Report Employee artifact ownership
+
+- Extended the live portal PostgreSQL test to assert generated invoice PDF `FileObject` rows are owned by the resolved resource tenant and uploaded by the effective actor for Vendor A→Reseller, Vendor B→Reseller, and Reseller→Customer contexts. Added negative checks that a Vendor A portal cannot export a Vendor B invoice and a revoked Vendor portal cannot export its former target invoice.
+- Report Employee `analyze_dataset` artifact rows are now asserted to use the Customer tenant and the Customer actor who invoked the tool; this complements the focused ToolRegistry actor-forwarding test.
+- Validation: updated live PostgreSQL 16 portal HTTP test completed successfully (**1 passed**) on disposable tmpfs + dedicated Docker network, Alembic `w33_tenant_action_grants`; targeted Ruff and `git diff --check` passed. Temporary DB container/network removed.
+- Included in PR #1457; exact-head CI reruns after this test-only extension.
