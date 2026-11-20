@@ -72,7 +72,7 @@ async def _send(outbox_id: str) -> None:
             select(OutboxMessage).where(OutboxMessage.id == outbox_id).with_for_update()
         )
         row = result.scalar_one_or_none()
-        if row is None or row.status in {"dispatched", "dead", "uncertain"}:
+        if row is None or row.kind != "email.send" or row.status in {"dispatched", "dead", "uncertain"}:
             return
         if row.status not in {"processing", "pending"}:
             return
