@@ -1,5 +1,6 @@
 from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
+from sqlalchemy import select
 from app.core.deps import AuditReadContext, DbSession, WorkflowReadContext, WorkflowExecuteContext
 from app.schemas.common import APIResponse
 from app.schemas.audit import AuditLogResponse
@@ -21,8 +22,18 @@ async def list_dead_letters(ctx: WorkflowReadContext, db: DbSession, limit: int 
 
 @router.post("/dead-letters/{message_id}/replay", response_model=APIResponse[dict])
 async def replay_dead_letter(message_id: UUID, ctx: WorkflowExecuteContext, db: DbSession):
-    row = await db.get(OutboxMessage, message_id)
-    if row is None or row.tenant_id != ctx.tenant_id:
+    # Serialize replay with dispatch claims and concurrent replay requests.
+    # Re-check status only after the row lock has been acquired.
+    result = await db.execute(
+        select(OutboxMessage)
+        .where(
+            OutboxMessage.id == message_id,
+            OutboxMessage.tenant_id == ctx.tenant_id,
+        )
+        .with_for_update()
+    )
+    row = result.scalar_one_or_none()
+    if row is None:
         raise HTTPException(status_code=404, detail="Dead-letter message not found")
     if row.status != "dead":
         raise HTTPException(status_code=409, detail="Message is not dead-lettered")

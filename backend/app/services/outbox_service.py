@@ -97,6 +97,11 @@ async def claim(db: AsyncSession, *, limit: int = 50) -> list[OutboxMessage]:
     for row in rows:
         row.status = "processing"
         row.attempts += 1
+        # Start the processing recovery lease at claim time, not enqueue time.
+        # The recovery query reclaims processing rows when available_at is five
+        # minutes old; leaving the original due timestamp here can cause early
+        # duplicate publishes for messages that waited in the pending queue.
+        row.available_at = now
     await db.flush()
     return rows
 
@@ -122,10 +127,13 @@ async def mark_retry(db: AsyncSession, message: OutboxMessage, error: str, delay
 
 
 async def replay(db: AsyncSession, message: OutboxMessage) -> OutboxMessage:
+    now = datetime.now(timezone.utc)
     message.status = "pending"
-    message.available_at = datetime.now(timezone.utc)
+    message.attempts = 0
+    message.available_at = now
+    message.dispatched_at = None
     message.last_error = None
     message.dead_at = None
-    message.replayed_at = datetime.now(timezone.utc)
+    message.replayed_at = now
     await db.flush()
     return message
