@@ -116,6 +116,7 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                     id=uuid.uuid4(), tenant_id=tenant_a.id,
                     employee_id=employee.id, channel_id=channel.id,
                     customer_token_hash=_hash_token(handoff_token), customer_name="Synthetic customer",
+                    customer_email=f"private-a-{suffix}@example.test", customer_phone="+15550000001",
                     status="open", handoff_requested=False,
                 )
                 employee_b = Employee(
@@ -137,6 +138,7 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                     id=uuid.uuid4(), tenant_id=tenant_b.id,
                     employee_id=employee_b.id, channel_id=channel_b.id,
                     customer_token_hash=_hash_token(handoff_token_b), customer_name="Synthetic customer B",
+                    customer_email=f"private-b-{suffix}@example.test", customer_phone="+15550000002",
                     status="open", handoff_requested=False,
                 )
                 session.add_all([conversation, conversation_b])
@@ -218,6 +220,17 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                 assert str(tenant_a.id) in outbox_row.payload["body"]
                 assert str(conversation.id) in outbox_row.payload["body"]
                 assert str(channel.id) in outbox_row.payload["body"]
+                assert outbox_row.payload["body"] == (
+                    "A customer requested human support.\n"
+                    f"Conversation ID: {conversation.id}\n"
+                    f"Channel ID: {channel.id}\n"
+                    f"Tenant ID: {tenant_a.id}\n"
+                    "Open the authenticated support workspace to review the conversation."
+                )
+                assert "Synthetic customer" not in outbox_row.payload["body"]
+                assert f"private-a-{suffix}@example.test" not in outbox_row.payload["body"]
+                assert "+15550000001" not in outbox_row.payload["body"]
+                assert request_text not in outbox_row.payload["body"]
 
                 # A second tenant with a different configured destination must
                 # resolve its own address from its own Tenant.settings. The
@@ -242,6 +255,18 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                 assert str(tenant_b.id) in tenant_b_outbox.payload["body"]
                 assert str(conversation_b.id) in tenant_b_outbox.payload["body"]
                 assert str(channel_b.id) in tenant_b_outbox.payload["body"]
+                assert tenant_b_outbox.payload["body"] == (
+                    "A customer requested human support.\n"
+                    f"Conversation ID: {conversation_b.id}\n"
+                    f"Channel ID: {channel_b.id}\n"
+                    f"Tenant ID: {tenant_b.id}\n"
+                    "Open the authenticated support workspace to review the conversation."
+                )
+                assert str(tenant_a.id) not in tenant_b_outbox.payload["body"]
+                assert str(conversation.id) not in tenant_b_outbox.payload["body"]
+                assert str(channel.id) not in tenant_b_outbox.payload["body"]
+                assert f"private-b-{suffix}@example.test" not in tenant_b_outbox.payload["body"]
+                assert "+15550000002" not in tenant_b_outbox.payload["body"]
                 assert tenant_b_outbox.payload["to"] != outbox_row.payload["to"]
 
                 # Re-enqueuing the same logical handoff must return the existing
