@@ -37,7 +37,7 @@ async def execute_run(run_id: UUID, ctx: RunExecuteContext, db: AsyncSession = D
         raise HTTPException(status_code=409, detail="only queued test runs can be dispatched")
 
     try:
-        task = execute_run_task.delay(str(run.id))
+        task = execute_run_task.delay(str(run.id), str(ctx.tenant_id))
     except Exception as exc:
         await db.rollback()
         raise HTTPException(status_code=503, detail="test run worker dispatch failed") from exc
