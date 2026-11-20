@@ -536,3 +536,8 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Targeted Ruff across the corresponding production services/workers and test modules: **All checks passed**. `git diff --check` passed. No production or test source was changed in this verification slice; no database or provider was contacted.
 - This extends the bounded worker/delivery evidence. It does not close the full actor x hierarchy x delivery-kind matrix, prove immutable AuditLog transition coverage, or settle the unresolved failure/error privacy and transaction-coupling policy. Do not add speculative audit writes or change error persistence until that policy is approved.
 - The 81 pre-existing local worktree paths remain preserved and unstaged. Issue #1350 remains OPEN. Remaining gates include the audit/failure policy, sanitized historical Vendor permission-backfill snapshot review, human visual Portal acceptance, and remaining matrix cells.
+## 2026-11-20 - Sibling Customer file isolation delta
+
+- Current main already covers full Vendor-to-direct-Customer and Reseller-to-Customer file lifecycle; PR #1428 adds no missing lifecycle behavior against the current test body and is treated as redundant.
+- Remaining #1432 gap was sibling Customer file isolation. A distinct unentitled Customer file is now seeded in the live PostgreSQL portal test, and the granted sibling Customer context asserts: file omitted from list; GET by ID = 404; download = 404; delete = 404.
+- Disposable PostgreSQL 16 / Alembic head `w33_tenant_action_grants`; live HTTP acceptance **1 passed in 34.24s**; targeted Ruff and `git diff --check` passed. Exact-head CI is pending publication; do not mark the matrix cell fully accepted until CI completes.
