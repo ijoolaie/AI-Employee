@@ -1,3 +1,31 @@
+## Active engineering track — 2026-11-18: Multi-Vendor acceptance (#1350)
+
+This checkpoint supersedes older dated priorities for the current continuation. Work is restricted to the Multi-Vendor tenant ownership, delegated authorization and portal acceptance track. Do not start unrelated product, World Mode, external production or release work.
+
+Current evidence:
+- PR #1434 is OPEN/unmerged at exact head fed62f56a75dd0f6de09c41e14a00506593d14c5, matching the active local branch.
+- 20 GitHub Actions suites and one GitHub Advanced Security suite succeeded on that head. Freebuff Web suite 117539141336 is queued; combined commit status is pending. No merge.
+- PR #1433 (master handoff) is OPEN/unmerged. PR #1447 is Draft and stacked on #1434. Issue #1350 remains OPEN.
+- The local worktree has 80 uncommitted paths (61 tracked, 19 untracked). They are outside the committed test-only scope of PR #1434 and must be preserved and classified before further implementation.
+
+Single ordered path:
+1. Complete remaining Actor x Resource x Action route/action/topology cases, one documented gap per step.
+2. Local ephemeral PostgreSQL evidence now passes for Outbox entitlement/provider fencing (8), Test Center suspended delayed execution (5), delegated Portal/reporting and sibling invoice export denial (21), and Lifecycle races/API (5); obtain exact-head GitHub CI evidence next.
+3. Delegated `/usage/optimization` and `/usage/cost-forecast` are now accepted in the live Portal scenario; only exact-head CI evidence remains for this slice.
+4. Verify delegated audit attribution for failed access, grant revocation and background workers.
+5. Keep legacy migration rehearsal and human visual acceptance behind their separate approval gates; realtime transport is a separate follow-on, not an Issue #1350 blocker.
+6. Treat backend cache isolation as not applicable unless a server response/data cache is introduced; preserve future tenant/context cache requirements.
+7. Keep persistent database changes, commit/push/merge, deploy and release promotion behind separate explicit authorization.
+
+Explicit decision gates:
+- WebSocket/SSE is not implemented. Treat it as an architecture decision only; do not implement a transport without a separate approved decision.
+- Desktop/mobile visual acceptance requires separate explicit approval.
+- No persistent DB migration/backfill, Staging/Production mutation, commit, push, merge, deploy or release promotion without separate explicit authorization.
+
+Detailed checkpoint: docs/current/AI_EMPLOYEE_MASTER_HANDOFF_2026-11-18.md.
+Source-backed gap register: docs/current/MULTI_VENDOR_ACCEPTANCE_MATRIX_AUDIT_2026-11-08.md.
+
+---
 ## Verified checkpoint — 2026-10-30 (PRs #1310 and #1311 merged)
 
 Application baseline: `main` at `3d3f7f72c4c5e56a4d7e3f1c73cd282c41aea10f` after the two merges below. This documentation checkpoint does not change application behavior.
@@ -372,3 +400,123 @@ This is a new product/design track, not a claim that interactive World Mode is a
 ### External-production boundary
 
 External production remains independent. Product World work is allowed to proceed locally while the project remains local-first; no external production deployment or customer-revenue claim is implied by this track.
+
+## Step completion — 2026-11-18
+
+Notification recipient lookup is evidenced with one focused test (1 passed, 2 deselected; no database). The broader Notifications/Outbox row remains partial. Continue next with the existing entitlement expiry/suspension evidence and only the remaining in-flight/background boundary; do not repeat expired-grant or paused-subscription tests already present.
+
+## Entitlement slice result — 2026-11-18
+
+Outbound Email/WhatsApp workers use the existing commercial execution-entitlement guard before provider I/O; deterministic denial follows the dead-letter path. Eight focused PostgreSQL tests now pass on a disposable local database, including no-entitlement denial for both providers and Subscription revocation serialization across the provider transaction. Next ordered slice is a bounded inventory of remaining Celery/async workers for tenant provenance and execution-time authorization.
+
+## Worker inventory slice result — 2026-11-18
+
+Test Center delayed execution revalidates current tenant/commercial entitlement using the durable TestRun tenant before starting. The suspended-tenant PostgreSQL integration case now passes with valid paid entitlement fixtures; all five Test Center integration tests pass locally on the disposable PostgreSQL database. The remaining reviewed schedule/event/Run/Workflow/outbox tasks use explicit or durable-row-derived tenant identity with existing guards. Next ordered domain: server-side cache isolation, followed by remaining report/export topology gaps.
+
+## Cache isolation decision — 2026-11-18
+
+- Targeted backend scan found no tenant-scoped server response/data cache or cache decorator. Redis is used for IP rate limiting, tenant resource leases and fair scheduling, not response caching. Frontend QueryClient identity clearing is already evidenced by #1413–#1415.
+- Do not build a cache subsystem or add cache tests. Mark backend cache isolation not applicable for this source baseline; retain a guard for any future server cache to include effective tenant/context and revoke/switch invalidation.
+- Next: reports, privacy exports and generated artifact ownership gaps.
+
+## Latest report/export evidence — 2026-11-18
+
+- Added one Reseller→Customer negative assertion: sibling Customer invoice PDF export must return 404. Ruff and diff check passed; PostgreSQL scenario not run locally.
+- Existing portal live-API evidence already covers owned invoice PDF export/download and revoked-grant denial; the new assertion closes only the sibling export action gap.
+- CI execution remains pending.
+
+## Knowledge search/indexing source reconciliation - 2026-11-18
+
+Existing portal live-API acceptance covers direct Customer and Vendor-to-Reseller contexts: tenant-owned indexing, sibling file rejection, search results excluding sibling/foreign tenant markers, and 403 after grant revocation. RAG search filters KnowledgeChunk, KnowledgeDocument and active FileObject by effective tenant. API supports bounded top_k (1..20), not page pagination or arbitrary filters; no result cache exists. Do not invent tests for nonexistent features. Search/index isolation is covered for the exercised contexts; the full Actor x Resource x Action matrix remains partial pending remaining hierarchy permutations and authorized CI evidence.
+
+## Worktree status refresh - 2026-11-18
+
+Current worktree is 80 changed paths (61 tracked, 19 untracked), with no staged changes. Four additional tracked paths were changed in the entitlement and report/export slices since the 76-path checkpoint. Preserve all existing edits. Branch remains test/knowledge-revoked-portal-context-20261108 at fed62f56a75dd0f6de09c41e14a00506593d14c5. No commit/push/merge/deploy or database mutation; local changes are not part of PR #1434.
+
+## Reseller Customer user lifecycle evidence - 2026-11-18
+
+Added a live portal acceptance scenario for Reseller-owned Customer user management: invite/revoke in its direct Customer and deny invitation into a sibling Reseller's Customer. Ruff and diff check passed; PostgreSQL scenario not run locally. Isolated CI evidence is pending.
+
+## Scope clarification - realtime is not an Issue #1350 blocker
+
+Issue #1350's approved scope explicitly names APIs, search, reports, files, exports, background jobs and dashboards, but does not require WebSocket/SSE. Realtime remains a separate product/architecture follow-on and must not be implemented in this continuation. It does not block Issue #1350 acceptance unless the product owner formally extends the approved scope.
+## Action-grant and child-tenant lifecycle live acceptance - 2026-11-20
+
+- Executed the PostgreSQL 16 live API acceptance on a disposable container with an isolated network namespace and tmpfs database storage. The complete local Alembic graph, including `w34_assignment_commands` and `w35_assignment_recovery_claims`, migrated successfully.
+- `test_reseller_action_grant_enables_direct_customer_provisioning_and_revocation`, `test_vendor_action_grant_enables_reseller_provisioning_and_revocation`, and `test_vendor_reseller_lifecycle_routes_enforce_direct_child_boundaries` passed: **3 passed**. The lifecycle case covers Vendor -> direct Reseller, Vendor -> direct Customer, and Reseller -> direct Customer, including invalid transitions, parent/child guards, sibling/wrong-kind denial, audit attribution and user deactivation.
+- The first execution exposed a test-fixture mismatch, not an application defect: the two new grantor fixtures used a non-canonical role name (`Action Grant Admin`), while the established edition-admin dependency requires `Admin`. Updated only those test fixtures; rerun passed. No production code changed.
+- The existing Vendor -> direct Customer action-grant baseline test was not part of this filtered run. No GitHub CI was triggered. Disposable PostgreSQL container was removed; no persistent DB, Staging service, or existing container was modified.
+- Remaining gates: exact-head CI evidence; unresolved product decision on Vendor parent administration of child-tenant users; audit failure-event transaction/privacy policy; legacy migration rehearsal and human UX acceptance. Issue #1350 remains OPEN.
+## Vendor direct-Customer action-grant baseline execution - 2026-11-20
+
+- Executed the previously omitted baseline `test_user_action_grant_enables_scoped_provisioning_and_revocation` independently against a fresh disposable PostgreSQL 16 container (`support_test`, isolated network namespace, tmpfs data directory).
+- The full Alembic graph migrated from the initial schema through `w35_assignment_recovery_claims`; the focused test passed: **1 passed, 2 deselected**.
+- Combined with the three passing live acceptance cases recorded above, Vendor -> direct Customer, Vendor -> direct Reseller, Reseller -> direct Customer grant/revoke, and the Vendor/Reseller child lifecycle matrix now all have local PostgreSQL execution evidence.
+- No Production source changed. The test container was uniquely named, stopped, and auto-removed. Staging services and the persistent databases were not targeted. GitHub CI remains untriggered; Issue #1350 remains OPEN.
+
+## Legacy Vendor permission-backfill rehearsal evidence - 2026-11-20
+
+- Executed the existing PostgreSQL TEMP-table rehearsal `backend/tests/test_vendor_permission_backfill_postgres.py` on disposable PostgreSQL 16: **1 passed**.
+- The fixture exercises two root Vendors, a shared role assigned to both a platform administrator and an ordinary user, Vendor child Reseller/Customer roles, Vendor Admin/Owner role-name variants, preservation of an existing permission description, idempotent repeated upgrade, and non-revoking downgrade behavior. The test rolls back its transaction; no persistent schema or data is changed.
+- This is synthetic representative-fixture evidence, not a rehearsal against a sanitized historical production snapshot. The acceptance matrix's real legacy-snapshot review remains OPEN; no Staging/Production migration or backfill was run.
+- Disposable PostgreSQL container was uniquely named, isolated, tmpfs-backed, stopped, and auto-removed. No Production source changed. Issue #1350 remains OPEN.
+
+## Exact-head GitHub CI and remaining action-scope contracts - 2026-11-20
+
+- Re-read GitHub PR #1434 and the complete Check Runs collection for exact head `fed62f56a75dd0f6de09c41e14a00506593d14c5`: **23/23 check runs completed successfully**, including CI backend/frontend, CodeQL (Python and JavaScript/TypeScript), security/privacy, architecture, tenant hierarchy isolation/RBAC, real-stack E2E, DAST, infrastructure, observability, recovery and rollback. This supersedes earlier handoff notes describing a queued/pending check on this same SHA.
+- PR #1434 remains OPEN and unmerged. PR #1447 remains OPEN, Draft, stacked on #1434. Issue #1350 remains OPEN.
+- Important evidence boundary: these GitHub checks ran against the pushed `fed62f56` tree. They do **not** include the current uncommitted worktree changes (87 changed paths), including the focused test additions and current documentation updates. No new workflow was triggered.
+- Ran DB-free acceptance contracts against the repository's dependency-complete Python 3.12 container with the backend mount read-only: `test_edition_api_key_scope_contract.py` and `test_vendor_permission_backfill_migration.py` — **17 passed**. Pytest emitted only a cache warning because the source mount was intentionally read-only; test results were successful and no repository artifacts were written by the runner.
+- Legacy Vendor permission backfill PostgreSQL TEMP-table rehearsal remains **1 passed** on disposable PostgreSQL 16 (synthetic fixture; not a historical snapshot rehearsal). Action-grant/lifecycle PostgreSQL cases remain as recorded above.
+- No commit, push, merge, deploy, persistent database mutation, or Issue #1350 state change. Continue to preserve all local edits.
+
+
+## 2026-11-20 - Vendor descendant user administration decision
+- Product decision received: Vendor has full user lifecycle and access-management authority throughout its own tenant subtree (direct Resellers, direct Customers, and Customers beneath its Resellers).
+- Authority is ancestry-validated server-side on every request; no sibling-Vendor or external-tenant access. User identities/roles stay tenant-local; platform-admin/superuser and platform-only permissions are never delegable.
+- Required actions include list, invite, invitation revoke, activate/deactivate, and tenant-local role assignment/management under delegation ceilings, with last-admin, entitlement, API-key scope and audit controls preserved.
+- Existing Reseller -> direct Customer router is insufficient. Next implementation slice is a shared hierarchy-aware service plus Vendor/Reseller route surfaces and a PostgreSQL-backed Actor x Target hierarchy matrix. No application code changed in recording this decision.
+- Open gates remain: audit failure-event transaction/privacy policy, historical migration snapshot, human portal UX acceptance, exact-head CI for local dirty changes. No commit/push/merge/deploy; Issue #1350 remains OPEN.
+
+## Implementation reconnaissance - hierarchy boundary (2026-11-20)
+
+Source inspection confirms `edition_service.assert_can_access` is intentionally limited to Vendor -> direct Reseller/Customer and Reseller -> direct Customer. `backend/tests/test_edition_boundaries.py::test_vendor_can_access_direct_resellers_and_direct_customers_only` explicitly rejects Vendor -> Reseller -> Customer. Do not broaden this shared cross-edition helper: it is used outside user administration and changing it would expand unrelated API access.
+
+The user-management implementation must therefore use a dedicated, database-backed target resolver that validates the complete persisted ancestry for the user-management routes only. It must support Vendor -> direct Reseller, Vendor -> direct Customer, Vendor -> Reseller -> Customer, and Reseller -> direct Customer; reject sibling Vendor and foreign ancestry; and lock/revalidate the target tenant before writes. The existing `tenant_admin` role loader is also actor-tenant-bound and rejects `vendor.*` permissions, while the Reseller router has a fixed Customer-member role and only list/invite/revoke/status operations. These cannot simply be reused unchanged for Vendor target administration.
+
+No authorization code was changed in this reconnaissance step. The next implementation slice is the dedicated hierarchy resolver plus its unit/PostgreSQL contract tests, followed by target-tenant-aware user lifecycle and role operations with explicit API-key route scopes.
+### Vendor delegated user-management resolver — implementation checkpoint (2026-11-20)
+- Added `backend/app/services/tenant_user_management_service.py` with a DB-backed resolver that loads actor, target, parent, and (for nested Customer targets) grandparent from persisted `tenants` rows. It rejects inactive tenants, non-root Vendor actors, malformed Reseller ancestry, non-Customer actors, self-targeting, sibling/foreign ancestry, and unsupported hierarchy edges.
+- The resolver is intentionally separate from `edition_service.assert_can_access`; no global edition access policy was widened.
+- Added `backend/tests/test_tenant_user_management_service.py`; focused pure-policy tests: **8 passed**. `git diff --check` passed.
+- Not yet integrated into HTTP routes; no invitation/list/revoke/status/role API behavior changed. No PostgreSQL resolver integration test has run yet.
+- An attempted combined run with `test_edition_boundaries.py` had 18 passes and one environment/import failure because the local interpreter is Python 3.10 and an existing module imports `enum.StrEnum` (Python 3.11+); this is not evidence of a product regression. The first attempt also exposed an incorrect test expectation (a Reseller is allowed to manage all its own direct Customers); the test was corrected to use a Customer under a different Reseller.
+
+### Vendor descendant user read APIs — implementation checkpoint (2026-11-20)
+- Added `backend/app/api/v1/vendor_tenant_users.py` with target-tenant-scoped GET endpoints for tenant-local users and assignable roles, using the DB-backed ancestry resolver. The route only exposes users whose `User.tenant_id` matches the resolved target; role listing is limited to target-tenant roles and system roles.
+- Registered the router and added a dedicated API-key scope `edition.vendor.users.read` with explicit route-template mappings for both GET routes. The API-key scope contract remains fail-closed for unmapped routes.
+- Authorization requires the Vendor administrator context plus the target-kind read permission (`vendor.reseller.read` or `vendor.customer.read`). The resolver enforces active target and persisted Vendor subtree ancestry.
+- Validation: Python compileall succeeded for changed runtime modules; focused resolver + API-key scope tests: **23 passed**.
+- Write operations (invite/revoke/status/role assignment) are not yet exposed for Vendor; no DB-backed live API test has run for these new endpoints. No PostgreSQL or persistent database was touched.
+
+### Validation correction (2026-11-20)
+- After adding the new Vendor users read scope to the Vendor API-key allowlist, the final focused run completed with **25 passed** across `test_tenant_user_management_service.py` and `test_edition_api_key_scope_contract.py`; compileall and `git diff --check` also succeeded.
+
+## 2026-11-20 - Vendor delegated user lifecycle progress
+Vendor descendant user invite/revoke/status routes are now implemented locally, with persisted hierarchy resolution, tenant locks, last-admin and entitlement checks, auth-token revocation, dual audit entries, and a dedicated API-key manage scope. Next: settle the role-assignment permission boundary from existing bootstrap/system-role contracts, implement role writes, then run focused PostgreSQL live API acceptance. Keep Issue #1350 open until evidence and exact-head CI are complete.
+
+## 2026-11-20 - Vendor role administration progress
+Vendor descendant role replacement is now implemented locally. It preserves non-target assignments, allows only target-local/system roles, applies the existing permission ceiling, blocks platform/Vendor control-plane escalation, protects the last active target admin, and writes dual-scope audit. Next validation is PostgreSQL live HTTP coverage for the complete Vendor user lifecycle, then remaining Issue #1350 acceptance evidence.
+
+### Vendor user-management authorization revalidation - 2026-11-20
+- Source review confirmed that Vendor descendant role replacement already exists in `vendor_tenant_users.py`; it is limited to target-local and NULL-tenant system roles, enforces the existing actor-permission ceiling, blocks `vendor.*`/`platform.*` and named Platform Admin/Superuser grants, preserves non-target assignments, and protects the last active target administrator.
+- Found a concurrency gap in write authorization: target tenant was locked, but the Vendor actor's active status and role permissions were not reloaded under lock before mutation. Added `_refresh_vendor_actor` to reload the actor with role permissions and `populate_existing=True` under `FOR UPDATE` after acquiring the target lock; inactive/missing actors now fail closed before the write permission check.
+- Validation after the change: `test_tenant_user_management_service.py` + `test_edition_api_key_scope_contract.py`: **34 passed**; `compileall` and `git diff --check` passed. Git emitted existing LF/CRLF warnings only.
+- This is focused contract/unit validation, not PostgreSQL/live HTTP acceptance. No database migration, staging/production access, CI, commit, push, or deployment occurred. Existing local worktree changes were preserved.
+
+### Vendor subtree PostgreSQL acceptance attempt and cleanup - 2026-11-20
+- Created a dedicated PostgreSQL 16.15 test database on loopback port 15436, with database files on container tmpfs. The complete Alembic migration graph reached head successfully, including `w34_assignment_commands` and `w35_assignment_recovery_claims`.
+- Added `backend/tests/test_vendor_tenant_users_live_postgres.py`, a strict disposable-database-only HTTP acceptance covering Vendor reads across direct/nested descendants, foreign-Vendor denial, invitation creation/revocation and hashed token persistence, accepted-invite activation, deactivation, target-local role assignment, last-admin protection, dual-tenant audit attribution, and ledger verification.
+- HTTP execution under the default local Python 3.10 stopped at application import because `enum.StrEnum` requires Python 3.11+. Python 3.12 successfully ran the focused DB-free suites: **34 passed**; compileall and `git diff --check` passed. The attempted PostgreSQL HTTP pytest invocation was not completed, so this acceptance remains unverified; do not count it as a pass.
+- The disposable PostgreSQL container was stopped and auto-removed; its tmpfs database vanished with it. No persistent Docker volume, staging container, staging/production database, or other container was changed. No generated test database files remain.
+- GitHub publication was explicitly requested by the user. Before publishing, preserve branch/PR stacking and inspect the complete dirty worktree; do not merge or deploy. The local worktree contains pre-existing cross-cutting Agent/Outbox/AssignmentCommand changes as well as Vendor user-management work, so publication must not silently omit or discard any of these files.
