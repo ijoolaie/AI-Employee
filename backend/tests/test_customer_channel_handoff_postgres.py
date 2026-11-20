@@ -116,6 +116,7 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                     id=uuid.uuid4(), tenant_id=tenant_a.id,
                     employee_id=employee.id, channel_id=channel.id,
                     customer_token_hash=_hash_token(handoff_token), customer_name="Synthetic customer",
+                    customer_email=f"private-a-{suffix}@example.test", customer_phone="+15550000001",
                     status="open", handoff_requested=False,
                 )
                 employee_b = Employee(
@@ -137,6 +138,7 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                     id=uuid.uuid4(), tenant_id=tenant_b.id,
                     employee_id=employee_b.id, channel_id=channel_b.id,
                     customer_token_hash=_hash_token(handoff_token_b), customer_name="Synthetic customer B",
+                    customer_email=f"private-b-{suffix}@example.test", customer_phone="+15550000002",
                     status="open", handoff_requested=False,
                 )
                 session.add_all([conversation, conversation_b])
@@ -218,6 +220,17 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                 assert str(tenant_a.id) in outbox_row.payload["body"]
                 assert str(conversation.id) in outbox_row.payload["body"]
                 assert str(channel.id) in outbox_row.payload["body"]
+                assert outbox_row.payload["body"] == (
+                    "A customer requested human support.\n"
+                    f"Conversation ID: {conversation.id}\n"
+                    f"Channel ID: {channel.id}\n"
+                    f"Tenant ID: {tenant_a.id}\n"
+                    "Open the authenticated support workspace to review the conversation."
+                )
+                assert "Synthetic customer" not in outbox_row.payload["body"]
+                assert f"private-a-{suffix}@example.test" not in outbox_row.payload["body"]
+                assert "+15550000001" not in outbox_row.payload["body"]
+                assert request_text not in outbox_row.payload["body"]
 
                 # A second tenant with a different configured destination must
                 # resolve its own address from its own Tenant.settings. The
@@ -242,6 +255,18 @@ async def test_handoff_is_persisted_and_assignee_is_tenant_scoped_in_postgres(mo
                 assert str(tenant_b.id) in tenant_b_outbox.payload["body"]
                 assert str(conversation_b.id) in tenant_b_outbox.payload["body"]
                 assert str(channel_b.id) in tenant_b_outbox.payload["body"]
+                assert tenant_b_outbox.payload["body"] == (
+                    "A customer requested human support.\n"
+                    f"Conversation ID: {conversation_b.id}\n"
+                    f"Channel ID: {channel_b.id}\n"
+                    f"Tenant ID: {tenant_b.id}\n"
+                    "Open the authenticated support workspace to review the conversation."
+                )
+                assert str(tenant_a.id) not in tenant_b_outbox.payload["body"]
+                assert str(conversation.id) not in tenant_b_outbox.payload["body"]
+                assert str(channel.id) not in tenant_b_outbox.payload["body"]
+                assert f"private-b-{suffix}@example.test" not in tenant_b_outbox.payload["body"]
+                assert "+15550000002" not in tenant_b_outbox.payload["body"]
                 assert tenant_b_outbox.payload["to"] != outbox_row.payload["to"]
 
                 # Re-enqueuing the same logical handoff must return the existing
@@ -366,3 +391,77 @@ async def test_handoff_outbox_retry_and_dead_letter_states_persist_in_postgres(m
     finally:
         await engine.dispose()
 
+
+async def test_handoff_notification_recipient_is_exact_tenant_in_hierarchy():
+    """A Vendor/Reseller/Customer must never inherit another tenant's destination."""
+    from app.models.tenant import Tenant
+    from app.services.customer_channel_service import _tenant_handoff_notification_email
+
+    engine = create_async_engine(_support_test_database_url(), poolclass=NullPool)
+    sessions = async_sessionmaker(engine, expire_on_commit=False, autoflush=False)
+    suffix = uuid.uuid4().hex
+    try:
+        async with sessions() as session:
+            async with session.begin():
+                vendor = Tenant(
+                    id=uuid.uuid4(), name=f"Notification vendor {suffix}",
+                    slug=f"notification-vendor-{suffix}", tenant_kind="vendor",
+                    status="active",
+                    settings={"customer_handoff_notification_email": f"vendor-{suffix}@example.test"},
+                )
+                session.add(vendor)
+                await session.flush()
+
+                reseller = Tenant(
+                    id=uuid.uuid4(), name=f"Notification reseller {suffix}",
+                    slug=f"notification-reseller-{suffix}", tenant_kind="reseller",
+                    status="active", parent_tenant_id=vendor.id,
+                    settings={"customer_handoff_notification_email": f"reseller-{suffix}@example.test"},
+                )
+                sibling_reseller = Tenant(
+                    id=uuid.uuid4(), name=f"Notification sibling reseller {suffix}",
+                    slug=f"notification-sibling-reseller-{suffix}", tenant_kind="reseller",
+                    status="active", parent_tenant_id=vendor.id,
+                    settings={"customer_handoff_notification_email": f"sibling-reseller-{suffix}@example.test"},
+                )
+                session.add_all([reseller, sibling_reseller])
+                await session.flush()
+
+                customer = Tenant(
+                    id=uuid.uuid4(), name=f"Notification customer {suffix}",
+                    slug=f"notification-customer-{suffix}", tenant_kind="customer",
+                    status="active", parent_tenant_id=reseller.id,
+                    settings={"customer_handoff_notification_email": f"customer-{suffix}@example.test"},
+                )
+                unconfigured_customer = Tenant(
+                    id=uuid.uuid4(), name=f"Notification unconfigured customer {suffix}",
+                    slug=f"notification-unconfigured-customer-{suffix}",
+                    tenant_kind="customer", status="active", parent_tenant_id=reseller.id,
+                    settings={},
+                )
+                sibling_customer = Tenant(
+                    id=uuid.uuid4(), name=f"Notification sibling customer {suffix}",
+                    slug=f"notification-sibling-customer-{suffix}",
+                    tenant_kind="customer", status="active", parent_tenant_id=sibling_reseller.id,
+                    settings={"customer_handoff_notification_email": f"sibling-customer-{suffix}@example.test"},
+                )
+                session.add_all([customer, unconfigured_customer, sibling_customer])
+                await session.flush()
+
+                expected = {
+                    vendor.id: f"vendor-{suffix}@example.test",
+                    reseller.id: f"reseller-{suffix}@example.test",
+                    sibling_reseller.id: f"sibling-reseller-{suffix}@example.test",
+                    customer.id: f"customer-{suffix}@example.test",
+                    sibling_customer.id: f"sibling-customer-{suffix}@example.test",
+                }
+                for tenant_id, address in expected.items():
+                    assert await _tenant_handoff_notification_email(session, tenant_id) == address
+
+                # No implicit parent fallback: an unconfigured child has no
+                # destination even though its Reseller and Vendor are configured.
+                assert await _tenant_handoff_notification_email(
+                    session, unconfigured_customer.id
+                ) is None
+    finally:
+        await engine.dispose()

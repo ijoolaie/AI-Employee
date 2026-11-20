@@ -116,9 +116,40 @@ async def test_claim_includes_stale_email_delivery_in_recovery_predicate():
 
 
 @pytest.mark.asyncio
+async def test_email_worker_ignores_non_email_outbox_rows_before_smtp(monkeypatch):
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind="whatsapp.send_text",
+        status="processing",
+        attempts=1,
+        payload={"to": ["private@example.test"], "subject": "Wrong route", "body": "must not send"},
+        tenant_id=uuid4(),
+        last_error=None,
+    )
+    db = _DB([row])
+    smtp_attempts = []
+
+    class _UnexpectedSMTP:
+        def __init__(self, *args, **kwargs):
+            smtp_attempts.append((args, kwargs))
+            raise AssertionError("non-email outbox rows must not reach SMTP")
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _UnexpectedSMTP)
+
+    await email_worker._send(str(row.id))
+
+    assert smtp_attempts == []
+    assert row.status == "processing"
+    assert db.commits == 0
+
+
+@pytest.mark.asyncio
 async def test_email_delivery_select_serializes_concurrent_workers(monkeypatch):
     row = SimpleNamespace(
         id=uuid4(),
+        kind="email.send",
         status="processing",
         attempts=1,
         payload={"to": ["user@example.test"], "subject": "Hello", "body": "Body"},
@@ -159,6 +190,7 @@ async def test_governed_email_revalidates_after_uncertain_commit(monkeypatch):
     delegation_id = uuid4()
     row = SimpleNamespace(
         id=uuid4(),
+        kind="email.send",
         status="processing",
         attempts=1,
         payload={
@@ -216,6 +248,7 @@ async def test_governed_email_revalidates_after_uncertain_commit(monkeypatch):
 async def test_email_side_effect_failure_remains_uncertain(monkeypatch):
     row = SimpleNamespace(
         id=uuid4(),
+        kind="email.send",
         status="processing",
         attempts=1,
         payload={"to": ["user@example.test"], "subject": "Hello", "body": "Body"},
@@ -264,6 +297,7 @@ async def test_customer_handoff_email_worker_invokes_configured_destination(monk
     recipient = "ops@example.test"
     row = SimpleNamespace(
         id=uuid4(),
+        kind="email.send",
         status="processing",
         attempts=1,
         tenant_id=tenant_id,
@@ -329,6 +363,7 @@ async def test_customer_handoff_email_worker_invokes_configured_destination(monk
 async def test_email_success_metric_is_not_emitted_when_final_commit_fails(monkeypatch):
     row = SimpleNamespace(
         id=uuid4(),
+        kind="email.send",
         status="processing",
         attempts=1,
         payload={"to": ["user@example.test"], "subject": "Hello", "body": "Body"},
@@ -389,6 +424,7 @@ async def test_governed_email_rejects_cross_tenant_row_binding_before_smtp(monke
     proof_tenant_id = uuid4()
     row = SimpleNamespace(
         id=uuid4(),
+        kind="email.send",
         status="processing",
         attempts=1,
         tenant_id=row_tenant_id,
@@ -435,6 +471,7 @@ async def test_governed_email_revocation_after_uncertain_commit_blocks_smtp(monk
     tenant_id = uuid4()
     row = SimpleNamespace(
         id=uuid4(),
+        kind="email.send",
         status="processing",
         attempts=1,
         tenant_id=tenant_id,
