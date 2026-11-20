@@ -59,15 +59,15 @@ def test_license_list_rejects_legacy_api_key_without_scopes():
 @pytest.mark.parametrize(
     ("kind", "path", "required_scope"),
     [
-        (EDITION_VENDOR, f"/api/v1/edition/vendor/resellers/{{reseller_id}}/suspend", "edition.vendor.resellers.manage"),
-        (EDITION_VENDOR, f"/api/v1/edition/vendor/resellers/{{reseller_id}}/resume", "edition.vendor.resellers.manage"),
-        (EDITION_VENDOR, f"/api/v1/edition/vendor/resellers/{{reseller_id}}/deprovision", "edition.vendor.resellers.manage"),
-        (EDITION_VENDOR, f"/api/v1/edition/vendor/customers/{{customer_id}}/suspend", "edition.vendor.customers.manage"),
-        (EDITION_VENDOR, f"/api/v1/edition/vendor/customers/{{customer_id}}/resume", "edition.vendor.customers.manage"),
-        (EDITION_VENDOR, f"/api/v1/edition/vendor/customers/{{customer_id}}/deprovision", "edition.vendor.customers.manage"),
-        (EDITION_RESELLER, f"/api/v1/edition/reseller/customers/{{customer_id}}/suspend", "edition.reseller.customers.manage"),
-        (EDITION_RESELLER, f"/api/v1/edition/reseller/customers/{{customer_id}}/resume", "edition.reseller.customers.manage"),
-        (EDITION_RESELLER, f"/api/v1/edition/reseller/customers/{{customer_id}}/deprovision", "edition.reseller.customers.manage"),
+        (EDITION_VENDOR, "/api/v1/edition/vendor/resellers/{reseller_id}/suspend", "edition.vendor.resellers.manage"),
+        (EDITION_VENDOR, "/api/v1/edition/vendor/resellers/{reseller_id}/resume", "edition.vendor.resellers.manage"),
+        (EDITION_VENDOR, "/api/v1/edition/vendor/resellers/{reseller_id}/deprovision", "edition.vendor.resellers.manage"),
+        (EDITION_VENDOR, "/api/v1/edition/vendor/customers/{customer_id}/suspend", "edition.vendor.customers.manage"),
+        (EDITION_VENDOR, "/api/v1/edition/vendor/customers/{customer_id}/resume", "edition.vendor.customers.manage"),
+        (EDITION_VENDOR, "/api/v1/edition/vendor/customers/{customer_id}/deprovision", "edition.vendor.customers.manage"),
+        (EDITION_RESELLER, "/api/v1/edition/reseller/customers/{customer_id}/suspend", "edition.reseller.customers.manage"),
+        (EDITION_RESELLER, "/api/v1/edition/reseller/customers/{customer_id}/resume", "edition.reseller.customers.manage"),
+        (EDITION_RESELLER, "/api/v1/edition/reseller/customers/{customer_id}/deprovision", "edition.reseller.customers.manage"),
     ],
 )
 def test_child_tenant_lifecycle_api_key_scope_contract(kind: str, path: str, required_scope: str):

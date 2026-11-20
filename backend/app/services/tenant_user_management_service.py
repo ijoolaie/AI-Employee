@@ -1,4 +1,4 @@
-﻿"""Persisted tenant-ancestry authorization for delegated user administration."""
+"""Persisted tenant-ancestry authorization for delegated user administration."""
 
 from uuid import UUID
 
