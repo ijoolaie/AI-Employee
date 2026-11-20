@@ -78,10 +78,12 @@ async def test_vendor_subtree_user_lifecycle_over_http(monkeypatch):
             vendor_admin_role = Role(tenant_id=vendor.id, name="Admin", description="Vendor lifecycle test administrator", permissions=[permissions[code] for code in codes])
             target_admin_role = Role(tenant_id=reseller.id, name="Admin", description="Target tenant administrator")
             target_member_role = Role(tenant_id=reseller.id, name="Member", description="Target tenant member", permissions=[permissions["employee.read"]])
+            foreign_role = Role(tenant_id=foreign_reseller.id, name="Foreign Member", description="Must not cross tenant boundary")
+            platform_system_role = Role(tenant_id=None, name="Platform Admin", description="Must not be delegated", permissions=[permissions["employee.read"]])
             actor = User(tenant_id=vendor.id, email=f"vendor-actor-{run_id}@example.com", password_hash="not-used", full_name="Vendor Actor", is_active=True, is_superuser=False, is_platform_admin=False, roles=[vendor_admin_role])
             admins = [User(tenant_id=reseller.id, email=f"target-admin-{i}-{run_id}@example.com", password_hash="not-used", full_name=f"Target Admin {i}", is_active=True, is_superuser=False, is_platform_admin=False, roles=[target_admin_role]) for i in range(2)]
             member = User(tenant_id=reseller.id, email=f"target-member-{run_id}@example.com", password_hash="not-used", full_name="Target Member", is_active=False, is_superuser=False, is_platform_admin=False, roles=[])
-            session.add_all([vendor_admin_role, target_admin_role, target_member_role, actor, *admins, member])
+            session.add_all([vendor_admin_role, target_admin_role, target_member_role, foreign_role, platform_system_role, actor, *admins, member])
             await session.flush()
             grant = TenantDemoGrant(tenant_id=reseller.id, granted_by_user_id=actor.id, reason="Isolated Vendor user lifecycle acceptance", expires_at=datetime.now(timezone.utc) + timedelta(days=1))
             accepted = TenantInvitation(tenant_id=reseller.id, user_id=member.id, email=member.email, token_hash=uuid.uuid4().hex + uuid.uuid4().hex, expires_at=datetime.now(timezone.utc) + timedelta(days=1), accepted_at=datetime.now(timezone.utc))
@@ -105,6 +107,8 @@ async def test_vendor_subtree_user_lifecycle_over_http(monkeypatch):
             listed = await client.get(base, headers=headers)
             assert listed.status_code == 200, listed.text
             assert {row["email"] for row in listed.json()["data"]} == {admins[0].email, admins[1].email, member.email}
+            listed_roles = await client.get(f"{base}/roles", headers=headers)
+            assert listed_roles.status_code == 200, listed_roles.text
             nested = await client.get(f"/api/v1/edition/vendor/tenants/{nested_customer.id}/users", headers=headers)
             assert nested.status_code == 200, nested.text
             foreign = await client.get(f"/api/v1/edition/vendor/tenants/{foreign_reseller.id}/users", headers=headers)
@@ -126,6 +130,10 @@ async def test_vendor_subtree_user_lifecycle_over_http(monkeypatch):
             assert deactivated.status_code == 200, deactivated.text
             assigned = await client.post(f"{base}/{member.id}/roles", headers=headers, json={"role_ids": [str(target_member_role.id)]})
             assert assigned.status_code == 200, assigned.text
+            foreign_role_assignment = await client.post(f"{base}/{member.id}/roles", headers=headers, json={"role_ids": [str(foreign_role.id)]})
+            assert foreign_role_assignment.status_code == 400, foreign_role_assignment.text
+            platform_role_assignment = await client.post(f"{base}/{member.id}/roles", headers=headers, json={"role_ids": [str(platform_system_role.id)]})
+            assert platform_role_assignment.status_code == 403, platform_role_assignment.text
             demoted = await client.post(f"{base}/{admins[0].id}/roles", headers=headers, json={"role_ids": []})
             assert demoted.status_code == 200, demoted.text
             last_admin = await client.post(f"{base}/{admins[1].id}/status", headers=headers, json={"is_active": False})

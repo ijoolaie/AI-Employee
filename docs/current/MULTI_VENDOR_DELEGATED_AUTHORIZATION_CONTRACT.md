@@ -185,3 +185,8 @@ Vendor role assignment is target-tenant scoped and supports target-local roles p
 - The PostgreSQL container and dedicated network were removed after the test. No named persistent volume was created. Staging PostgreSQL/Redis remained untouched.
 - GitHub exact-head CI for `0b85595034fd86a85a540d4a83717fb000ccfe87` completed with **30 workflow runs, all successful** (including full backend, security/privacy, CodeQL, architecture, tenant hierarchy isolation/RBAC, DAST, infrastructure, recovery, and real-stack E2E). The branch and PR #1434 point at this exact SHA at the time of verification.
 - PR #1434 remains open; PR #1447 remains open and stacked; Issue #1350 remains open. This is not final Issue acceptance: human portal UX, sanitized historical migration snapshot, and the separately unresolved audit-policy questions remain outstanding.
+
+### Vendor role-boundary negative coverage extension - 2026-11-20
+- Extended the disposable PostgreSQL HTTP acceptance to exercise `GET .../users/roles`, reject role IDs belonging to a different tenant (**400**), and reject the global `Platform Admin` system role (**403**) while retaining successful target-tenant role assignment.
+- Re-ran the full migration-to-head + HTTP lifecycle acceptance on a fresh PostgreSQL 16.15 tmpfs database: **1 passed in 5.74s**. Observed and asserted the new 400/403 denials, alongside existing subtree, invitation, activation, last-admin and audit-ledger checks.
+- The dedicated temporary container and network were removed after the run. This test extension is local pending publication and fresh exact-head CI.
