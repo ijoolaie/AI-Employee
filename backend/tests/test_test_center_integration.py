@@ -179,7 +179,7 @@ async def test_worker_rejects_run_linked_to_another_tenants_definition(test_cent
         run_id = run.id
 
     with pytest.raises(TestCenterError, match="test definition not found"):
-        await _execute_run_async(run_id)
+        await _execute_run_async(run_id, data["tenant_a"])
 
     async with AsyncSessionLocal() as db:
         persisted = (
@@ -188,3 +188,49 @@ async def test_worker_rejects_run_linked_to_another_tenants_definition(test_cent
         assert persisted.tenant_id == data["tenant_a"]
         assert persisted.status is TestRunStatus.QUEUED
         assert persisted.started_at is None
+
+@pytest.mark.asyncio
+async def test_worker_requires_matching_tenant_and_completes_with_correct_tenant(test_center_setup, monkeypatch):
+    from contextlib import asynccontextmanager
+
+    from app.workers import test_center_worker
+
+    data = test_center_setup
+    async with AsyncSessionLocal() as db:
+        run = TestRun(
+            tenant_id=data["tenant_a"],
+            test_definition_id=data["definition_a"],
+            workspace_key="ops",
+            status=TestRunStatus.QUEUED,
+            executor_type="backend",
+            fixtures={},
+            evidence={},
+        )
+        db.add(run)
+        await db.commit()
+        run_id = run.id
+
+    @asynccontextmanager
+    async def _worker_session():
+        async with AsyncSessionLocal() as db:
+            yield db
+
+    async def _noop(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(test_center_worker, "worker_db_session", _worker_session)
+    monkeypatch.setattr(test_center_worker, "record", _noop)
+
+    with pytest.raises(TestCenterError, match="test run not found"):
+        await test_center_worker._execute_run_async(run_id, data["tenant_b"])
+
+    async with AsyncSessionLocal() as db:
+        persisted = (await db.execute(select(TestRun).where(TestRun.id == run_id))).scalar_one()
+        assert persisted.status is TestRunStatus.QUEUED
+
+    assert await test_center_worker._execute_run_async(run_id, data["tenant_a"]) == str(run_id)
+
+    async with AsyncSessionLocal() as db:
+        persisted = (await db.execute(select(TestRun).where(TestRun.id == run_id))).scalar_one()
+        assert persisted.status is TestRunStatus.PASSED
+        assert persisted.result["executor"] == "celery_worker"

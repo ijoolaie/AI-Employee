@@ -536,3 +536,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Targeted Ruff across the corresponding production services/workers and test modules: **All checks passed**. `git diff --check` passed. No production or test source was changed in this verification slice; no database or provider was contacted.
 - This extends the bounded worker/delivery evidence. It does not close the full actor x hierarchy x delivery-kind matrix, prove immutable AuditLog transition coverage, or settle the unresolved failure/error privacy and transaction-coupling policy. Do not add speculative audit writes or change error persistence until that policy is approved.
 - The 81 pre-existing local worktree paths remain preserved and unstaged. Issue #1350 remains OPEN. Remaining gates include the audit/failure policy, sanitized historical Vendor permission-backfill snapshot review, human visual Portal acceptance, and remaining matrix cells.
+## 2026-11-20 - Test Center worker tenant binding / Report Employee attribution
+
+- Test Center API now dispatches both Run ID and validated tenant ID; worker requires both UUIDs and queries by `(TestRun.id, TestRun.tenant_id)`. Wrong-tenant dispatch is 404/fail-closed and does not transition the Run; matching tenant completes successfully.
+- PostgreSQL 16 disposable tmpfs, Alembic `w33_tenant_action_grants`: full Test Center integration module **5 passed in 3.74s**. Focused worker guards + Report Employee actor propagation **4 passed in 2.79s**. Ruff and `git diff --check` passed.
+- ToolRegistry `analyze_dataset` now forwards its Run actor ID to report generation; focused test verifies tenant/actor/file propagation. `analyze_document` remains unchanged.
+- Remaining gaps: complete Test Center task/sweeper lifecycle and persisted Agent Run/outbox/worker delegated portal acceptance remain open.
