@@ -90,6 +90,9 @@ async def _execute_run_async(run_id: UUID, tenant_id: UUID) -> str:
         if definition is None:
             raise TestCenterError("test definition not found")
 
+        from app.services.billing_service import assert_run_execution_entitlement
+
+        await assert_run_execution_entitlement(db, tenant_id=run.tenant_id)
         run = await service.start_run(run_id=run.id, tenant_id=run.tenant_id)
         await record(
             db,

@@ -620,3 +620,9 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - The second tenant's notification body must contain only its own tenant/conversation/channel identifiers and must not contain the first tenant's identifiers. Existing exact recipient/dedupe assertions remain.
 - Disposable PostgreSQL 16 tmpfs + dedicated Docker network, Alembic head: `test_customer_channel_handoff_postgres.py` **3 passed in 4.57s**. Ruff and `git diff --check` passed. Temporary DB container/network removed; staging services untouched.
 - This closes the focused handoff-email payload minimization/cross-tenant-content assertion. It does not complete all Notifications/Outbox delivery-kind, retry/dead-letter worker, stale/revoked delegated-context or provider-boundary permutations.
+
+## 2026-11-20 - Test Center delayed execution entitlement fence
+
+- Found and corrected a source/documentation mismatch: Test Center's API request path checked tenant access, but the queued worker did not revalidate entitlement immediately before starting. It now calls the shared `assert_run_execution_entitlement` guard after tenant/run/definition binding checks and before the state transition.
+- PostgreSQL 16 disposable integration: `test_test_center_integration.py` **5 passed in 4.08s**; wrong tenant is rejected before entitlement evaluation, inactive entitlement leaves the run queued, and restored entitlement allows the correct tenant to complete. Ruff/diff check passed; disposable container/network removed.
+- PR #1459 exact-head CI pending. This proves worker delegation to the shared commercial execution guard, not the entire delayed worker/provider matrix. Issue #1350 remains OPEN.

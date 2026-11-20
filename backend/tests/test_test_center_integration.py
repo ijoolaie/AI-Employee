@@ -193,6 +193,8 @@ async def test_worker_rejects_run_linked_to_another_tenants_definition(test_cent
 async def test_worker_requires_matching_tenant_and_completes_with_correct_tenant(test_center_setup, monkeypatch):
     from contextlib import asynccontextmanager
 
+    from app.core.exceptions import ConflictError
+    from app.services import billing_service
     from app.workers import test_center_worker
 
     data = test_center_setup
@@ -221,6 +223,18 @@ async def test_worker_requires_matching_tenant_and_completes_with_correct_tenant
     monkeypatch.setattr(test_center_worker, "worker_db_session", _worker_session)
     monkeypatch.setattr(test_center_worker, "record", _noop)
 
+    entitlement_checks = []
+    deny_entitlement = True
+
+    async def _assert_entitlement(_db, *, tenant_id):
+        entitlement_checks.append(tenant_id)
+        if deny_entitlement:
+            raise ConflictError("commercial entitlement is inactive")
+
+    monkeypatch.setattr(
+        billing_service, "assert_run_execution_entitlement", _assert_entitlement
+    )
+
     with pytest.raises(TestCenterError, match="test run not found"):
         await test_center_worker._execute_run_async(run_id, data["tenant_b"])
 
@@ -228,7 +242,16 @@ async def test_worker_requires_matching_tenant_and_completes_with_correct_tenant
         persisted = (await db.execute(select(TestRun).where(TestRun.id == run_id))).scalar_one()
         assert persisted.status is TestRunStatus.QUEUED
 
+    with pytest.raises(ConflictError, match="commercial entitlement is inactive"):
+        await test_center_worker._execute_run_async(run_id, data["tenant_a"])
+    async with AsyncSessionLocal() as db:
+        persisted = (await db.execute(select(TestRun).where(TestRun.id == run_id))).scalar_one()
+        assert persisted.status is TestRunStatus.QUEUED
+        assert persisted.started_at is None
+
+    deny_entitlement = False
     assert await test_center_worker._execute_run_async(run_id, data["tenant_a"]) == str(run_id)
+    assert entitlement_checks == [data["tenant_a"], data["tenant_a"]]
 
     async with AsyncSessionLocal() as db:
         persisted = (await db.execute(select(TestRun).where(TestRun.id == run_id))).scalar_one()
