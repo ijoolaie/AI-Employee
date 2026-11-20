@@ -36,8 +36,8 @@ opentelemetry-sdk>=1.45.2
 
 # FastAPI >=0.137 uses lazy _IncludedRouter nodes; older OTel FastAPI
 # instrumentation can raise AttributeError while resolving matched routes.
-opentelemetry-instrumentation-fastapi>=0.66b1
-opentelemetry-instrumentation-sqlalchemy>=0.66b1
+opentelemetry-instrumentation-fastapi>=0.66b2
+opentelemetry-instrumentation-sqlalchemy>=0.66b2
 opentelemetry-exporter-otlp-proto-http>=1.45.2
 
 # Phase 6 — real payment-provider adapter (Stripe), closing the Phase 4
