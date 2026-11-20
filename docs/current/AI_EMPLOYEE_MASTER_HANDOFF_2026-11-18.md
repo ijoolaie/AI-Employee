@@ -33,7 +33,7 @@
 - Runtime execution exposed and fixed a real Audit metadata defect: `edition_service.record_audit` passed `metadata` instead of the mapped `AuditLog.metadata_` field. Live API assertions now verify parent tenant, actor, child identity/kind and previous/target status metadata on all three deprovision edges.
 - The concurrency and live API tests clean up their generated records. Ruff check passed for all three changed Python files; the new concurrency test is Ruff-formatted. Full CI was not run.
 - No commit, push, merge, deployment or Issue #1350 closure. Issue #1350 remains OPEN.
-# AI-Employee Master Handoff ΓÇö 2026-11-18
+# AI-Employee Master Handoff ╬ô├ç├╢ 2026-11-18
 
 Repository: ijoolaie/AI-Employee
 Active track: Multi-Vendor tenant ownership, delegated authorization and portal acceptance
@@ -61,7 +61,7 @@ The accepted architecture remains:
 - PR #1433, the 2026-11-08 master handoff document, remains OPEN and unmerged at 6c4dfe33fb84077553dc7b777379d9303aca7090. Its document is not yet the merged repository truth.
 - PR #1447 is Draft and stacked on PR #1434; it remains separate from #1434 and must not be folded into it.
 - PR #1452 is a separate open, non-Draft PR. Do not merge it as part of this workstream.
-- Issue #1350's latest recorded synchronization refresh (2026-11-17) says the 13 tracked PRs #1428, #1431ΓÇô#1434 and #1447ΓÇô#1454 remain open; visible Actions/CodeQL checks passed on their recorded exact heads, while Freebuff Web remained queued on each. Drafts were #1447ΓÇô#1451, #1453 and #1454. Refresh exact heads/checks before any later merge decision.
+- Issue #1350's latest recorded synchronization refresh (2026-11-17) says the 13 tracked PRs #1428, #1431╬ô├ç├┤#1434 and #1447╬ô├ç├┤#1454 remain open; visible Actions/CodeQL checks passed on their recorded exact heads, while Freebuff Web remained queued on each. Drafts were #1447╬ô├ç├┤#1451, #1453 and #1454. Refresh exact heads/checks before any later merge decision.
 
 ## 3. Local worktree preservation boundary
 
@@ -70,15 +70,15 @@ The accepted architecture remains:
 - Preserve all 71 paths. Do not reset, clean, stash, restore, delete, stage, commit, push, merge, rebase or move them as part of this checkpoint.
 - Do not add the broader local implementation to PR #1434. First classify it against the ordered acceptance gaps and keep any later change in the smallest reviewable scope.
 
-## 4. Acceptance roadmap ΓÇö source-backed order
+## 4. Acceptance roadmap ╬ô├ç├╢ source-backed order
 
 The current source-backed gap register is docs/current/MULTI_VENDOR_ACCEPTANCE_MATRIX_AUDIT_2026-11-08.md; the tracker is Issue #1350. The matrix remains incomplete.
 
-1. Current gate ΓÇö reconcile local changes with the acceptance matrix. Classify the existing Outbox/worker, authorization, Run/Workflow recovery and AssignmentCommand changes against a specific open gap. Do not create another implementation slice until this classification is documented. Preserve unrelated changes.
+1. Current gate ╬ô├ç├╢ reconcile local changes with the acceptance matrix. Classify the existing Outbox/worker, authorization, Run/Workflow recovery and AssignmentCommand changes against a specific open gap. Do not create another implementation slice until this classification is documented. Preserve unrelated changes.
 2. Notifications and Outbox tenant isolation. Close only the remaining evidence gaps for recipient resolution, dispatch, retry/dead-letter ownership, delegated context and revocation. Reuse existing implementation/tests where they already prove the contract; add only the smallest missing assertion.
 3. Worker enqueue and execution-time authorization. Verify tenant provenance, forged metadata rejection, delayed work and authority revocation at execution. Avoid duplicate tests for already-proven boundaries.
 4. Entitlement lifecycle. Cover expiry/suspension and already-issued portal grants, plus in-flight/background work where the matrix still marks it missing. Keep request-time denial distinct from cancellation of work already executing.
-5. Remaining Actor ├ù Resource ├ù Action matrix. Select the next concrete uncovered resource/action/topology from the audit; do not expand into a broad test sweep.
+5. Remaining Actor Γö£├╣ Resource Γö£├╣ Action matrix. Select the next concrete uncovered resource/action/topology from the audit; do not expand into a broad test sweep.
 6. Cache, reports and exports. Continue only where the audit still says partial/not evidenced, including tenant-scoped server cache invalidation and revoked-context artifact access.
 7. Legacy permission migration rehearsal. Remains a separate review gate; no staging/production backfill or persistent migration without explicit approval.
 8. Human portal UX acceptance. Remains blocked pending separate explicit approval for visual/browser acceptance.
@@ -101,7 +101,7 @@ Next step is documentation-led classification of the existing 71 local changes a
 
 This checkpoint is based on local Git metadata, local documentation, GitHub PR/check-suite data and the latest Issue #1350 comments available at inspection. It is not a merge approval, production certification, deployment claim, database acceptance result or customer sign-off.
 
-## Scope reconciliation of pre-existing implementation ΓÇö 2026-11-18
+## Scope reconciliation of pre-existing implementation ╬ô├ç├╢ 2026-11-18
 
 The 71 pre-documentation implementation paths were reviewed against the acceptance matrix. They are classified by acceptance purpose, not treated as one feature branch or as evidence that every matrix row is complete.
 
@@ -128,7 +128,7 @@ The 71 pre-documentation implementation paths were reviewed against the acceptan
 
 Do not add new AssignmentCommand, Run/Workflow, workforce, template or other worker features in this slice. Preserve their existing local changes. The next bounded action is to prove that handoff recipient configuration is selected only from the conversation-owning tenant, then record the exact evidence. After that, continue to the already prioritized entitlement lifecycle gap, one concrete missing condition at a time.
 
-## Evidence update ΓÇö notification recipient ownership ΓÇö 2026-11-18
+## Evidence update ╬ô├ç├╢ notification recipient ownership ╬ô├ç├╢ 2026-11-18
 
 - Added one focused test: test_handoff_notification_destination_lookup_is_scoped_to_conversation_tenant.
 - The test calls the real Tenant.settings lookup, compiles the SQLAlchemy statement for PostgreSQL, and asserts the predicate targets tenants.id with the supplied conversation tenant UUID; it also verifies the configured destination returned by the lookup.
@@ -137,30 +137,30 @@ Do not add new AssignmentCommand, Run/Workflow, workforce, template or other wor
 - No application behavior was changed in this slice.
 - Next ordered domain: entitlement expiry/suspension for existing portal grants and already-enqueued/in-flight work. Existing tenant_access_service tests already cover expired paid periods, expired Demo grants, existing portal-grant denial after commercial access expires, and paused subscription denial; inspect these contracts and only address the remaining in-flight/background boundary.
 
-## Next bounded acceptance gap ΓÇö entitlement at irreversible worker side effects ΓÇö 2026-11-18
+## Next bounded acceptance gap ╬ô├ç├╢ entitlement at irreversible worker side effects ╬ô├ç├╢ 2026-11-18
 
 Source inspection found a specific remaining gap in the Entitlement and stale-grant row: portal-context requests revalidate current commercial entitlement, and Run/Workflow admission revalidates entitlement, but the Email and WhatsApp workers currently revalidate only Tenant.status before the provider call. Their already-queued, in-flight outbox rows can therefore pass the lifecycle-status fence even after a paid period/Demo grant becomes invalid, unless the Agent-specific policy happens to reject them for another reason.
 
-Bounded correction: reuse the existing billing execution-entitlement guard at the provider boundary, before the irreversible SMTP/WhatsApp call, while preserving the established Subscription ΓåÆ Tenant lock order and the existing uncertain-outcome behavior. Map a deterministic inactive commercial entitlement to the existing fail-closed TenantInactiveError path so the outbox row is dead-lettered before provider I/O. No new entitlement model or migration is in scope.
+Bounded correction: reuse the existing billing execution-entitlement guard at the provider boundary, before the irreversible SMTP/WhatsApp call, while preserving the established Subscription ╬ô├Ñ├å Tenant lock order and the existing uncertain-outcome behavior. Map a deterministic inactive commercial entitlement to the existing fail-closed TenantInactiveError path so the outbox row is dead-lettered before provider I/O. No new entitlement model or migration is in scope.
 
 Verification is limited to the new helper contract and one focused worker-path contract. PostgreSQL lock-race verification follows the approved ephemeral-database policy; do not use persistent databases.
 
-## Evidence update ΓÇö commercial entitlement at outbound provider boundary ΓÇö 2026-11-18
+## Evidence update ╬ô├ç├╢ commercial entitlement at outbound provider boundary ╬ô├ç├╢ 2026-11-18
 
-- Updated assert_tenant_active_for_side_effect to invoke the existing assert_run_execution_entitlement guard before locking Tenant for the provider window. This reuses the existing Subscription ΓåÆ Tenant admission order and does not add schema or new entitlement rules.
+- Updated assert_tenant_active_for_side_effect to invoke the existing assert_run_execution_entitlement guard before locking Tenant for the provider window. This reuses the existing Subscription ╬ô├Ñ├å Tenant admission order and does not add schema or new entitlement rules.
 - ConflictError/NotFoundError from current commercial entitlement/admission are converted to TenantInactiveError. Existing Email and WhatsApp worker paths already treat TenantInactiveError as a deterministic pre-provider denial and dead-letter the row; no provider call is made.
 - Preserved the pre-existing pending-public-signup invitation exclusion hunk in tenant_access_service.py while applying this change.
-- Focused test: test_external_side_effect_fails_closed_when_current_entitlement_is_inactive ΓÇö 1 passed, 13 deselected. git diff --check passed. No PostgreSQL test or persistent DB operation.
+- Focused test: test_external_side_effect_fails_closed_when_current_entitlement_is_inactive ╬ô├ç├╢ 1 passed, 13 deselected. git diff --check passed. No PostgreSQL test or persistent DB operation.
 - Acceptance status: code path now fails closed for entitlement at outbound delivery time; PostgreSQL concurrency/lock serialization still requires the authorized isolated CI evidence. This does not complete the full Entitlement or Worker matrix.
 - Next: inventory the remaining Celery/async task entry points against explicit tenant provenance and execution-time authority; select only the next documented uncovered worker class.
 
-## Worker inventory finding ΓÇö Test Center delayed execution ΓÇö 2026-11-18
+## Worker inventory finding ╬ô├ç├╢ Test Center delayed execution ╬ô├ç├╢ 2026-11-18
 
-The Celery inventory shows most workflow/run/outbox tasks derive tenant ownership from a durable tenant-scoped row or receive tenant_id explicitly. Test Center execute_run is a specific exception worth closing: its task accepts only run_id, then correctly binds TestDefinition.tenant_id to TestRun.tenant_id, but it does not revalidate the tenant's current active/commercial entitlement before transitioning QUEUED ΓåÆ RUNNING. A task queued before suspension/expiry can therefore begin afterward.
+The Celery inventory shows most workflow/run/outbox tasks derive tenant ownership from a durable tenant-scoped row or receive tenant_id explicitly. Test Center execute_run is a specific exception worth closing: its task accepts only run_id, then correctly binds TestDefinition.tenant_id to TestRun.tenant_id, but it does not revalidate the tenant's current active/commercial entitlement before transitioning QUEUED ╬ô├Ñ├å RUNNING. A task queued before suspension/expiry can therefore begin afterward.
 
 Bounded correction: after resolving the TestRun and tenant-bound enabled definition, call the existing billing_service.assert_run_execution_entitlement with the TestRun's authoritative tenant_id before start_run. Do not trust caller-supplied tenant metadata, change the task signature, or alter the Test Center ownership model. Add one PostgreSQL integration assertion for suspended-tenant delayed execution; do not run it locally due the database safety boundary.
 
-## Evidence update ΓÇö Test Center delayed execution ΓÇö 2026-11-18
+## Evidence update ╬ô├ç├╢ Test Center delayed execution ╬ô├ç├╢ 2026-11-18
 
 - Test Center worker now calls the existing billing execution-entitlement guard using the TestRun's durable tenant_id after validating the enabled TestDefinition belongs to that same tenant and before transitioning the run to RUNNING.
 - Added one PostgreSQL integration case: a queued TestRun for a suspended tenant must remain QUEUED and must not receive started_at.
@@ -169,22 +169,22 @@ Bounded correction: after resolving the TestRun and tenant-bound enabled definit
 - Worker inventory status: explicit tenant arguments or durable row-derived tenant ownership were found for the Celery tasks reviewed; event/schedule/Run/Workflow tasks already use tenant-scoped durable rows and existing admission/dispatch guards. Test Center delayed execution was the identified missing active/commercial admission check and is now corrected locally. The full worker matrix still needs exact-head CI evidence.
 - Next: continue with the source-backed Cache isolation and Reports/Exports gaps; do not expand into unrelated workforce/template task behavior.
 
-## Cache isolation source verification ΓÇö 2026-11-18
+## Cache isolation source verification ╬ô├ç├╢ 2026-11-18
 
-A targeted backend source inventory found no tenant-scoped server response/data cache implementation, cache decorator, cachetools/aiocache/fastapi-cache integration, or Redis GET/SET response cache. Current Redis usage is for IP-bucket rate limiting, tenant resource concurrency leases and tenant-fair scheduling; these are coordination/rate-limit structures, not cached tenant response data. Frontend QueryClient identity clearing is already evidenced by #1413ΓÇô#1415.
+A targeted backend source inventory found no tenant-scoped server response/data cache implementation, cache decorator, cachetools/aiocache/fastapi-cache integration, or Redis GET/SET response cache. Current Redis usage is for IP-bucket rate limiting, tenant resource concurrency leases and tenant-fair scheduling; these are coordination/rate-limit structures, not cached tenant response data. Frontend QueryClient identity clearing is already evidenced by #1413╬ô├ç├┤#1415.
 
 Decision: do not invent a cache invalidation subsystem or add cache tests for a cache that does not exist. Keep a release guard: if server response/data caching is introduced, keys must include actor/effective tenant/context and invalidation must cover portal switch, grant revocation, role change and account switch. For the current source baseline, the backend cache-isolation item is NOT APPLICABLE (no server data cache found); frontend identity-transition coverage remains covered by existing PR evidence. Move to the remaining report/export artifact topology gaps.
 
-## Report/export matrix refinement ΓÇö 2026-11-18
+## Report/export matrix refinement ╬ô├ç├╢ 2026-11-18
 
 Source review of the existing portal live-API acceptance test confirms meaningful evidence already exists for:
-- Vendor ΓåÆ Reseller context: tenant-scoped usage summary, invoice list/detail/summary, Test Center verification record and artifacts, operations metrics/dead letters/replay, privacy export, and report artifacts saved as tenant-owned FileObjects and downloaded through the Files API.
-- Reseller ΓåÆ Customer context: invoice list/detail/PDF export and download, privacy export, report artifact ownership/download, run artifact list/download, and denial after grant revocation.
+- Vendor ╬ô├Ñ├å Reseller context: tenant-scoped usage summary, invoice list/detail/summary, Test Center verification record and artifacts, operations metrics/dead letters/replay, privacy export, and report artifacts saved as tenant-owned FileObjects and downloaded through the Files API.
+- Reseller ╬ô├Ñ├å Customer context: invoice list/detail/PDF export and download, privacy export, report artifact ownership/download, run artifact list/download, and denial after grant revocation.
 - Sibling/cross-Vendor negative cases: invoice detail, Test Center verification, operations/dead-letter replay, privacy exports, report source-file access and file/artifact retrieval.
 
-One concrete missing assertion in the Reseller ΓåÆ Customer path: a sibling Customer invoice PDF export is not explicitly denied (sibling invoice detail is denied; the export route is separately exercised for the owned Customer and after grant revocation). Add that one negative action assertion only. Do not duplicate the existing report/usage/operations coverage or expand into another broad live API test.
+One concrete missing assertion in the Reseller ╬ô├Ñ├å Customer path: a sibling Customer invoice PDF export is not explicitly denied (sibling invoice detail is denied; the export route is separately exercised for the owned Customer and after grant revocation). Add that one negative action assertion only. Do not duplicate the existing report/usage/operations coverage or expand into another broad live API test.
 
-## Evidence update ΓÇö sibling invoice PDF export denial ΓÇö 2026-11-18
+## Evidence update ╬ô├ç├╢ sibling invoice PDF export denial ╬ô├ç├╢ 2026-11-18
 
 - Added one negative assertion to the existing PostgreSQL portal acceptance scenario: a Reseller-to-Customer portal context cannot export a sibling Customer invoice PDF (expected 404), complementing the existing sibling invoice detail denial.
 - Focused Ruff check passed for the modified portal acceptance test and the recently changed entitlement worker/service files; git diff --check passed.
@@ -202,7 +202,7 @@ Existing portal live-API acceptance covers direct Customer and Vendor-to-Reselle
 - Active branch remains test/knowledge-revoked-portal-context-20261108 at fed62f56a75dd0f6de09c41e14a00506593d14c5. No commit, push, merge, deploy or database mutation.
 - The local code/test changes remain unpushed and are not included in PR #1434. Do not merge this broader worktree into its test-only scope.
 
-## Next actor/resource/action gap ΓÇö Reseller-managed Customer users ΓÇö 2026-11-18
+## Next actor/resource/action gap ╬ô├ç├╢ Reseller-managed Customer users ╬ô├ç├╢ 2026-11-18
 
 The tenant user lifecycle source review found a specific acceptance gap: reseller_customer_users.py exposes direct-Customer user list/invite/revoke/status operations with direct-child checks, a fixed least-privilege Customer Member role, accepted-invitation activation and audit attribution. Unit tests cover direct-child/inactive-child boundaries and the shared invitation service covers token hashing, acceptance, replay/revoke/expiry. The existing portal live-API matrix does not execute these routes with a real Reseller actor against its own Customer or a sibling Reseller's Customer.
 
@@ -212,7 +212,7 @@ Bounded acceptance addition: in the existing portal live-API scenario, grant the
 
 Added a live portal acceptance scenario for Reseller-owned Customer user management: invite/revoke in its direct Customer and deny invitation into a sibling Reseller's Customer. Ruff and diff check passed; PostgreSQL scenario not run locally. Isolated CI evidence is pending.
 
-## Extension of the same user-lifecycle acceptance case ΓÇö audit attribution
+## Extension of the same user-lifecycle acceptance case ╬ô├ç├╢ audit attribution
 
 Extend the existing Reseller Customer invitation scenario (not a separate test) to verify the created/revoked audit rows retain the Reseller actor tenant and actor user while recording the target Customer tenant in metadata. This is the smallest evidence addition for the audit-attribution row; no general audit export/filter suite is added here.
 
@@ -319,7 +319,7 @@ The test is authored but not executed. No Production code changed; no pytest, Po
 ### Child tenant lifecycle API-key scope contract - 2026-11-19
 
 - Verified all nine suspend/resume/deprovision route templates map to their intended Vendor or Reseller manage scope and that each scope is allowlisted for the correct tenant kind.
-- Added parameterized contract coverage for matching-scope acceptance and wrong-scope 403 rejection across VendorΓåÆReseller, VendorΓåÆCustomer, and ResellerΓåÆCustomer routes; added explicit Bearer-context bypass coverage.
+- Added parameterized contract coverage for matching-scope acceptance and wrong-scope 403 rejection across Vendor╬ô├Ñ├åReseller, Vendor╬ô├Ñ├åCustomer, and Reseller╬ô├Ñ├åCustomer routes; added explicit Bearer-context bypass coverage.
 - Test authored only; not executed. Existing PostgreSQL-backed lifecycle scenario remains authored but unexecuted. No Production code changed.
 
 ### Lifecycle negative-state coverage - 2026-11-19
@@ -329,7 +329,7 @@ The test is authored but not executed. No Production code changed; no pytest, Po
 
 ### Deprovision audit attribution evidence - 2026-11-19
 
-- Extended the live lifecycle scenario to verify deprovision audit rows are attributed to the managing parent tenant and authenticated actor for both ResellerΓåÆCustomer and VendorΓåÆReseller transitions, including child_tenant_id metadata.
+- Extended the live lifecycle scenario to verify deprovision audit rows are attributed to the managing parent tenant and authenticated actor for both Reseller╬ô├Ñ├åCustomer and Vendor╬ô├Ñ├åReseller transitions, including child_tenant_id metadata.
 - Expanded the same PostgreSQL-backed live scenario to cover all three deprovision edges: Reseller?Customer, Vendor?Reseller, and Vendor?direct Customer. Each edge now asserts parent-tenant audit attribution, authenticated actor, child tenant/kind, previous status, and target status. Persisted user deactivation is asserted for the Reseller admin, Reseller Customer user, and direct Customer user. Test authored only; not executed. No Production code changed.
 ## Action-grant and child-tenant lifecycle live acceptance - 2026-11-20
 
@@ -357,7 +357,7 @@ The test is authored but not executed. No Production code changed; no pytest, Po
 - Re-read GitHub PR #1434 and the complete Check Runs collection for exact head `fed62f56a75dd0f6de09c41e14a00506593d14c5`: **23/23 check runs completed successfully**, including CI backend/frontend, CodeQL (Python and JavaScript/TypeScript), security/privacy, architecture, tenant hierarchy isolation/RBAC, real-stack E2E, DAST, infrastructure, observability, recovery and rollback. This supersedes earlier handoff notes describing a queued/pending check on this same SHA.
 - PR #1434 remains OPEN and unmerged. PR #1447 remains OPEN, Draft, stacked on #1434. Issue #1350 remains OPEN.
 - Important evidence boundary: these GitHub checks ran against the pushed `fed62f56` tree. They do **not** include the current uncommitted worktree changes (87 changed paths), including the focused test additions and current documentation updates. No new workflow was triggered.
-- Ran DB-free acceptance contracts against the repository's dependency-complete Python 3.12 container with the backend mount read-only: `test_edition_api_key_scope_contract.py` and `test_vendor_permission_backfill_migration.py` ΓÇö **17 passed**. Pytest emitted only a cache warning because the source mount was intentionally read-only; test results were successful and no repository artifacts were written by the runner.
+- Ran DB-free acceptance contracts against the repository's dependency-complete Python 3.12 container with the backend mount read-only: `test_edition_api_key_scope_contract.py` and `test_vendor_permission_backfill_migration.py` ╬ô├ç├╢ **17 passed**. Pytest emitted only a cache warning because the source mount was intentionally read-only; test results were successful and no repository artifacts were written by the runner.
 - Legacy Vendor permission backfill PostgreSQL TEMP-table rehearsal remains **1 passed** on disposable PostgreSQL 16 (synthetic fixture; not a historical snapshot rehearsal). Action-grant/lifecycle PostgreSQL cases remain as recorded above.
 - No commit, push, merge, deploy, persistent database mutation, or Issue #1350 state change. Continue to preserve all local edits.
 
@@ -376,14 +376,14 @@ Source inspection confirms `edition_service.assert_can_access` is intentionally 
 The user-management implementation must therefore use a dedicated, database-backed target resolver that validates the complete persisted ancestry for the user-management routes only. It must support Vendor -> direct Reseller, Vendor -> direct Customer, Vendor -> Reseller -> Customer, and Reseller -> direct Customer; reject sibling Vendor and foreign ancestry; and lock/revalidate the target tenant before writes. The existing `tenant_admin` role loader is also actor-tenant-bound and rejects `vendor.*` permissions, while the Reseller router has a fixed Customer-member role and only list/invite/revoke/status operations. These cannot simply be reused unchanged for Vendor target administration.
 
 No authorization code was changed in this reconnaissance step. The next implementation slice is the dedicated hierarchy resolver plus its unit/PostgreSQL contract tests, followed by target-tenant-aware user lifecycle and role operations with explicit API-key route scopes.
-### Vendor delegated user-management resolver ΓÇö implementation checkpoint (2026-11-20)
+### Vendor delegated user-management resolver ╬ô├ç├╢ implementation checkpoint (2026-11-20)
 - Added `backend/app/services/tenant_user_management_service.py` with a DB-backed resolver that loads actor, target, parent, and (for nested Customer targets) grandparent from persisted `tenants` rows. It rejects inactive tenants, non-root Vendor actors, malformed Reseller ancestry, non-Customer actors, self-targeting, sibling/foreign ancestry, and unsupported hierarchy edges.
 - The resolver is intentionally separate from `edition_service.assert_can_access`; no global edition access policy was widened.
 - Added `backend/tests/test_tenant_user_management_service.py`; focused pure-policy tests: **8 passed**. `git diff --check` passed.
 - Not yet integrated into HTTP routes; no invitation/list/revoke/status/role API behavior changed. No PostgreSQL resolver integration test has run yet.
 - An attempted combined run with `test_edition_boundaries.py` had 18 passes and one environment/import failure because the local interpreter is Python 3.10 and an existing module imports `enum.StrEnum` (Python 3.11+); this is not evidence of a product regression. The first attempt also exposed an incorrect test expectation (a Reseller is allowed to manage all its own direct Customers); the test was corrected to use a Customer under a different Reseller.
 
-### Vendor descendant user read APIs ΓÇö implementation checkpoint (2026-11-20)
+### Vendor descendant user read APIs ╬ô├ç├╢ implementation checkpoint (2026-11-20)
 - Added `backend/app/api/v1/vendor_tenant_users.py` with target-tenant-scoped GET endpoints for tenant-local users and assignable roles, using the DB-backed ancestry resolver. The route only exposes users whose `User.tenant_id` matches the resolved target; role listing is limited to target-tenant roles and system roles.
 - Registered the router and added a dedicated API-key scope `edition.vendor.users.read` with explicit route-template mappings for both GET routes. The API-key scope contract remains fail-closed for unmapped routes.
 - Authorization requires the Vendor administrator context plus the target-kind read permission (`vendor.reseller.read` or `vendor.customer.read`). The resolver enforces active target and persisted Vendor subtree ancestry.
@@ -470,18 +470,18 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Reconciled the active branch against GitHub: local HEAD and `origin/test/knowledge-revoked-portal-context-20261108` are both `02d150c8fb548ad331a9e3cfc52fe42a80b3f059`; PR #1434 is OPEN (not draft), and all **35/35** displayed PR checks pass on that exact head. PR #1447 remains OPEN + Draft on its separate stacked head `425d40d081c56b0b66a26727772d900062cd9868`. Issue #1350 remains OPEN.
 - Preserved the 81 pre-existing modified/untracked worktree paths. No reset, clean, staging, code edit, commit, merge, deployment, or persistent database operation was performed in this verification slice.
 - Source review of `outbox_service.py`, `outbox_worker.py`, `assignment_command_service.py`, `assignment_command.py`, and `assignment_command_worker.py` confirms operational state transitions and durable retry/lease/recovery behavior, but no immutable AuditLog transition writes in these paths. Do not add audit writes until the unresolved event semantics, actor attribution, failure policy, privacy, and transaction/commit coupling are approved; generic exception logging is not a substitute.
-- Focused DB-free contracts passed on Python 3.12: AssignmentCommand service/worker contracts, Outbox lease/replay contracts, WorkItem locking, and workflow timeout reconciliation ΓÇö **30 passed in 1.70s**. Full backend Ruff (`app` + `tests`) passed. `git diff --check` passed (only pre-existing LF/CRLF warnings).
+- Focused DB-free contracts passed on Python 3.12: AssignmentCommand service/worker contracts, Outbox lease/replay contracts, WorkItem locking, and workflow timeout reconciliation ╬ô├ç├╢ **30 passed in 1.70s**. Full backend Ruff (`app` + `tests`) passed. `git diff --check` passed (only pre-existing LF/CRLF warnings).
 - PostgreSQL race/recovery tests in this slice are explicitly CI-only and were not locally executed; their CI guards require `CI=true` and a dedicated loopback `support_test` database. No guard was bypassed. The only running Docker services remain the pre-existing Staging PostgreSQL/Redis containers on ports 15434/16379.
 - Remaining acceptance gates are unchanged: approved immutable-audit/failure-event policy; sanitized historical Vendor permission-backfill snapshot; human visual acceptance of the distinct portals; and completion of the documented Actor x Resource x Action gaps. The Vendor descendant user-administration slice remains separately accepted by its disposable PostgreSQL live test and exact-head CI evidence; this does not close Issue #1350.
 ## 2026-11-20 - Notification destination tenant-predicate evidence
 
 - Revisited the exact remaining narrow gap named by the acceptance matrix: tenant handoff notification destination lookup must read `Tenant.settings` for the conversation-owning tenant, not an actor/portal-context or caller-selected tenant.
 - Executed the existing focused regression `tests/services/test_customer_handoff_notification_outbox.py`: **3 passed in 0.89s** on Python 3.12. The specific query-contract case compiles the SQL with the PostgreSQL dialect and asserts the `tenants.id` predicate and the conversation tenant UUID are bound in the statement.
-- This closes the narrow query-predicate evidence gap for the inspected handoff destination lookup only. It does not complete the broader Notifications/Outbox actor ├ù hierarchy ├ù delivery-kind matrix. The test and related Outbox implementation remain part of the preserved local in-progress worktree; they were not included in the documentation-only GitHub commit.
+- This closes the narrow query-predicate evidence gap for the inspected handoff destination lookup only. It does not complete the broader Notifications/Outbox actor Γö£├╣ hierarchy Γö£├╣ delivery-kind matrix. The test and related Outbox implementation remain part of the preserved local in-progress worktree; they were not included in the documentation-only GitHub commit.
 - No production code was changed in this verification step, and no database was used. Continue only with the next documented uncovered notification/worker case; do not infer full matrix acceptance from this focused contract.
 ## 2026-11-20 - Notification and Outbox delivery-contract verification
 
-- Continued the documented Notifications/Outbox actor ├ù hierarchy ├ù delivery-kind review with the existing focused delivery contracts; no production code or test definitions were changed in this verification slice.
+- Continued the documented Notifications/Outbox actor Γö£├╣ hierarchy Γö£├╣ delivery-kind review with the existing focused delivery contracts; no production code or test definitions were changed in this verification slice.
 - Python 3.12 focused run across email Outbox crash safety, worker crash safety, WhatsApp worker behavior, enqueue-race handling, tenant-scoped deduplication, approval-resume enqueue, run-creation enqueue, Outbox hardening, and tenant handoff notification destination: **36 passed in 2.04s**.
 - Targeted Ruff over the inspected notification/Outbox services, workers, and test files: **All checks passed**. `git diff --check` passed; existing LF/CRLF warnings relate to preserved unrelated dirty files.
 - These tests establish the listed local contracts only. They do not substitute for PostgreSQL race tests whose fixtures require CI-only `support_test`, nor do they prove the complete actor/hierarchy/delivery-kind matrix or immutable AuditLog coverage. No PostgreSQL, Staging, or Production database was accessed.
@@ -566,3 +566,43 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Validation on PostgreSQL 16 disposable tmpfs + dedicated Docker network, Alembic head `w33_tenant_action_grants`: `test_handoff_notification_recipient_is_exact_tenant_in_hierarchy` **1 passed in 1.45s**. Targeted Ruff and `git diff --check` passed.
 - The temporary container/network were removed after the run. Staging PostgreSQL/Redis were untouched. This proves exact-tenant destination resolution only; end-to-end dispatch, stale/revoked grant transitions, retry/dead-letter delivery and notification-content isolation remain partial. Issue #1350 remains OPEN.
 - Consolidated in PR #1456; exact-head CI is rerunning after synchronization with current main.
+## 2026-11-20 - PR #1456 hierarchical handoff proof merged
+
+- PR #1456 completed all **13/13** exact-head checks on `9285dc487a99f2a347f546fd9fd6309087c1df0d`, based on `b08f436cb15dd1422a752a941a021c4dd7d1c814`; merge commit `0799dcf95d9ba161237b56506b0d3e5498deb71f`.
+- The PostgreSQL-backed exact-tenant notification destination test is now on main. The matrix remains partial for end-to-end dispatch/retry/revocation and content-isolation cases.
+
+## 2026-11-20 - Test Center worker tenant binding and Report Employee actor attribution
+
+- Reconciled the stale Test Center worker changes from PR #1451 against current main. The current Test Center API dispatched only `run_id`, and its Celery worker selected `TestRun` by ID alone. Updated the API to dispatch the validated `ctx.tenant_id`, made the task require/parse both UUIDs, and constrained the worker's initial Run lookup by both `TestRun.id` and `TestRun.tenant_id`.
+- Added a PostgreSQL integration case proving a wrong dispatched tenant receives `test run not found` and leaves the Run queued, while the matching tenant executes and persists PASSED. Updated the existing mismatched-definition test for the explicit tenant argument. Added focused unit guards for the SQL tenant predicate, invalid tenant UUID, and API dispatch argument.
+- Reconciled Report Employee attribution: `ToolRegistry.execute(analyze_dataset)` now forwards the Run actor ID instead of `None`; a focused regression asserts the exact actor/tenant/file IDs passed to the report service. `analyze_document` behavior was deliberately left unchanged.
+- Validation: disposable PostgreSQL 16 tmpfs + dedicated Docker network, Alembic head `w33_tenant_action_grants`; full `tests/test_test_center_integration.py`: **5 passed in 3.74s**. Worker guard + Report Employee actor tests: **4 passed in 2.79s**. Targeted Ruff and `git diff --check` passed.
+- Temporary PostgreSQL container/network removed. Staging PostgreSQL/Redis were untouched. This proves the Test Center worker's tenant-qualified lookup and handler-level Report Employee actor forwarding; it does not prove all Test Center lifecycle/background sweeper paths or full persisted Agent Run/worker delegated portal execution. Issue #1350 remains OPEN.
+
+## 2026-11-20 - Delegated Usage Optimization and Cost Forecast portal context
+
+- Reconciled PR #1451's Usage API delta against current main. `/api/v1/usage/optimization` and `/api/v1/usage/cost-forecast` use `AuditReadContext` and tenant-scoped services, but the portal-context route guard denied them because only `/usage/summary` was explicitly exempted from the `/usage` denied prefix. Added only these two read endpoints to the portal allowlist; other unknown `/usage/*` paths remain denied by default.
+- Added route-policy allowlist regression assertions and extended the authenticated PostgreSQL portal test to call both endpoints through Vendor A→Reseller, Vendor B→Reseller, and Reseller→Customer grants. Stubbed service functions capture the effective tenant ID; every call must match the delegated resource tenant, not the actor's home tenant or sibling.
+- Added `audit.read` to the Reseller test role because both endpoints require `AuditReadContext`. Existing Vendor B and Customer grant revocation assertions remain after the new active-grant checks; no revocation behavior was weakened.
+- Validation: route-policy module **20 passed in 0.67s**; live PostgreSQL 16 portal HTTP test **1 passed in 30.89s** on disposable tmpfs + dedicated Docker network, Alembic head `w33_tenant_action_grants`; targeted Ruff and `git diff --check` passed.
+- Temporary PostgreSQL container/network removed. Staging PostgreSQL/Redis untouched. This proves the two read endpoints' delegated tenant context across the three portal topologies; it does not complete the entire usage/finance matrix or persisted Run/worker execution. Included in PR #1457; exact-head CI will rerun after push.
+
+## 2026-11-20 - Global worker sweeper tenant attribution
+
+- Ported the bounded tenant-attribution regression cases from stale PR #1451 onto current main without changing worker runtime code: Test Center global expiration sweep audits each transitioned Run with that Run's tenant/resource ID; Workflow timeout sweep audits each timed-out Run with its own tenant; Run stale recovery audit uses the locked Run tenant; Workflow approval expiry audit uses the approval tenant/resource and does not mutate the unrelated cross-tenant Run/Step.
+- Validation: `test_worker_sweeper_tenant_attribution.py`, `test_run_recovery.py`, and `test_workflow_approval_expiry_tenant_boundary.py`: **9 passed in 1.61s**. Targeted Ruff and `git diff --check` passed. These are deterministic fake-session/unit proofs; no database or provider was contacted.
+- This does not complete every worker/dispatch/retry path or the delegated Run actor/grant provenance lifecycle. Included in PR #1457; exact-head CI required.
+
+## 2026-11-20 - Delegated invoice PDF and Report Employee artifact ownership
+
+- Extended the live portal PostgreSQL test to assert generated invoice PDF `FileObject` rows are owned by the resolved resource tenant and uploaded by the effective actor for Vendor A→Reseller, Vendor B→Reseller, and Reseller→Customer contexts. Added negative checks that a Vendor A portal cannot export a Vendor B invoice and a revoked Vendor portal cannot export its former target invoice.
+- Report Employee `analyze_dataset` artifact rows are now asserted to use the Customer tenant and the Customer actor who invoked the tool; this complements the focused ToolRegistry actor-forwarding test.
+- Validation: updated live PostgreSQL 16 portal HTTP test completed successfully (**1 passed**) on disposable tmpfs + dedicated Docker network, Alembic `w33_tenant_action_grants`; targeted Ruff and `git diff --check` passed. Temporary DB container/network removed.
+- Included in PR #1457; exact-head CI reruns after this test-only extension.
+
+## 2026-11-20 - Acceptance matrix reconciliation after merged PRs
+
+- PR #1434's Vendor descendant user-management implementation is accepted for its tested subtree: PostgreSQL live HTTP lifecycle 1 passed and exact-head CI 35/35. This covers Vendor invite/revoke, activate/deactivate, descendant role assignment/removal, permission-subset ceiling and last-admin protections across tested direct/nested descendants.
+- PR #1453 symmetric action-grant delegation merged after 12/12 exact-head checks; PR #1455 sibling Customer file isolation merged after 13/13; PR #1456 hierarchical notification destination proof merged after 13/13.
+- The acceptance matrix was reconciled to those exact outcomes. PR #1457 carries the next bounded local evidence for delegated usage/invoice/report ownership, Test Center worker tenant binding, and sweeper audit attribution; exact-head CI remains pending.
+- Remaining gates are unchanged: immutable audit/failure-event policy, sanitized historical permission-backfill snapshot, human UX acceptance, tenant-managed role CRUD scope, and remaining concrete actor/resource/action cells. Issue #1350 remains OPEN.
