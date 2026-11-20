@@ -32,6 +32,7 @@ celery_app = Celery(
         "app.workers.workflow_trigger_worker",
         "app.workers.outbox_worker",
         "app.workers.email_worker",
+        "app.workers.whatsapp_worker",
         "app.workers.test_center_worker",
         "app.workers.workforce_evaluation_worker",
     ],
@@ -67,6 +68,7 @@ TASK_ROUTES = {
     "test_center.expiration_sweep": {"queue": CONTROL_QUEUE},
     "outbox.dispatch": {"queue": OUTBOX_QUEUE},
     "email.send": {"queue": EMAIL_QUEUE},
+    "whatsapp.send_text": {"queue": OUTBOX_QUEUE},
 }
 
 _fair_scheduler = None
