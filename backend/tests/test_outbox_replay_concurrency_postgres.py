@@ -128,4 +128,4 @@ async def test_concurrent_dead_letter_replay_is_serialized_by_tenant_row_lock(mo
             await db.execute(delete(OutboxMessage).where(OutboxMessage.id == message_id))
             await db.execute(delete(Tenant).where(Tenant.id == tenant_id))
             await db.commit()
-        await engine.dispose()\n
+        await engine.dispose()
