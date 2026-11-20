@@ -599,3 +599,10 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Report Employee `analyze_dataset` artifact rows are now asserted to use the Customer tenant and the Customer actor who invoked the tool; this complements the focused ToolRegistry actor-forwarding test.
 - Validation: updated live PostgreSQL 16 portal HTTP test completed successfully (**1 passed**) on disposable tmpfs + dedicated Docker network, Alembic `w33_tenant_action_grants`; targeted Ruff and `git diff --check` passed. Temporary DB container/network removed.
 - Included in PR #1457; exact-head CI reruns after this test-only extension.
+
+## 2026-11-20 - Acceptance matrix reconciliation after merged PRs
+
+- PR #1434's Vendor descendant user-management implementation is accepted for its tested subtree: PostgreSQL live HTTP lifecycle 1 passed and exact-head CI 35/35. This covers Vendor invite/revoke, activate/deactivate, descendant role assignment/removal, permission-subset ceiling and last-admin protections across tested direct/nested descendants.
+- PR #1453 symmetric action-grant delegation merged after 12/12 exact-head checks; PR #1455 sibling Customer file isolation merged after 13/13; PR #1456 hierarchical notification destination proof merged after 13/13.
+- The acceptance matrix was reconciled to those exact outcomes. PR #1457 carries the next bounded local evidence for delegated usage/invoice/report ownership, Test Center worker tenant binding, and sweeper audit attribution; exact-head CI remains pending.
+- Remaining gates are unchanged: immutable audit/failure-event policy, sanitized historical permission-backfill snapshot, human UX acceptance, tenant-managed role CRUD scope, and remaining concrete actor/resource/action cells. Issue #1350 remains OPEN.
