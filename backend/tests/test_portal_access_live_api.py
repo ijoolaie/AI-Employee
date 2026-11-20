@@ -41,6 +41,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.core.database import get_db
     from app.core.security import create_access_token
     from app.main import app
+    from app.api.v1 import usage as usage_api
 
     # This integration test makes many authenticated requests; shared CI Redis
     # buckets can otherwise rate-limit it based on unrelated parallel tests.
@@ -219,7 +220,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             vendor_b_actor.roles = [vendor_b_reader_role]
             reseller_admin_role.permissions = [
                 *file_permissions, workflow_write_permission,
-                invoice_read_permission, invoice_export_pdf_permission, run_read_permission,
+                invoice_read_permission, invoice_export_pdf_permission, run_read_permission, audit_read_permission,
             ]
             reseller_grantor.roles = [reseller_admin_role]
             reseller_actor.roles = [reseller_admin_role]
@@ -952,6 +953,52 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     json={"email": "vendor-b-portal-override@example.com"},
                 )
                 assert vendor_b_notification_write.status_code == 403, vendor_b_notification_write.text
+                optimization_contexts = []
+                forecast_contexts = []
+
+                async def portal_optimization(_db, *, tenant_id):
+                    optimization_contexts.append(tenant_id)
+                    return {
+                        "period_start": datetime(2026, 11, 1, tzinfo=timezone.utc),
+                        "plan": "business",
+                        "usage": {"runs": 2, "tokens": 30},
+                        "cost_usd": 0.12,
+                        "successful_work_items": 2,
+                        "cost_per_successful_work_item_usd": 0.06,
+                        "budget": {
+                            "state": "ok", "run_utilization": 0.1, "token_utilization": 0.2,
+                            "remaining_runs": 18, "remaining_tokens": 970,
+                        },
+                        "optimization_actions": [],
+                    }
+
+                async def portal_forecast(_db, *, tenant_id):
+                    forecast_contexts.append(tenant_id)
+                    return {
+                        "as_of": datetime(2026, 11, 12, tzinfo=timezone.utc),
+                        "current_daily_cost_usd": 0.02, "baseline_daily_cost_usd": 0.01,
+                        "anomaly": False, "anomaly_score": 1.0,
+                        "month_to_date_cost_usd": 0.12, "projected_month_cost_usd": 0.31,
+                        "baseline_days": 7, "actions": ["Continue observing spend."],
+                    }
+
+                monkeypatch.setattr(usage_api.optimization_service, "tenant_optimization_summary", portal_optimization)
+                monkeypatch.setattr(usage_api.cost_anomaly_service, "tenant_cost_anomaly_forecast", portal_forecast)
+
+                async def assert_portal_usage_context(portal_headers_for_usage, expected_tenant):
+                    optimization = await client.get(
+                        "/api/v1/usage/optimization", headers=portal_headers_for_usage,
+                    )
+                    assert optimization.status_code == 200, optimization.text
+                    assert optimization.json()["data"]["plan"] == "business"
+                    forecast = await client.get(
+                        "/api/v1/usage/cost-forecast", headers=portal_headers_for_usage,
+                    )
+                    assert forecast.status_code == 200, forecast.text
+                    assert forecast.json()["data"]["baseline_days"] == 7
+                    assert optimization_contexts[-1] == expected_tenant
+                    assert forecast_contexts[-1] == expected_tenant
+
                 # Vendor B usage and invoice reports must resolve only to its Reseller.
                 vendor_b_usage = await client.get("/api/v1/usage/summary", headers=vendor_b_portal_headers)
                 assert vendor_b_usage.status_code == 200, vendor_b_usage.text
@@ -961,6 +1008,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert vendor_b_usage_data["completion_tokens"] == 13
                 assert vendor_b_usage_data["total_tokens"] == 30
                 assert vendor_b_usage_data["cost_usd"] == 0.03
+                await assert_portal_usage_context(vendor_b_portal_headers, reseller_b.id)
 
                 vendor_b_invoices = await client.get("/api/v1/invoices", headers=vendor_b_portal_headers)
                 assert vendor_b_invoices.status_code == 200, vendor_b_invoices.text
@@ -1140,6 +1188,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert customer_portal_me.status_code == 200, customer_portal_me.text
                 assert customer_portal_me.json()["data"]["tenant"]["id"] == str(customer_a.id)
                 assert customer_portal_me.json()["data"]["user"]["tenant_id"] == str(target.id)
+                await assert_portal_usage_context({"Authorization": f"Bearer {customer_portal_token}"}, customer_a.id)
                 # Customer portal resources must resolve against the effective
                 # Customer context, not the actor's home Reseller tenant.
                 customer_visible_files = await client.get(
@@ -1739,6 +1788,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert usage_data["completion_tokens"] == 5
                 assert usage_data["total_tokens"] == 12
                 assert usage_data["cost_usd"] == 0.01
+                await assert_portal_usage_context(portal_headers, target.id)
 
                 # Invoice list, detail, and financial aggregates must use the
                 # validated portal tenant, not the Vendor actor's home or sibling tenants.

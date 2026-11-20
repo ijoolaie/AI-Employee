@@ -554,3 +554,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - ToolRegistry `analyze_dataset` now forwards its Run actor ID to report generation; focused test verifies tenant/actor/file propagation. `analyze_document` remains unchanged.
 - Remaining gaps: complete Test Center task/sweeper lifecycle and persisted Agent Run/outbox/worker delegated portal acceptance remain open.
 - Consolidated in PR #1457; exact-head CI is rerunning after synchronization with current main.
+
+## 2026-11-20 - Delegated Usage Optimization / Cost Forecast
+
+- Portal route policy now explicitly permits only `/api/v1/usage/optimization` and `/api/v1/usage/cost-forecast` (in addition to existing `/usage/summary`) while keeping other `/usage/*` routes denied by default.
+- Authenticated PostgreSQL portal test exercises both endpoints under Vendor A→Reseller, Vendor B→Reseller, and Reseller→Customer grants; captured service `tenant_id` must equal the delegated resource tenant in each case. Reseller fixture role includes required `audit.read`.
+- Route-policy tests: **20 passed in 0.67s**. PostgreSQL 16 disposable tmpfs live HTTP test: **1 passed in 30.89s**, Alembic `w33_tenant_action_grants`; targeted Ruff/diff check passed. Temporary container/network removed.
+- Included in PR #1457. Other usage/finance routes, full Run/worker execution, and revocation delivery remain separately gated.
