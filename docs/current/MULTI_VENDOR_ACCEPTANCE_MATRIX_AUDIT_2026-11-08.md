@@ -638,3 +638,12 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Preserved lifecycle precedence by checking missing/inactive Tenant before commercial lookup, while retaining the full shared entitlement guard and Subscription-before-Tenant locks for active tenants.
 - Updated only the two PostgreSQL fixtures to create and clean up their own Vendor issuer, Customer target, and active license. Unit tests now stub the outbound adapter, while a separate adapter test verifies denial translation.
 - Local focused evidence after correction: 17 passed; Ruff, py_compile and git diff --check passed. These PostgreSQL cases remain unexecuted locally and must pass exact-head CI. Overall Notifications/Outbox matrix remains PARTIAL.
+
+
+## 2026-11-21 - Outbox dispatcher ambiguous broker acknowledgement
+
+- Re-audited the broker publish exception path after the Email/WhatsApp commercial-entitlement provider fence. The dispatcher committed processing, published the dedicated task, and on any .delay() exception rolled back then used unlocked db.get() + mark_retry(). A broker acknowledgement can be ambiguous: a dedicated worker may already have committed dispatched, dead, or uncertain before the publisher reports failure. The old catch path could reset that state to pending, allowing an already-completed or uncertain provider delivery to be scheduled again.
+- Updated outbox_worker._dispatch_async to reload the durable row with SELECT ... FOR UPDATE after rollback and preserve dispatched, dead, and uncertain. Nonterminal rows still follow the existing retry/backoff path, including workflow broker failure.
+- Added parameterized Email/WhatsApp regression tests for ambiguous publisher acknowledgement after worker terminal-state commit; the fake DB asserts the recovery query requests a row lock. Existing generic workflow publish-failure retry test remains green.
+- Focused Python 3.12 Outbox/Email/WhatsApp suite: 27 passed; targeted Ruff and git diff --check passed. No local DB, broker, external provider, Staging or Production access.
+- Status: dispatcher terminal-state overwrite race is closed at unit-contract level pending exact-head CI. Broader Notifications/Outbox actor ? hierarchy ? delivery-kind retry/dead-letter/revocation/content-isolation matrix remains PARTIAL. Audit event semantics remain unresolved and untouched. Issue #1350 remains OPEN.

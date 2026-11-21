@@ -664,3 +664,11 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Initial exact-head Backend CI surfaced five failures in pre-existing PostgreSQL acceptance fixtures: two suspended-tenant assertions expected the old error text, two provider-window cases and the WhatsApp approval case lacked an active Vendor-issued CommercialLicense for their Customer tenant.
 - Corrected lifecycle precedence in the shared adapter and amended only those fixtures to seed and remove their own Vendor/Customer/license rows. The worker unit fixtures now stub the outbound adapter; its real denial translation is tested separately.
 - Focused Python 3.12 rerun: 17 passed. Targeted Ruff, py_compile for the adjusted PostgreSQL tests, and git diff --check passed. No local PostgreSQL/Provider was used. Exact-head CI must rerun before considering merge.
+
+
+## 2026-11-21 - Outbox dispatcher ambiguous-acknowledgement protection
+
+- Found and corrected a concurrency gap in the generic dispatcher exception path: after a broker .delay() error it previously reloaded Outbox with unlocked db.get() and unconditionally called mark_retry(). With an ambiguous broker acknowledgement, Email/WhatsApp workers can have already committed dispatched, dead, or uncertain; an unlocked retry could overwrite those terminal states and schedule a duplicate delivery.
+- Dispatcher now performs a SELECT OutboxMessage ... FOR UPDATE after rollback and preserves terminal states (dispatched, dead, uncertain). It retains retry/backoff for rows that are still nonterminal; existing workflow broker-failure retry behavior is unchanged.
+- Added parameterized Email/WhatsApp terminal-state race tests and a lock assertion. Python 3.12 focused Outbox/Email/WhatsApp suite: 27 passed; Ruff and git diff --check passed. No DB, broker or provider accessed locally.
+- This is bounded unit-contract evidence only. Exact-head CI is required; full Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance remains PARTIAL and Issue #1350 remains OPEN.
