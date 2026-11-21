@@ -673,3 +673,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - This complements the existing transient pre-provider retry test and the existing post-provider uncertain/no-retry test. It reuses the shared retry-budget contract; it does not duplicate the PostgreSQL Email retry/dead-letter persistence test or change worker behavior.
 - Focused Python 3.12 worker/service suite: **31 passed**; targeted Ruff and `git diff --check` passed. No DB, broker or external provider was accessed.
 - This closes one WhatsApp retry-exhaustion evidence cell only. Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. Exact-head GitHub CI is pending; Issue #1350 remains OPEN.
+
+
+### PR #1469 exact-head acceptance - 2026-11-21
+
+- PR #1469 head `44eea11d699cce4ac0b42e64a7f718c70a1515e3` passed **13/13** exact-head checks, including Backend, Frontend, Architecture, CodeQL, DAST, Infrastructure, Recovery, Semantic E2E, W21 real-stack, Public Widget Browser/API and Release identity consistency.
+- Merged to `main` at `e3b423d82e912d348c1a2516aba23b5b253ca3d3`. WhatsApp deterministic pre-provider retry exhaustion now has worker evidence for durable dead-lettering with provider suppression.
+- This is one bounded retry-exhaustion cell only; Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance remains PARTIAL. Issue #1350 remains OPEN.
