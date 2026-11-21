@@ -17,7 +17,7 @@ def _allow_active_tenant_in_worker_unit_tests(monkeypatch):
         return SimpleNamespace(id=tenant_id, status="active")
 
     monkeypatch.setattr(
-        "app.services.tenant_access_service.assert_tenant_active_for_side_effect",
+        "app.services.billing_service.assert_outbound_delivery_entitlement",
         assert_active,
     )
 
@@ -515,3 +515,36 @@ async def test_governed_email_revocation_after_uncertain_commit_blocks_smtp(monk
     assert row.status == "uncertain"
     assert "revoked before SMTP" in row.last_error
     assert db.commits >= 2
+
+
+@pytest.mark.asyncio
+async def test_email_worker_dead_letters_when_commercial_entitlement_is_inactive(monkeypatch):
+    from app.core.exceptions import TenantInactiveError
+
+    row = SimpleNamespace(
+        id=uuid4(), kind="email.send", status="processing", attempts=1,
+        tenant_id=uuid4(), payload={"to": ["private@example.test"], "subject": "blocked", "body": "blocked"},
+        last_error=None, dead_at=None,
+    )
+    db = _DB([row])
+    smtp_attempts = []
+
+    async def denied(_db, *, tenant_id):
+        raise TenantInactiveError("commercial entitlement expired")
+
+    class _UnexpectedSMTP:
+        def __init__(self, *args, **kwargs):
+            smtp_attempts.append(args)
+            raise AssertionError("ineligible email must not reach SMTP")
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr("app.services.billing_service.assert_outbound_delivery_entitlement", denied)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _UnexpectedSMTP)
+
+    await email_worker._send(str(row.id))
+
+    assert smtp_attempts == []
+    assert row.status == "dead"
+    assert row.dead_at is not None
+    assert "commercial entitlement expired" in row.last_error

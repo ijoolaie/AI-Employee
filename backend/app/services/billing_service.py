@@ -10,7 +10,7 @@ from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
+from app.core.exceptions import ConflictError, NotFoundError, TenantInactiveError, ValidationAppError
 from app.models.billing import BillingEvent, BillingPlan, Subscription
 from app.models.ai_provider_call import AIProviderCall
 from app.models.employee import Employee
@@ -323,6 +323,26 @@ async def assert_run_execution_entitlement(db: AsyncSession, *, tenant_id: uuid.
     ).scalar_one()
     if locked_tenant.status != "active":
         raise ConflictError("Tenant is not active; Run execution is suspended")
+
+
+async def assert_outbound_delivery_entitlement(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:
+    """Revalidate commercial access and hold its subscription/tenant locks through delivery.
+
+    Outbound providers are irreversible side effects. Reuse the Run admission
+    guard so Subscription-before-Tenant lock ordering stays consistent with
+    billing lifecycle mutations; translate deterministic denials to the
+    Outbox terminal state rather than retrying an ineligible delivery.
+    """
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    if tenant is None:
+        raise TenantInactiveError("Tenant no longer exists; outbound delivery is blocked")
+    if tenant.status != "active":
+        raise TenantInactiveError("Tenant is not active; external delivery is blocked")
+
+    try:
+        await assert_run_execution_entitlement(db, tenant_id=tenant_id)
+    except (ConflictError, NotFoundError) as exc:
+        raise TenantInactiveError("Commercial entitlement is inactive; outbound delivery is blocked") from exc
 
 
 async def enforce_run_quota(db: AsyncSession, *, tenant_id: uuid.UUID) -> None:

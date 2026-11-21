@@ -17,7 +17,7 @@ def _allow_active_tenant_in_worker_unit_tests(monkeypatch):
         return SimpleNamespace(id=tenant_id, status="active")
 
     monkeypatch.setattr(
-        "app.services.tenant_access_service.assert_tenant_active_for_side_effect",
+        "app.services.billing_service.assert_outbound_delivery_entitlement",
         assert_active,
     )
 
@@ -161,3 +161,37 @@ async def test_whatsapp_worker_rejects_approval_for_different_message():
 
     with pytest.raises(ValidationAppError, match="does not match its consumed exact-call approval"):
         await whatsapp_worker._validate_and_load(_ApprovalDB(), row)
+
+
+@pytest.mark.asyncio
+async def test_whatsapp_worker_dead_letters_when_commercial_entitlement_is_inactive(monkeypatch):
+    from app.core.exceptions import TenantInactiveError
+
+    tenant_id = uuid4()
+    row = SimpleNamespace(
+        id=uuid4(), kind="whatsapp.send_text", tenant_id=tenant_id,
+        status="processing", attempts=1, payload={}, last_error=None, dead_at=None,
+    )
+    db = _DB(row)
+    provider = AsyncMock()
+    retries = AsyncMock()
+
+    async def validated(_db, _row):
+        return tenant_id, SimpleNamespace(id=uuid4(), channel_type="whatsapp", config={}), {}, None, uuid4(), uuid4(), None
+
+    async def denied(_db, *, tenant_id):
+        raise TenantInactiveError("commercial entitlement expired")
+
+    monkeypatch.setattr(whatsapp_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(whatsapp_worker, "_validate_and_load", validated)
+    monkeypatch.setattr("app.services.billing_service.assert_outbound_delivery_entitlement", denied)
+    monkeypatch.setattr(whatsapp_worker, "deliver_text", provider)
+    monkeypatch.setattr(whatsapp_worker, "mark_retry", retries)
+
+    await whatsapp_worker._send(str(row.id))
+
+    provider.assert_not_awaited()
+    retries.assert_not_awaited()
+    assert row.status == "dead"
+    assert row.dead_at is not None
+    assert "commercial entitlement expired" in row.last_error

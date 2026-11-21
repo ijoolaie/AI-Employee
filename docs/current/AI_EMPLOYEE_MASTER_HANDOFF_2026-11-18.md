@@ -648,3 +648,19 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Exact PR head 10e2c1df6e2857474aa6e2860af5b5d771f6c586 passed all 13 required checks, including both W10 real-stack runs. PR #1440 merged as 4ed51137ff7fe0afbcd34d7d5714b829f779fb95; source branch retained. main now points to this merge commit.
 - Rechecked PRs #1442 and #1443: their old checks are green, but both are behind their respective bases and report mergeable=false, mergeable_state=dirty. They are not eligible for merge; resolve/synchronize conflicts and rerun exact-head checks before reconsideration.
 - Issue #1350 remains OPEN. Remaining acceptance gates: full Notifications/Outbox actor x hierarchy x delivery-kind lifecycle matrix; explicit immutable Audit Ledger/Failure Audit Policy decisions; sanitized historical Vendor permission-backfill snapshot review; human UX acceptance for #1452; remaining Actor x Resource x Action cells; and broader asynchronous export/report actor/topology coverage. No staging/prod migration, deployment, or UX acceptance is claimed.
+
+
+## 2026-11-21 - Outbound Email/WhatsApp commercial entitlement correction
+
+- Main checkpoint reviewed: dbca8059cec2f074da8cf75398d44e75abea0b73 (after PR #1462). A fresh source inspection found a gap that earlier entitlement notes had not actually closed in the dedicated Email/WhatsApp workers: they held the Tenant lifecycle lock but did not call the commercial entitlement guard.
+- Corrected on isolated branch fix/outbox-commercial-entitlement-20261121: billing_service.assert_outbound_delivery_entitlement delegates to the existing assert_run_execution_entitlement, translating deterministic entitlement denials into TenantInactiveError. Email and WhatsApp call it after the durable uncertain fence and hold its Subscription/Tenant transaction locks through provider delivery and final Outbox commit.
+- Focused tests now prove both delivery kinds dead-letter before provider I/O when entitlement is inactive; shared-guard exception translation is also covered. Python 3.12: 17 passed; targeted Ruff and git diff --check passed.
+- The existing PostgreSQL outbound-suspension module was invoked but all 5 cases skipped because its dedicated disposable database URL was not configured. No PostgreSQL, Staging, Production, or external provider was accessed. Exact-head CI must run the guarded PostgreSQL race tests before acceptance.
+- This is one bounded worker/provider entitlement correction, not completion of the Notifications/Outbox matrix. Retry exhaustion, dead-letter ownership across the actor/hierarchy/delivery-kind matrix, revoked delegated context, content isolation, and provider-window permutations remain open. Immutable audit event/failure policy remains a separate decision gate; no speculative audit writes were added. Issue #1350 remains OPEN.
+
+
+### PR #1463 Backend CI follow-up - fixture correction
+
+- Initial exact-head Backend CI surfaced five failures in pre-existing PostgreSQL acceptance fixtures: two suspended-tenant assertions expected the old error text, two provider-window cases and the WhatsApp approval case lacked an active Vendor-issued CommercialLicense for their Customer tenant.
+- Corrected lifecycle precedence in the shared adapter and amended only those fixtures to seed and remove their own Vendor/Customer/license rows. The worker unit fixtures now stub the outbound adapter; its real denial translation is tested separately.
+- Focused Python 3.12 rerun: 17 passed. Targeted Ruff, py_compile for the adjusted PostgreSQL tests, and git diff --check passed. No local PostgreSQL/Provider was used. Exact-head CI must rerun before considering merge.

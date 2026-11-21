@@ -1534,3 +1534,19 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Targeted Ruff across the corresponding production services/workers and test modules: **All checks passed**. `git diff --check` passed. No production or test source was changed in this verification slice; no database or provider was contacted.
 - This extends the bounded worker/delivery evidence. It does not close the full actor x hierarchy x delivery-kind matrix, prove immutable AuditLog transition coverage, or settle the unresolved failure/error privacy and transaction-coupling policy. Do not add speculative audit writes or change error persistence until that policy is approved.
 - The 81 pre-existing local worktree paths remain preserved and unstaged. Issue #1350 remains OPEN. Remaining gates include the audit/failure policy, sanitized historical Vendor permission-backfill snapshot review, human visual Portal acceptance, and remaining matrix cells.
+
+## 2026-11-21 - Email/WhatsApp commercial entitlement at provider boundary
+
+- Source audit on main dbca8059cec2f074da8cf75398d44e75abea0b73 found that Email and WhatsApp workers revalidated tenant lifecycle status before provider I/O but did not call the shared commercial execution-entitlement guard. This contradicted the intended worker acceptance contract; active Tenant status alone does not prove a current paid/Demo/license entitlement.
+- Added billing_service.assert_outbound_delivery_entitlement, reusing assert_run_execution_entitlement and its Subscription-before-Tenant lock order. Deterministic missing/expired/revoked entitlement is translated to TenantInactiveError, so the uncertain-fenced Outbox row is terminally dead-lettered before SMTP/WhatsApp provider I/O.
+- Both dedicated workers now invoke the guard after committing the uncertain fence and retain its transaction/row locks through provider completion and final Outbox commit.
+- Added focused regressions for both delivery kinds and the shared guard translation. Python 3.12: 17 passed; targeted Ruff passed; git diff --check passed.
+- test_tenant_outbound_suspension_postgres.py: 5 skipped because its dedicated disposable-database environment was not supplied. No PostgreSQL, Staging, Production, or provider was accessed. The lock/race integration gate remains pending exact-head CI.
+- This closes one worker/provider entitlement boundary only. Full actor ? hierarchy ? delivery-kind retry/dead-letter/revocation/content-isolation acceptance remains PARTIAL. Immutable audit-event policy remains a separate decision gate. Issue #1350 remains OPEN.
+
+
+### CI fixture reconciliation
+
+- First exact-head Backend CI run reported 2,051 passed, 5 failed, 1 skipped and 1 deselected. The failures were limited to PostgreSQL fixtures that had active Customer tenants but no active CommercialLicense, plus assertions expecting the old lifecycle error text.
+- Corrected the shared outbound guard to preserve the early suspended/missing-Tenant denial before commercial lookup. Updated the active provider-window and WhatsApp approval PostgreSQL fixtures to seed a valid Vendor-issued Customer license and to clean up only their own license/tenant rows.
+- Moved the shared-guard adapter contract into a standalone test module so worker unit fixtures can stub only the adapter without masking the adapter itself. Focused Python 3.12 rerun: 17 passed; Ruff and diff check passed. PostgreSQL execution remains CI-only.

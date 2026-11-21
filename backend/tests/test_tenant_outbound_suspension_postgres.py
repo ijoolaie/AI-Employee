@@ -13,6 +13,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
 
 from app.core.exceptions import TenantInactiveError
+from app.models.license import CommercialLicense
 from app.models.outbox import OutboxMessage
 from app.models.tenant import Tenant
 
@@ -115,6 +116,7 @@ async def test_suspended_tenant_outbox_is_dead_lettered_before_provider(monkeypa
         async with sessions() as cleanup:
             async with cleanup.begin():
                 await cleanup.execute(delete(OutboxMessage).where(OutboxMessage.id == outbox_id))
+                await cleanup.execute(delete(CommercialLicense).where(CommercialLicense.tenant_id == tenant_id))
                 await cleanup.execute(delete(Tenant).where(Tenant.id == tenant_id))
         await engine.dispose()
 
@@ -208,12 +210,32 @@ async def test_worker_holds_tenant_lifecycle_lock_until_provider_finishes(monkey
     try:
         async with sessions() as setup:
             async with setup.begin():
+                issuer_id = uuid.uuid4()
+                setup.add(Tenant(
+                    id=issuer_id,
+                    name=f"Provider lock issuer {channel} {suffix}",
+                    slug=f"provider-lock-issuer-{channel}-{suffix}",
+                    status="active",
+                    tenant_kind="vendor",
+                ))
+                await setup.flush()
                 setup.add(Tenant(
                     id=tenant_id,
                     name=f"Provider lock {channel} {suffix}",
                     slug=f"provider-lock-{channel}-{suffix}",
                     status="active",
                     tenant_kind="customer",
+                    parent_tenant_id=issuer_id,
+                ))
+                await setup.flush()
+                setup.add(CommercialLicense(
+                    license_key=f"LIC-{uuid.uuid4().hex}",
+                    issuer_tenant_id=issuer_id,
+                    tenant_id=tenant_id,
+                    edition="customer",
+                    status="active",
+                    feature_codes=["run.execute"],
+                    license_metadata={},
                 ))
                 setup.add(OutboxMessage(
                     id=outbox_id,
@@ -311,5 +333,7 @@ async def test_worker_holds_tenant_lifecycle_lock_until_provider_finishes(monkey
         async with sessions() as cleanup:
             async with cleanup.begin():
                 await cleanup.execute(delete(OutboxMessage).where(OutboxMessage.id == outbox_id))
+                await cleanup.execute(delete(CommercialLicense).where(CommercialLicense.tenant_id == tenant_id))
                 await cleanup.execute(delete(Tenant).where(Tenant.id == tenant_id))
+                await cleanup.execute(delete(Tenant).where(Tenant.id == issuer_id))
         await engine.dispose()

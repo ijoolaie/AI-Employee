@@ -620,3 +620,21 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added claim-time recovery lease coverage, replay retry-budget/terminal-metadata reset coverage, tenant-scoped SQL row-lock contract, and a PostgreSQL integration test for concurrent dead-letter replay.
 - Disposable PostgreSQL 16 tmpfs validation: **4 passed in 1.98s**. One replay commits; the concurrent replay observes the new `pending` state and returns HTTP 409. No duplicate replay transition is persisted.
 - The Notifications/Outbox acceptance row remains PARTIAL: end-to-end actor/hierarchy/delivery-kind retry exhaustion, revoked-context handling, and provider-boundary permutations are still required. Immutable audit policy remains a separate decision. Issue #1350 stays OPEN.
+
+
+## 2026-11-21 - Email/WhatsApp commercial entitlement provider fence
+
+- Re-audited the merged source at dbca8059cec2f074da8cf75398d44e75abea0b73. Despite the intended entitlement checkpoint recorded for Test Center/Run workers, email_worker._send and whatsapp_worker._send still called only assert_tenant_active_for_side_effect; neither invoked billing_service.assert_run_execution_entitlement. A queued message could therefore cross the external provider boundary after commercial entitlement expiry/revocation while its Tenant remained active.
+- Bounded correction on fix/outbox-commercial-entitlement-20261121: added billing_service.assert_outbound_delivery_entitlement, a narrow adapter over the existing Run execution guard. It translates deterministic ConflictError/NotFoundError denials to TenantInactiveError so the already-committed uncertain Outbox row is marked dead rather than retried or sent. It retains the shared Subscription-before-Tenant lock order.
+- Email and WhatsApp workers now acquire the commercial entitlement locks after the uncertain fence and hold them through provider I/O and durable delivery-state commit. No new schema, migration, provider protocol, or entitlement model was introduced.
+- Added worker regressions proving inactive entitlement blocks SMTP and WhatsApp, marks the durable row dead, and does not retry. Added a shared-guard translation contract.
+- Local evidence: Python 3.12 focused worker/service suite 17 passed; targeted Ruff passed; git diff --check passed. The existing PostgreSQL outbound-suspension module produced 5 guarded skips because the dedicated disposable DB URL was absent; no database/provider was contacted.
+- Status: this closes the commercial-entitlement provider fence for the two dedicated delivery workers at the unit/contract level. Exact-head CI and PostgreSQL subscription/tenant lock-race evidence remain pending. The broader Notifications/Outbox actor ? hierarchy ? delivery-kind retry/dead-letter/revocation/content-isolation matrix remains PARTIAL. Immutable AuditLog transition policy remains unresolved and untouched. Issue #1350 remains OPEN.
+
+
+### Exact-head CI fixture correction - 2026-11-21
+
+- The first PR #1463 Backend CI run exposed fixture assumptions, not a production failure: active Customer fixtures for the provider-window and WhatsApp approval tests lacked a valid Vendor-issued CommercialLicense. The suspended-tenant cases also expected the pre-adapter lifecycle message.
+- Preserved lifecycle precedence by checking missing/inactive Tenant before commercial lookup, while retaining the full shared entitlement guard and Subscription-before-Tenant locks for active tenants.
+- Updated only the two PostgreSQL fixtures to create and clean up their own Vendor issuer, Customer target, and active license. Unit tests now stub the outbound adapter, while a separate adapter test verifies denial translation.
+- Local focused evidence after correction: 17 passed; Ruff, py_compile and git diff --check passed. These PostgreSQL cases remain unexecuted locally and must pass exact-head CI. Overall Notifications/Outbox matrix remains PARTIAL.

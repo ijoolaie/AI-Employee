@@ -94,8 +94,8 @@ async def _send(outbox_id: str) -> None:
             # Tenant lifecycle lock is acquired after the uncertain fence and
             # held through SMTP plus the final durable outbox commit. Suspension
             # takes the same Tenant row lock and therefore serializes with send.
-            from app.services.tenant_access_service import assert_tenant_active_for_side_effect
-            await assert_tenant_active_for_side_effect(db, tenant_id=row.tenant_id)
+            from app.services.billing_service import assert_outbound_delivery_entitlement
+            await assert_outbound_delivery_entitlement(db, tenant_id=row.tenant_id)
 
             # The commit above releases transaction-scoped advisory locks.
             # Re-enter a fresh transaction, revalidate Agent authority (which

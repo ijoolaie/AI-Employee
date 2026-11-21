@@ -1814,3 +1814,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Targeted Ruff across the corresponding production services/workers and test modules: **All checks passed**. `git diff --check` passed. No production or test source was changed in this verification slice; no database or provider was contacted.
 - This extends the bounded worker/delivery evidence. It does not close the full actor x hierarchy x delivery-kind matrix, prove immutable AuditLog transition coverage, or settle the unresolved failure/error privacy and transaction-coupling policy. Do not add speculative audit writes or change error persistence until that policy is approved.
 - The 81 pre-existing local worktree paths remain preserved and unstaged. Issue #1350 remains OPEN. Remaining gates include the audit/failure policy, sanitized historical Vendor permission-backfill snapshot review, human visual Portal acceptance, and remaining matrix cells.
+
+## 2026-11-21 - Next bounded Notifications/Outbox slice
+
+- Current branch fix/outbox-commercial-entitlement-20261121 closes the source-confirmed missing commercial-entitlement revalidation for Email and WhatsApp provider calls. It reuses the existing billing guard and preserves Subscription-before-Tenant locking.
+- Focused evidence: 16 Python 3.12 tests passed; targeted Ruff and diff check passed. PostgreSQL outbound-suspension integration was not run locally (5 guarded skips); exact-head isolated CI must validate it.
+- Keep the full Notifications/Outbox actor ? hierarchy ? delivery-kind matrix PARTIAL until end-to-end retry exhaustion, dead-letter ownership, revoked/stale delegated context, and provider-boundary combinations have exact evidence.
+- Do not add AuditLog transitions until immutable audit event semantics, actor attribution, failure/privacy behavior, and transaction coupling are decided. Keep Issue #1350 OPEN.
