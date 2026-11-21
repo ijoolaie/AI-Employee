@@ -728,3 +728,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - The two-tenant Customer Handoff Email SMTP-boundary isolation regression is integrated. Local focused Python 3.12 suite: **24 passed**; targeted Ruff lint, documentation truth validation, and `git diff --check` passed.
 - This closes bounded worker/provider-boundary Email Handoff isolation evidence only; full Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. Issue #1350 remains OPEN.
 - Current verified `origin/main`: `60a3421414cb70f7d4e0ed4a47ed2160292a8eed`.
+
+## 2026-11-21 - Agent Run worker tenant-qualified lookup
+
+- Tightened the initial durable Run lookup in `backend/app/workers/run_worker.py` to require both `Run.id` and the queued `Run.tenant_id` in SQL. The existing post-load tenant comparison remains as defense in depth.
+- Extended `test_run_worker_fails_closed_on_tenant_mismatch` to assert the Run SELECT includes the tenant predicate. Python 3.12 focused worker suite: **9 passed**; Ruff lint and `git diff --check` passed.
+- Ruff format check reports pre-existing formatting drift elsewhere in `run_worker.py`; no broad unrelated reformat was applied. This is a query-level isolation hardening with focused unit evidence, not live PostgreSQL acceptance or closure of the broader delayed Agent/Outbox matrix. No database, broker, provider, Staging, or Production service was accessed. Issue #1350 remains OPEN.

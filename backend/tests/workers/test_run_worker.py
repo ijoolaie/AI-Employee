@@ -125,6 +125,8 @@ async def test_run_worker_fails_closed_on_tenant_mismatch(monkeypatch):
     with pytest.raises(ValidationAppError):
         await run_worker._run_async(str(run_id), str(supplied_tenant))
 
+    run_query = next(query for query in db.queries if "FROM runs" in query)
+    assert "runs.tenant_id =" in run_query
     assert db.committed is False
 
 
