@@ -1736,3 +1736,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - PR #1491 merged at `8bcf3715d6f2ca3de9adf184bc8590cec29455b1` after **13/13 exact-head checks passed**. Added a two-tenant WhatsApp worker provider-boundary content-isolation regression; the combined WhatsApp, generic Outbox, Email Outbox and Customer Handoff notification suites passed **35 tests** locally, with targeted Ruff and `git diff --check` clean.
 - The WhatsApp test is unit-level provider-boundary evidence, not live provider/DB execution and not full Notifications/Outbox actor x hierarchy x delivery-kind acceptance. Keep that matrix PARTIAL. Issue #1350 remains OPEN; unresolved Audit Ledger/failure policy, sanitized historical permission-backfill snapshot review, human portal UX acceptance, broader async export/report combinations and remaining actor/resource/action cells remain open.
 - Current verified `origin/main`: `8bcf3715d6f2ca3de9adf184bc8590cec29455b1`.
+
+
+## 2026-11-21 - Direct Vendor-to-Customer Report Employee artifact acceptance
+
+- Extended the existing PostgreSQL-backed portal live-API scenario to exercise `analyze_dataset` while a Vendor actor is operating under a direct Vendor-to-Customer portal grant. The scenario is distinct from the existing nested Reseller-to-Customer Report Employee path.
+- The test asserts generated PDF/Excel/chart FileObjects are owned by the effective direct Customer tenant and attributed to the Vendor actor; generated artifacts appear in that Customer portal's file list and PDF/Excel downloads return valid file signatures. The actor's home Vendor context receives 404 for artifact metadata/download, and the same delegated PDF download returns 403 immediately after the direct grant is revoked.
+- Local validation: Python 3.12 syntax compilation, targeted Ruff, and `git diff --check` passed. The PostgreSQL-backed scenario was not run locally; exact-head isolated GitHub CI is required. No application runtime behavior changed.
+- This closes one direct Vendor-to-Customer report-artifact topology cell only. Broader async export/report actor/topology combinations, other export types, and full revoked-context coverage remain open; Issue #1350 stays OPEN.

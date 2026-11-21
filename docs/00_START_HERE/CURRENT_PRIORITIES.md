@@ -1976,3 +1976,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - PR #1491 adds a two-tenant WhatsApp provider-boundary content-isolation unit regression and is merged. This is one bounded evidence cell only; the full Notifications/Outbox actor x hierarchy x delivery-kind/content matrix remains PARTIAL.
 - Current verified `origin/main`: `8bcf3715d6f2ca3de9adf184bc8590cec29455b1`.
 - Keep Issue #1350 OPEN. Remaining gates include immutable Audit Ledger/failure policy, sanitized historical permission-backfill snapshot review, human portal UX acceptance, broader asynchronous export/report topology coverage, and remaining actor/resource/action cells. Do not perform speculative audit writes, historical Staging/Production backfills, or realtime work.
+
+
+## 2026-11-21 - Direct Vendor-to-Customer Report Employee artifact acceptance
+
+- Extended the existing PostgreSQL-backed portal live-API scenario to exercise `analyze_dataset` while a Vendor actor is operating under a direct Vendor-to-Customer portal grant. The scenario is distinct from the existing nested Reseller-to-Customer Report Employee path.
+- The test asserts generated PDF/Excel/chart FileObjects are owned by the effective direct Customer tenant and attributed to the Vendor actor; generated artifacts appear in that Customer portal's file list and PDF/Excel downloads return valid file signatures. The actor's home Vendor context receives 404 for artifact metadata/download, and the same delegated PDF download returns 403 immediately after the direct grant is revoked.
+- Local validation: Python 3.12 syntax compilation, targeted Ruff, and `git diff --check` passed. The PostgreSQL-backed scenario was not run locally; exact-head isolated GitHub CI is required. No application runtime behavior changed.
+- This closes one direct Vendor-to-Customer report-artifact topology cell only. Broader async export/report actor/topology combinations, other export types, and full revoked-context coverage remain open; Issue #1350 stays OPEN.

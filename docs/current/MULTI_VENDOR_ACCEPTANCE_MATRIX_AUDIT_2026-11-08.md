@@ -790,3 +790,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added `test_whatsapp_worker_keeps_two_tenant_content_isolated_at_provider_boundary` to the dedicated WhatsApp worker unit suite. It processes two distinct tenant-owned Outbox rows through separate worker sessions and captures both `deliver_text` provider-boundary calls. Each call must carry only its tenant's recipient, message text, and channel configuration marker; the other tenant's values must be absent, and both rows must reach `dispatched`.
 - Focused Python 3.12 validation: WhatsApp worker plus generic Outbox crash-safety modules **20 passed**; targeted Ruff and `git diff --check` passed. No database, broker, WhatsApp provider, Staging, or Production service was accessed.
 - This adds unit-level provider-boundary content-isolation evidence for two WhatsApp tenants. It is not a live provider integration test and does not close the full actor x hierarchy x delivery-kind/content matrix. Keep Notifications/Outbox acceptance PARTIAL and Issue #1350 OPEN. No AuditLog behavior was changed.
+
+
+## 2026-11-21 - Direct Vendor-to-Customer Report Employee artifact acceptance
+
+- Extended the existing PostgreSQL-backed portal live-API scenario to exercise `analyze_dataset` while a Vendor actor is operating under a direct Vendor-to-Customer portal grant. The scenario is distinct from the existing nested Reseller-to-Customer Report Employee path.
+- The test asserts generated PDF/Excel/chart FileObjects are owned by the effective direct Customer tenant and attributed to the Vendor actor; generated artifacts appear in that Customer portal's file list and PDF/Excel downloads return valid file signatures. The actor's home Vendor context receives 404 for artifact metadata/download, and the same delegated PDF download returns 403 immediately after the direct grant is revoked.
+- Local validation: Python 3.12 syntax compilation, targeted Ruff, and `git diff --check` passed. The PostgreSQL-backed scenario was not run locally; exact-head isolated GitHub CI is required. No application runtime behavior changed.
+- This closes one direct Vendor-to-Customer report-artifact topology cell only. Broader async export/report actor/topology combinations, other export types, and full revoked-context coverage remain open; Issue #1350 stays OPEN.
