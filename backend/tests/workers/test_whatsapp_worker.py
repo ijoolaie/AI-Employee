@@ -238,3 +238,39 @@ async def test_whatsapp_delegation_revoked_after_uncertain_commit_blocks_provide
     assert "delegated authority revoked before WhatsApp provider" in row.last_error
     assert db.events.count("commit") == 2
     assert db.events.count("rollback") == 1
+
+@pytest.mark.asyncio
+async def test_whatsapp_pre_provider_retry_exhaustion_dead_letters_without_provider(monkeypatch):
+    from datetime import datetime, timezone
+
+    from app.core import config
+
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind="whatsapp.send_text",
+        tenant_id=uuid4(),
+        status="processing",
+        attempts=1,
+        payload={"channel_id": str(uuid4()), "recipient": "+15551234567", "text": "missing proof"},
+        last_error=None,
+        dead_at=None,
+        available_at=None,
+    )
+    db = _DB(row)
+    db.flush = AsyncMock()
+    provider = AsyncMock()
+
+    monkeypatch.setattr(config, "get_settings", lambda: SimpleNamespace(outbox_max_attempts=1))
+    monkeypatch.setattr(whatsapp_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(whatsapp_worker, "deliver_text", provider)
+
+    await whatsapp_worker._send(str(row.id))
+
+    provider.assert_not_awaited()
+    assert row.status == "dead"
+    assert row.dead_at is not None
+    assert isinstance(row.dead_at, datetime)
+    assert row.dead_at.tzinfo == timezone.utc
+    assert "missing Agent governance proof" in row.last_error
+    assert db.events.count("rollback") == 1
+    assert db.events.count("commit") == 1

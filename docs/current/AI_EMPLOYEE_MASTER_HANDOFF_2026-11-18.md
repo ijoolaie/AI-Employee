@@ -1,6 +1,33 @@
 # Current master handoff - verified 2026-11-21
 
 Repository: ijoolaie/AI-Employee
+Current main: 918137a30c52fad42bb1d58054f7b2126b66a47f
+Active tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN)
+
+## Latest GitHub facts
+- PR #1467 merged: b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc (WhatsApp delegated revocation at provider boundary; exact-head checks passed).
+- PR #1468 merged: 918137a30c52fad42bb1d58054f7b2126b66a47f (documentation reconciliation; four checks passed).
+- PR #1463 Email/WhatsApp commercial entitlement provider fence and #1464 ambiguous broker acknowledgement protection remain integrated.
+- New local branch `test/whatsapp-retry-exhaustion-20261121` adds one deterministic pre-provider failure/retry-exhaustion regression. Local focused suite 31 passed, Ruff passed, diff check passed; PR/CI evidence is pending.
+
+## Active acceptance gates
+1. Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL; this slice proves WhatsApp retry exhaustion dead-letters before provider I/O, not the full matrix.
+2. Immutable AuditLog event semantics and failure-audit transaction/privacy policy remain undecided. Do not add speculative events.
+3. Sanitized historical Vendor permission-backfill snapshot review and human visual portal UX acceptance remain outstanding.
+4. Continue only from concrete uncovered cells in the current acceptance audit; preserve merged evidence and avoid duplicate tests.
+
+## Persistent operating constraints
+- Use only D:/Work/project/AI-Employee for project work, worktrees, temporary test artifacts and generated files.
+- Preserve unrelated local changes/worktrees. No git reset, git clean, force push, branch deletion, deployment, or persistent/Staging/Production data mutation.
+- PostgreSQL tests only against disposable isolated instances. Never access Staging PostgreSQL/Redis.
+- Issue #1350 remains OPEN until every acceptance gate has explicit evidence.
+
+The remainder contains dated historical handoff snapshots; this checkpoint supersedes conflicting older status.
+---
+
+# Current master handoff - verified 2026-11-21
+
+Repository: ijoolaie/AI-Employee
 Current main: dc514b1147e95fc713be857225bcdcc6c1af0384
 Active tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN)
 
