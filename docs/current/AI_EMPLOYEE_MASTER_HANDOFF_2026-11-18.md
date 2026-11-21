@@ -1,3 +1,33 @@
+# Current master handoff - verified 2026-11-21
+
+Repository: ijoolaie/AI-Employee
+Current main: dc514b1147e95fc713be857225bcdcc6c1af0384
+Active tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN)
+
+## Current GitHub facts
+- PR #1434 merged: e2d7c11195f750d8c41ae5ecc78c8503b0fe43ff.
+- PR #1447 merged: 6e17d8a611e4194b684daff4341098455c76d5a7.
+- PR #1463 merged: 0eaf1b30cb74e504aa36822e19eb5c86ab4fe926 (Email/WhatsApp commercial entitlement provider fence; 18/18 exact-head checks).
+- PR #1464 merged: b4e57a048dcc22c772552039cb40a2f61bacc1b3 (Outbox ambiguous broker acknowledgement race; 17/17 exact-head checks).
+- PR #1465 merged: dc514b1147e95fc713be857225bcdcc6c1af0384 (documentation reconciliation).
+
+## Active acceptance gates
+1. Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. The two latest worker/dispatcher fixes are bounded increments, not complete end-to-end acceptance.
+2. Immutable AuditLog event semantics and failure-audit transaction/privacy policy remain undecided. Do not add speculative events.
+3. Sanitized historical Vendor permission-backfill snapshot has not been reviewed; no staging/production backfill.
+4. Human visual portal UX acceptance remains outstanding.
+5. Continue only from a concrete uncovered Actor ? Resource ? Action cell in the current acceptance audit. Preserve all already-merged evidence and avoid duplicate tests.
+
+## Persistent operating constraints
+- Use only D:/Work/project/AI-Employee for project work, worktrees, temporary test artifacts and generated files. Never create project folders/files elsewhere.
+- Preserve unrelated local changes and worktrees. No git reset, git clean, force push, branch deletion, deployment, or persistent/Staging/Production data mutation.
+- PostgreSQL tests are permitted only against disposable isolated instances with cleanup. Never access Staging PostgreSQL/Redis.
+- Clean only caches and artifacts created by the current task; preserve user files and pre-existing dirty work.
+- Issue #1350 remains OPEN until every acceptance gate has explicit evidence.
+
+The remainder of this file contains dated historical handoff snapshots. This 2026-11-21 section supersedes older GitHub SHA, PR status, worktree, authorization and next-step statements where they differ.
+---
+
 
 
 ## Reseller-to-Customer file lifecycle follow-up - 2026-11-19
