@@ -46,7 +46,12 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             except (ValueError, AttributeError) as exc:
                 raise ValidationAppError("Invalid worker tenant/run context") from exc
 
-            result = await db.execute(select(Run).where(Run.id == parsed_run_id))
+            result = await db.execute(
+                select(Run).where(
+                    Run.id == parsed_run_id,
+                    Run.tenant_id == parsed_tenant_id,
+                )
+            )
             run = result.scalar_one_or_none()
             if run is None:
                 logger.error("run_worker_phase", extra={"phase": "run_not_found", "run_id": run_id, "tenant_id": tenant_id})
