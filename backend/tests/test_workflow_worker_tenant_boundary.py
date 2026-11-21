@@ -9,11 +9,21 @@ from app.workers import workflow_worker
 
 
 class _FakeDb:
-    def __init__(self, durable_tenant_id):
+    def __init__(self, durable_tenant_id, task_tenant_id):
         self._durable_tenant_id = durable_tenant_id
+        self._task_tenant_id = task_tenant_id
+        self.queries = []
 
-    async def execute(self, _statement):
-        return SimpleNamespace(scalar_one_or_none=lambda: self._durable_tenant_id)
+    async def execute(self, statement):
+        self.queries.append(str(statement))
+        return SimpleNamespace(
+            scalar_one_or_none=lambda: (
+                self._durable_tenant_id
+                if self._durable_tenant_id is not None
+                and self._durable_tenant_id == self._task_tenant_id
+                else None
+            )
+        )
 
     async def commit(self):
         raise AssertionError("tenant validation failure must not commit")
@@ -37,8 +47,8 @@ class _DbContext:
 @pytest.mark.parametrize(
     ("durable_tenant_id", "task_tenant_id", "message"),
     [
-        ("tenant-a", "tenant-b", "Worker tenant context does not match Workflow Run tenant"),
-        (None, "tenant-a", "Workflow Run not found"),
+        ("10000000-0000-0000-0000-000000000001", "20000000-0000-0000-0000-000000000002", "Workflow Run not found for tenant context"),
+        (None, "10000000-0000-0000-0000-000000000001", "Workflow Run not found for tenant context"),
     ],
 )
 async def test_workflow_worker_validates_durable_tenant_before_execution(
@@ -47,7 +57,7 @@ async def test_workflow_worker_validates_durable_tenant_before_execution(
     task_tenant_id,
     message,
 ):
-    db = _FakeDb(durable_tenant_id)
+    db = _FakeDb(durable_tenant_id, task_tenant_id)
     acquire_lease = AsyncMock()
     execute_workflow = AsyncMock()
 
@@ -73,5 +83,7 @@ async def test_workflow_worker_validates_durable_tenant_before_execution(
             task_tenant_id,
         )
 
+    assert len(db.queries) == 1
+    assert "workflow_runs.tenant_id =" in db.queries[0]
     acquire_lease.assert_not_awaited()
     execute_workflow.assert_not_awaited()
