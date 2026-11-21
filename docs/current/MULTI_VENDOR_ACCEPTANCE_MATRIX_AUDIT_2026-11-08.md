@@ -652,3 +652,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 ### PR #1464 exact-head acceptance
 
 - PR #1464 exact head ed36d567ef86bbf2a29b09e59507e1fbaa33bfb5 passed **17/17** exact-head checks, including Backend and W21 real-stack. It merged to main at b4e57a048dcc22c772552039cb40a2f61bacc1b3. The Outbox dispatcher terminal-state preservation correction is now integrated; the wider actor ? hierarchy ? delivery-kind matrix remains PARTIAL.
+
+
+## 2026-11-21 - WhatsApp delegated revocation provider-boundary evidence
+
+- Existing Email coverage proves delegated authority revoked after the uncertain commit blocks SMTP. Source inspection confirmed WhatsApp also calls _validate_and_load again after committing uncertain and before deliver_text, which rechecks Agent policy/delegation and exact approval/channel bindings; however, no worker regression proved revocation between the initial validation and the provider-boundary revalidation.
+- Added test_whatsapp_delegation_revoked_after_uncertain_commit_blocks_provider. It makes the initial validation pass, rejects the second validation, asserts no provider call, no retry, two commits (uncertain fence and final uncertain state), one rollback, and durable uncertain status.
+- Python 3.12 WhatsApp worker tests: 5 passed; targeted Ruff and git diff --check passed. No DB/broker/provider accessed locally.
+- This closes the missing WhatsApp unit-evidence counterpart only. Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL pending exact-head CI and broader end-to-end cases.

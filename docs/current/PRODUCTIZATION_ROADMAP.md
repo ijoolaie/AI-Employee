@@ -667,3 +667,9 @@ Vendor descendant role replacement is now implemented locally. It preserves non-
 ### PR #1464 integration checkpoint - 2026-11-21
 
 - The Outbox ambiguous-acknowledgement protection is integrated in main at b4e57a048dcc22c772552039cb40a2f61bacc1b3 after 17/17 exact-head checks passed. Full Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance remains partial.
+
+
+## 2026-11-21 - WhatsApp delegated revocation provider-boundary regression
+
+- Added the missing WhatsApp worker test counterpart to the existing Email revocation-after-uncertain-commit regression. It proves post-fence revalidation blocks provider I/O and does not retry after the uncertain boundary.
+- Focused WhatsApp worker tests: 5 passed; targeted Ruff and diff check passed. Exact-head CI pending; broader Notifications/Outbox acceptance remains partial.

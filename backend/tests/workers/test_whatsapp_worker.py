@@ -195,3 +195,46 @@ async def test_whatsapp_worker_dead_letters_when_commercial_entitlement_is_inact
     assert row.status == "dead"
     assert row.dead_at is not None
     assert "commercial entitlement expired" in row.last_error
+
+
+@pytest.mark.asyncio
+async def test_whatsapp_delegation_revoked_after_uncertain_commit_blocks_provider(monkeypatch):
+    tenant_id = uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind="whatsapp.send_text",
+        tenant_id=tenant_id,
+        status="processing",
+        attempts=1,
+        payload={"recipient": "+15551234567", "text": "must not send after revocation"},
+        last_error=None,
+    )
+    db = _DB(row)
+    channel = SimpleNamespace(id=uuid4(), channel_type="whatsapp", config={})
+    approval = SimpleNamespace(id=uuid4())
+    agent_id, run_id = uuid4(), uuid4()
+    provider = AsyncMock()
+    retries = AsyncMock()
+    validation_calls = 0
+
+    async def validate(_db, _row):
+        nonlocal validation_calls
+        validation_calls += 1
+        if validation_calls == 2:
+            raise ValidationAppError("delegated authority revoked before WhatsApp provider")
+        return tenant_id, channel, row.payload, approval, agent_id, run_id, uuid4()
+
+    monkeypatch.setattr(whatsapp_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(whatsapp_worker, "_validate_and_load", validate)
+    monkeypatch.setattr(whatsapp_worker, "deliver_text", provider)
+    monkeypatch.setattr(whatsapp_worker, "mark_retry", retries)
+
+    await whatsapp_worker._send(str(row.id))
+
+    assert validation_calls == 2
+    provider.assert_not_awaited()
+    retries.assert_not_awaited()
+    assert row.status == "uncertain"
+    assert "delegated authority revoked before WhatsApp provider" in row.last_error
+    assert db.events.count("commit") == 2
+    assert db.events.count("rollback") == 1

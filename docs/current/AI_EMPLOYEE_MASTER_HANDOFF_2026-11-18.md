@@ -707,3 +707,9 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 ### PR #1464 merged - 2026-11-21
 
 - The ambiguous broker acknowledgement terminal-state protection merged at b4e57a048dcc22c772552039cb40a2f61bacc1b3 after **17/17 exact-head checks** passed on ed36d567ef86bbf2a29b09e59507e1fbaa33bfb5. Issue #1350 remains OPEN; complete Notifications/Outbox matrix remains PARTIAL.
+
+
+## 2026-11-21 - WhatsApp delegated-revocation regression
+
+- Added a worker test proving WhatsApp's second Agent/delegation validation, after the durable uncertain fence and immediately before provider I/O, blocks a revoked delegated context. The provider is not called, no retry occurs, and the row remains uncertain.
+- Focused Python 3.12 WhatsApp worker module: 5 passed; Ruff and diff check passed. Exact-head CI pending. This is a bounded evidence increment; complete Notifications/Outbox matrix remains PARTIAL.
