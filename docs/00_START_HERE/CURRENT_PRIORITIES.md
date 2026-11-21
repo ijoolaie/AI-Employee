@@ -1917,3 +1917,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - For each delivered message, the test asserts the configured recipient and only that row's tenant, conversation, and channel identifiers are present; the other tenant's recipient and identifiers are absent. Both rows reach the expected dispatched state. This complements the existing producer-side minimal-content and tenant-scoped destination tests with worker/provider-boundary evidence.
 - Python 3.12 focused suite (`test_email_outbox_crash_safety.py`, `test_outbox_worker_crash_safety.py`, and `test_customer_handoff_notification_outbox.py`): **24 passed**. Targeted Ruff lint and `git diff --check` passed. Ruff format check still reports pre-existing unrelated formatting drift in the module; no broad reformat was applied.
 - This is bounded two-tenant Email Handoff unit evidence, not closure of all Email/WhatsApp/Agent actor ? hierarchy ? delivery-kind end-to-end combinations. No DB, broker, SMTP provider, Staging, or Production service was accessed. Issue #1350 remains OPEN.
+
+
+### PR #1475 exact-head acceptance - 2026-11-21
+
+- PR #1475 merged at `60a3421414cb70f7d4e0ed4a47ed2160292a8eed` after all **13/13** exact-head checks passed, including Backend, Frontend, Architecture, CodeQL, DAST, Recovery, Infrastructure, Public Widget, Semantic E2E, W21 real-stack, and Release identity consistency.
+- The two-tenant Customer Handoff Email SMTP-boundary isolation regression is integrated. Local focused Python 3.12 suite: **24 passed**; targeted Ruff lint, documentation truth validation, and `git diff --check` passed.
+- This closes bounded worker/provider-boundary Email Handoff isolation evidence only; full Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. Issue #1350 remains OPEN.
+- Current verified `origin/main`: `60a3421414cb70f7d4e0ed4a47ed2160292a8eed`.
