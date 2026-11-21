@@ -52,6 +52,42 @@ async def _session(db):
 
 
 @pytest.mark.asyncio
+async def test_whatsapp_worker_rejects_cross_tenant_governance_binding_before_lookup():
+    row_tenant_id, proof_tenant_id, run_id = uuid4(), uuid4(), uuid4()
+    row = SimpleNamespace(
+        tenant_id=row_tenant_id,
+        payload={
+            "run_id": str(run_id),
+            "approval_request_id": str(uuid4()),
+            "channel_id": str(uuid4()),
+            "tool_name": "whatsapp.send_text",
+            "tool_call_id": "call_cross_tenant",
+            "recipient": "+15551234567",
+            "text": "must not cross tenant boundary",
+            "_agent_governance": {
+                "tenant_id": str(proof_tenant_id),
+                "agent_instance_id": str(uuid4()),
+                "run_id": str(run_id),
+                "tool_name": "whatsapp.send_text",
+            },
+        },
+    )
+
+    class _NoLookupDB:
+        def __init__(self):
+            self.statements = []
+
+        async def execute(self, statement):
+            self.statements.append(statement)
+            return _Result(None)
+
+    db = _NoLookupDB()
+    with pytest.raises(ValidationAppError, match="governance binding mismatch"):
+        await whatsapp_worker._validate_and_load(db, row)
+
+    assert db.statements == []
+
+@pytest.mark.asyncio
 async def test_whatsapp_worker_rejects_missing_governance_proof_before_provider(monkeypatch):
     row = SimpleNamespace(
         id=uuid4(),
