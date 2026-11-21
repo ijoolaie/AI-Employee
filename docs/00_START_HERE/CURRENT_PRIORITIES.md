@@ -1,5 +1,21 @@
 # Current priorities - verified 2026-11-21
 
+Current main: 918137a30c52fad42bb1d58054f7b2126b66a47f
+Only active implementation track: Multi-Vendor tenant ownership, delegated authorization and portal acceptance - Issue #1350 (OPEN).
+
+1. P0 - Notifications/Outbox acceptance: continue the source-backed actor ? hierarchy ? delivery-kind matrix. PRs #1463/#1464/#1467/#1468 are integrated. Current local slice adds WhatsApp pre-provider retry-exhaustion/dead-letter evidence (31 focused tests pass) and is awaiting PR/CI. Broader end-to-end ownership, content isolation and topology permutations remain PARTIAL.
+2. P1 - Actor ? Resource ? Action: select only a concrete uncovered hierarchy/resource/action cell from the acceptance audit; do not duplicate merged coverage.
+3. Gated - Immutable audit/failure policy: no Outbox/AssignmentCommand ledger implementation until event semantics, actor attribution, failure/privacy behavior and transaction coupling are decided.
+4. Gated - Historical Vendor permission backfill: requires sanitized historical snapshot review; no staging/production rehearsal or mutation.
+5. Gated - Human portal UX: requires human visual acceptance; CI is not a substitute.
+6. Keep Issue #1350 OPEN until all acceptance evidence and gated decisions are complete.
+
+Execution: start from current handoff, status, priorities and acceptance audit; make one bounded source-backed change; run only focused checks; update documentation and Issue #1350 with verified evidence. PostgreSQL only on isolated disposable instances. No unrelated product tracks or broad repeated sweeps.
+
+---
+
+# Current priorities - verified 2026-11-21
+
 Current main: dc514b1147e95fc713be857225bcdcc6c1af0384
 Only active implementation track: Multi-Vendor tenant ownership, delegated authorization and portal acceptance - Issue #1350 (OPEN).
 

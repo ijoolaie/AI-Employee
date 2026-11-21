@@ -1,6 +1,31 @@
 # Current verified status - 2026-11-21
 
 Repository: ijoolaie/AI-Employee
+Verified main HEAD: 918137a30c52fad42bb1d58054f7b2126b66a47f
+Tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN)
+
+## Latest verified continuation
+- PR #1467 WhatsApp delegated-revocation provider-boundary regression merged at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc; exact-head checks passed.
+- PR #1468 reconciled the #1467 evidence into project docs and merged at 918137a30c52fad42bb1d58054f7b2126b66a47f; all four checks passed.
+- Current focused work adds a WhatsApp pre-provider retry-exhaustion regression: with attempts at the configured maximum, deterministic validation failure is durably dead-lettered and the provider is not called. Local focused suite: 31 passed; Ruff and diff check passed. This change is not yet in a PR and has no GitHub CI evidence.
+
+## Acceptance boundary
+- Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. This test closes one WhatsApp retry-exhaustion evidence cell only.
+- Immutable Outbox/AssignmentCommand audit-event and failure/privacy/transaction policy remains unresolved; no speculative ledger writes.
+- Sanitized historical Vendor permission-backfill snapshot review and human visual portal UX acceptance remain gated.
+- Issue #1350 remains OPEN.
+
+## Operating constraints
+- All project operations, generated artifacts, temporary worktrees and test data remain under D:/Work/project/AI-Employee.
+- Preserve unrelated dirty worktrees and local data. No reset, clean, force push, branch deletion, deployment, or persistent/Staging/Production mutation.
+- PostgreSQL tests only on disposable isolated instances. Do not access Staging PostgreSQL/Redis.
+
+The dated records below are historical and superseded wherever they conflict with this checkpoint.
+---
+
+# Current verified status - 2026-11-21
+
+Repository: ijoolaie/AI-Employee
 Verified main HEAD: dc514b1147e95fc713be857225bcdcc6c1af0384
 Tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN)
 

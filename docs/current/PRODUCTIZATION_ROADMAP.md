@@ -678,3 +678,8 @@ Vendor descendant role replacement is now implemented locally. It preserves non-
 ### PR #1467 integration checkpoint - 2026-11-21
 
 - WhatsApp post-fence delegated-revocation regression is integrated in main at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc after exact-head CI passed. The overall Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains partial.
+
+
+## 2026-11-21 - Issue #1350 continuation checkpoint
+
+WhatsApp retry-exhaustion evidence was added for deterministic pre-provider validation failure on the final configured attempt: durable dead-letter metadata is written and provider I/O is skipped. Local focused suite: 31 passed; Ruff and diff check passed. This is one bounded Notifications/Outbox acceptance increment, not completion of the actor ? hierarchy ? delivery-kind matrix. Exact-head CI remains pending; Issue #1350 stays OPEN.

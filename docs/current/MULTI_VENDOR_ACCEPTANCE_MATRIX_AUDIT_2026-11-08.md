@@ -665,3 +665,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 ### PR #1467 exact-head acceptance
 
 - PR #1467 passed all reported exact-head checks on 2ec18120dab65ad356671a6c3e936aa814626270 and merged at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc. WhatsApp delegated revocation after the uncertain fence now has the missing worker regression; the full Notifications/Outbox matrix remains PARTIAL.
+
+
+## 2026-11-21 - WhatsApp pre-provider retry exhaustion evidence
+
+- Added a focused worker regression for a WhatsApp outbox row whose deterministic pre-provider validation fails on its final configured attempt. The real `mark_retry` helper transitions the row to `dead`, records `dead_at` and the failure, and commits; the WhatsApp provider is never invoked.
+- This complements the existing transient pre-provider retry test and the existing post-provider uncertain/no-retry test. It reuses the shared retry-budget contract; it does not duplicate the PostgreSQL Email retry/dead-letter persistence test or change worker behavior.
+- Focused Python 3.12 worker/service suite: **31 passed**; targeted Ruff and `git diff --check` passed. No DB, broker or external provider was accessed.
+- This closes one WhatsApp retry-exhaustion evidence cell only. Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. Exact-head GitHub CI is pending; Issue #1350 remains OPEN.
