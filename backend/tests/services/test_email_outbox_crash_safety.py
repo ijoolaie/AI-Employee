@@ -360,6 +360,90 @@ async def test_customer_handoff_email_worker_invokes_configured_destination(monk
 
 
 @pytest.mark.asyncio
+async def test_email_worker_keeps_two_tenant_handoff_content_isolated_at_smtp(monkeypatch):
+    tenants = [
+        {
+            "tenant_id": uuid4(),
+            "conversation_id": uuid4(),
+            "channel_id": uuid4(),
+            "recipient": "tenant-a-ops@example.test",
+        },
+        {
+            "tenant_id": uuid4(),
+            "conversation_id": uuid4(),
+            "channel_id": uuid4(),
+            "recipient": "tenant-b-ops@example.test",
+        },
+    ]
+    rows = [
+        SimpleNamespace(
+            id=uuid4(),
+            kind="email.send",
+            status="processing",
+            attempts=1,
+            tenant_id=item["tenant_id"],
+            last_error=None,
+            payload={
+                "to": [item["recipient"]],
+                "subject": "Customer requested human support",
+                "body": (
+                    f"tenant_id={item['tenant_id']}\n"
+                    f"conversation_id={item['conversation_id']}\n"
+                    f"channel_id={item['channel_id']}\n"
+                ),
+            },
+        )
+        for item in tenants
+    ]
+    databases = [_DB([row]) for row in rows]
+    contexts = iter(databases)
+    delivered = []
+
+    class _CapturingSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def send_message(self, msg):
+            delivered.append(msg)
+
+    async def authorize(*args, **kwargs):
+        return None
+
+    async def mark_dispatched(_db, row):
+        row.status = "dispatched"
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(next(contexts)))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _CapturingSMTP)
+    monkeypatch.setattr(outbox_service, "mark_dispatched", mark_dispatched)
+
+    for row in rows:
+        await email_worker._send(str(row.id))
+
+    assert len(delivered) == 2
+    for index, (item, row, message) in enumerate(zip(tenants, rows, delivered, strict=True)):
+        body = message.get_content()
+        assert message["To"] == item["recipient"]
+        assert message["Subject"] == "Customer requested human support"
+        assert str(item["tenant_id"]) in body
+        assert str(item["conversation_id"]) in body
+        assert str(item["channel_id"]) in body
+        other = tenants[1 - index]
+        assert other["recipient"] not in body
+        assert str(other["tenant_id"]) not in body
+        assert str(other["conversation_id"]) not in body
+        assert str(other["channel_id"]) not in body
+        assert row.status == "dispatched"
+
+
+@pytest.mark.asyncio
 async def test_email_success_metric_is_not_emitted_when_final_commit_fails(monkeypatch):
     row = SimpleNamespace(
         id=uuid4(),
