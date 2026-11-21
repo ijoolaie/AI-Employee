@@ -1009,6 +1009,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert vendor_b_usage_data["total_tokens"] == 30
                 assert vendor_b_usage_data["cost_usd"] == 0.03
                 await assert_portal_usage_context(vendor_b_portal_headers, reseller_b.id)
+                await assert_portal_usage_context(direct_customer_portal_headers, direct_customer.id)
 
                 vendor_b_invoices = await client.get("/api/v1/invoices", headers=vendor_b_portal_headers)
                 assert vendor_b_invoices.status_code == 200, vendor_b_invoices.text
