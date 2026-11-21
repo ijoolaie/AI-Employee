@@ -1,4 +1,4 @@
-﻿# Current verified status - 2026-11-21
+# Current verified status - 2026-11-21
 
 Repository: ijoolaie/AI-Employee
 Verified main HEAD: e3b423d82e912d348c1a2516aba23b5b253ca3d3
@@ -85,50 +85,50 @@ The dated records below are historical evidence and are superseded wherever they
 - Added a two-session child/parent deprovision race test. Focused concurrency and Lifecycle live-API verification: **5 passed in 76.36s**.
 - Fixed a real Lifecycle audit persistence bug (`metadata` -> mapped `metadata_`). Live API assertions now verify tenant/actor/child/status metadata on all three direct-child deprovision paths.
 - New/changed tests clean their fixtures. Ruff checks passed. Full CI remains pending; Issue #1350 remains OPEN.
-## Current verified checkpoint â€” 2026-11-18
+## Current verified checkpoint — 2026-11-18
 
-- Active workstream is limited to Multi-Vendor acceptance tracked by Issue #1350. The full Actor Ã— Resource Ã— Action acceptance matrix remains incomplete; Issue #1350 stays OPEN.
+- Active workstream is limited to Multi-Vendor acceptance tracked by Issue #1350. The full Actor × Resource × Action acceptance matrix remains incomplete; Issue #1350 stays OPEN.
 - Active worktree branch test/knowledge-revoked-portal-context-20261108 is at fed62f56a75dd0f6de09c41e14a00506593d14c5, exactly matching PR #1434 head. PR #1434 remains OPEN and unmerged.
 - Exact-head checks: 20 GitHub Actions suites and one GitHub Advanced Security suite succeeded; Freebuff Web suite 117539141336 remains queued and commit combined status is pending. This is not merge clearance.
 - PR #1433 (2026-11-08 master handoff) remains OPEN/unmerged at 6c4dfe33fb84077553dc7b777379d9303aca7090. PR #1447 remains Draft and stacked on #1434; #1452 is a separate open PR.
 - Local worktree has 76 uncommitted changed paths after this documentation refresh (57 tracked, 19 untracked); before documentation updates, 71 paths were present. No staged changes. Preserve them. They are not part of PR #1434's test-only committed scope.
-- Ordered next work: classify existing local changes against the audit; then close only the remaining notification/Outbox and worker-ownership gaps, followed by entitlement lifecycle and selected uncovered Actor Ã— Resource Ã— Action cases. Reuse existing evidence; avoid duplicate tests and broad sweeps.
+- Ordered next work: classify existing local changes against the audit; then close only the remaining notification/Outbox and worker-ownership gaps, followed by entitlement lifecycle and selected uncovered Actor × Resource × Action cases. Reuse existing evidence; avoid duplicate tests and broad sweeps.
 - Realtime/WebSocket is an unimplemented architecture decision gate, not approved implementation work. Human visual acceptance, legacy backfill, persistent database changes, merge/push/deploy and release promotion remain separately gated.
 - New detailed checkpoint: docs/current/AI_EMPLOYEE_MASTER_HANDOFF_2026-11-18.md. The source-backed gap register remains docs/current/MULTI_VENDOR_ACCEPTANCE_MATRIX_AUDIT_2026-11-08.md.
 
 ---
-## Multi-Vendor implementation and acceptance checkpoint â€” 2026-11-08
+## Multi-Vendor implementation and acceptance checkpoint — 2026-11-08
 
-- Verified `main` baseline for this checkpoint: `c92a9bdeb026ff488a8be5a1cb8764d6fcbbe5ce` (PR #1429 merge). PRs #1389â€“#1429 are merged; this is substantial engineering progress, not completion of the full Multi-Vendor acceptance/release gate.
+- Verified `main` baseline for this checkpoint: `c92a9bdeb026ff488a8be5a1cb8764d6fcbbe5ce` (PR #1429 merge). PRs #1389–#1429 are merged; this is substantial engineering progress, not completion of the full Multi-Vendor acceptance/release gate.
 - Delegated portal context switching is implemented by [PR #1416](https://github.com/ijoolaie/AI-Employee/pull/1416): authenticated-user/home-tenant scoped grant discovery, context-bound refresh-token rotation with grant revalidation, Vendor/Reseller/Customer switching, separate home/delegated refresh credentials, and identity/query-cache reset. Exact-head CI passed 13 workflows / 15 jobs.
-- [PR #1417](https://github.com/ijoolaie/AI-Employee/pull/1417) and [PR #1418](https://github.com/ijoolaie/AI-Employee/pull/1418) add PostgreSQL integration regression coverage for stale/corrupt unentitled Vendorâ†’Reseller and Resellerâ†’Customer portal grants. In both cases `my-grants` excludes the unentitled target and activation returns HTTP 402. PR #1418 exact-head CI passed 9 workflows / 11 jobs; backend PostgreSQL integration ran in CI. The local PostgreSQL integration was not run because `SUPPORT_TEST_DATABASE_URL` is not configured.
+- [PR #1417](https://github.com/ijoolaie/AI-Employee/pull/1417) and [PR #1418](https://github.com/ijoolaie/AI-Employee/pull/1418) add PostgreSQL integration regression coverage for stale/corrupt unentitled Vendor→Reseller and Reseller→Customer portal grants. In both cases `my-grants` excludes the unentitled target and activation returns HTTP 402. PR #1418 exact-head CI passed 9 workflows / 11 jobs; backend PostgreSQL integration ran in CI. The local PostgreSQL integration was not run because `SUPPORT_TEST_DATABASE_URL` is not configured.
 - Frontend identity boundaries are hardened: [PR #1413](https://github.com/ijoolaie/AI-Employee/pull/1413) clears query cache on user/tenant identity changes; [PR #1414](https://github.com/ijoolaie/AI-Employee/pull/1414) resets previous identity at login transition; [PR #1415](https://github.com/ijoolaie/AI-Employee/pull/1415) coordinates concurrent refresh and rejects stale-session token/logout mutations. These are merged.
-- Tenant isolation, lifecycle/permissions, portal revocation, delegated authorization, workforce ownership and public child-signup acceptance work is recorded in merged PRs #1389â€“#1412. See PR history and [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350) for incremental evidence.
-- Detailed source-backed gap assessment: [Multi-Vendor acceptance matrix audit](../current/MULTI_VENDOR_ACCEPTANCE_MATRIX_AUDIT_2026-11-08.md). It distinguishes covered, partial and not-evidenced areas; highest-priority gaps are the missing WebSocket/SSE capability and completion of the Actor Ã— Resource Ã— Action matrix.
-- [PR #1420](https://github.com/ijoolaie/AI-Employee/pull/1420) adds PostgreSQL-backed streaming-download authorization coverage for direct Vendorâ†’Customer, Vendorâ†’Reseller and Resellerâ†’Customer portal contexts, foreign-tenant denial, and immediate denial after grant revocation; all 12 exact-head CI checks passed.
-- [PR #1421](https://github.com/ijoolaie/AI-Employee/pull/1421) rejects cross-tenant Workflow Event Deliveryâ†’Trigger bindings before run creation; all 16 exact-head CI checks passed.
+- Tenant isolation, lifecycle/permissions, portal revocation, delegated authorization, workforce ownership and public child-signup acceptance work is recorded in merged PRs #1389–#1412. See PR history and [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350) for incremental evidence.
+- Detailed source-backed gap assessment: [Multi-Vendor acceptance matrix audit](../current/MULTI_VENDOR_ACCEPTANCE_MATRIX_AUDIT_2026-11-08.md). It distinguishes covered, partial and not-evidenced areas; highest-priority gaps are the missing WebSocket/SSE capability and completion of the Actor × Resource × Action matrix.
+- [PR #1420](https://github.com/ijoolaie/AI-Employee/pull/1420) adds PostgreSQL-backed streaming-download authorization coverage for direct Vendor→Customer, Vendor→Reseller and Reseller→Customer portal contexts, foreign-tenant denial, and immediate denial after grant revocation; all 12 exact-head CI checks passed.
+- [PR #1421](https://github.com/ijoolaie/AI-Employee/pull/1421) rejects cross-tenant Workflow Event Delivery→Trigger bindings before run creation; all 16 exact-head CI checks passed.
 - [PR #1423](https://github.com/ijoolaie/AI-Employee/pull/1423) executes the Vendor Admin permission-backfill migration against PostgreSQL TEMP tables in a rolled-back transaction, verifying root-Vendor eligibility, exclusion of shared/child roles, idempotency, preservation of existing descriptions and non-destructive downgrade; all 12 exact-head CI checks passed.
-- [PR #1425](https://github.com/ijoolaie/AI-Employee/pull/1425) extends Vendorâ†’Reseller delegated file tests to upload/create, get, download and soft-delete; cross-Vendor reads and post-delete access are denied; all 12 exact-head CI checks passed.
-- [PR #1429](https://github.com/ijoolaie/AI-Employee/pull/1429) adds the same complete file lifecycle for Vendorâ†’direct Customer context, including denial from the Vendor home context; all 12 exact-head CI checks passed. Its PostgreSQL backend run passed 1,963 tests (1 deselected); frontend contract tests 149/149, unit tests 93/93 and Playwright 10/10 passed.
-- **Acceptance still open:** complete the Actor Ã— Resource Ã— Action matrix across Vendor A/B, Reseller A/B, direct Customers and Reseller-nested Customers. Explicitly verify read/list/get/create/update/delete, search, reports, exports, files/downloads/object storage, WebSocket/realtime, notifications, audit views, caches and asynchronous/background workers. Include cross-root negative cases, delegation ceilings, grant revocation on existing sessions, and entitlement changes.
+- [PR #1425](https://github.com/ijoolaie/AI-Employee/pull/1425) extends Vendor→Reseller delegated file tests to upload/create, get, download and soft-delete; cross-Vendor reads and post-delete access are denied; all 12 exact-head CI checks passed.
+- [PR #1429](https://github.com/ijoolaie/AI-Employee/pull/1429) adds the same complete file lifecycle for Vendor→direct Customer context, including denial from the Vendor home context; all 12 exact-head CI checks passed. Its PostgreSQL backend run passed 1,963 tests (1 deselected); frontend contract tests 149/149, unit tests 93/93 and Playwright 10/10 passed.
+- **Acceptance still open:** complete the Actor × Resource × Action matrix across Vendor A/B, Reseller A/B, direct Customers and Reseller-nested Customers. Explicitly verify read/list/get/create/update/delete, search, reports, exports, files/downloads/object storage, WebSocket/realtime, notifications, audit views, caches and asynchronous/background workers. Include cross-root negative cases, delegation ceilings, grant revocation on existing sessions, and entitlement changes.
 - Remaining release work includes evidence-backed desktop/mobile UX review, legacy-tenant permission/backfill compatibility plan with explicit review, and a final acceptance/handoff record. Do not infer production readiness from merged PRs or CI alone.
 - [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350) remains OPEN until the acceptance matrix is complete. Latest tracker comment records #1425/#1429 merges and clarifies that realtime transport is not implemented in application source.
 - No production/staging deployment, database migration, persistent account/data mutation, or payment activation is claimed in this checkpoint.
 
 ---
 
-## Current project checkpoint â€” 2026-11-02
+## Current project checkpoint — 2026-11-02
 
 - Approved multi-Vendor architecture, source-backed gap analysis and master handoff are merged to `main` at `2819cdc651c0a769b653bf3c92cd74e21a62925a` via PR #1351. Implementation tracker: [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350).
 - A clean local implementation worktree is based on the same main SHA at `C:\Users\Ali\AI-Employee\.worktrees\Ai-employee MultiVendor`, branch `feature/multi-vendor-foundation-20261102`; `git status` and `git diff --check` passed.
-- Baseline backend tests: `tests/test_edition_boundaries.py` and `tests/api/test_tenant_admin_role_boundary.py` â€” 21 passed.
+- Baseline backend tests: `tests/test_edition_boundaries.py` and `tests/api/test_tenant_admin_role_boundary.py` — 21 passed.
 - The separate Local Staging worktree retains its pre-existing runtime/staging artifacts and was fast-forwarded to the documentation branch head. Do not mix those artifacts into feature changes.
 - The primary checkout remains dirty and is not to be modified.
 - Next: finish the resource/background-task scope audit, define existing-tenant migration compatibility, then implement backend action grants and a server-validated portal context before UI redesign.
 - No application code, user accounts, local staging DB records, production data or payment state were changed in this checkpoint.
 
 ---
-## Latest Local/GitHub sync boundary â€” 2026-11-02
+## Latest Local/GitHub sync boundary — 2026-11-02
 
 - Latest GitHub documentation branch head before this status update: `7226a525e4e1ec0a94c0dba17f5fedf9be1ce369`.
 - Local Staging worktree last verified at `f38faafd99dddf3076c93c878c114d6bfb94bdb1`; it is four documentation commits behind the latest GitHub branch.
@@ -136,12 +136,12 @@ The dated records below are historical evidence and are superseded wherever they
 - Primary checkout remains dirty and 153 commits behind; preserve it without reset/clean/stash/switch/rebase/pull/fast-forward.
 
 ---
-## Architecture and synchronization checkpoint â€” 2026-11-02
+## Architecture and synchronization checkpoint — 2026-11-02
 
 - Approved account model and implementation plan are recorded in [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350), [architecture specification](../current/MULTI_VENDOR_PORTAL_ARCHITECTURE_2026-11-02.md) and [master handoff](../current/AI_EMPLOYEE_MASTER_HANDOFF_2026-11-02.md).
 - Decision: one default Vendor at launch with multi-Vendor support from the beginning; public Reseller/Customer signup attaches to the default Vendor; no public Vendor signup; explicit scoped grants govern child-account creation and portal access; Reseller-to-Reseller data access is forbidden.
 - Repository baseline inspected: `main` at `0c921d85fae806851fad1a58170d37bf8d46114d`. Documentation work is isolated on `docs/multi-vendor-portal-architecture-20261102`; this is not yet merged into main.
-- Existing [Phase 14 isolation/RBAC evidence](../current/PHASE_14_RUNTIME_ISOLATION_RBAC_ENGINEERING.md) documents the Vendor â†’ Reseller â†’ Customer tenant hierarchy and a real-stack CI verification harness. The new work must extend verified gaps rather than duplicate that foundation.
+- Existing [Phase 14 isolation/RBAC evidence](../current/PHASE_14_RUNTIME_ISOLATION_RBAC_ENGINEERING.md) documents the Vendor → Reseller → Customer tenant hierarchy and a real-stack CI verification harness. The new work must extend verified gaps rather than duplicate that foundation.
 - New implementation tracker: [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350). Existing issue #19 remains the external-production RBAC/isolation evidence gate.
 - Open retention drafts #1348 and #1349 remain unmerged. #1349 requires a dedicated staging DB secret and repository variable before activation. Issue #1305 remains open for observed operational acceptance; no production purge is claimed.
 - Local Staging worktree `C:\Users\Ali\AI-Employee\.worktrees\Ai-employee Staging` was observed at the same baseline SHA, detached, with pre-existing local runtime/staging modifications and untracked artifacts. Preserve them and do not include them in architecture commits.
@@ -150,29 +150,29 @@ The dated records below are historical evidence and are superseded wherever they
 - Next action: source-backed Gap Analysis of User/Tenant/Membership models, registration/login, RBAC delegation, portal authorization/context, commercial entitlements, data-access scoping and the three portal UIs. No application behavior or user accounts have been changed.
 
 ---
-## Source-backed multi-Vendor gap analysis â€” 2026-11-02
+## Source-backed multi-Vendor gap analysis — 2026-11-02
 
 - Initial source audit is recorded in [MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md](../current/MULTI_VENDOR_PORTAL_GAP_ANALYSIS_2026-11-02.md) under [Issue #1350](https://github.com/ijoolaie/AI-Employee/issues/1350).
 - Reusable foundation exists: tenant_kind/parent_tenant_id hierarchy, edition guards, direct-child provisioning, entitlements, distinct portal route groups and Phase 14 isolation CI.
-- Confirmed gaps: public signup creates a standalone root Customer tenant and active Admin; no default-Vendor resolver/provisioning path; no direct Vendorâ†’Customer creation; child creation is edition-Admin-gated rather than tied to a per-user action grant (although generic role assignment has a permission-subset check); no tenant-admin user create/invite endpoint; portal access is same-kind-only in frontend and backend; Vendor dashboard is a placeholder; existing isolation evidence does not cover every newly required data surface.
+- Confirmed gaps: public signup creates a standalone root Customer tenant and active Admin; no default-Vendor resolver/provisioning path; no direct Vendor→Customer creation; child creation is edition-Admin-gated rather than tied to a per-user action grant (although generic role assignment has a permission-subset check); no tenant-admin user create/invite endpoint; portal access is same-kind-only in frontend and backend; Vendor dashboard is a placeholder; existing isolation evidence does not cover every newly required data surface.
 - Do not duplicate Phase 14. Next: deeper audit of permission management APIs, resource query scoping, background jobs and migration of existing tenants, then implement the ownership and authorization contract before broad UI changes.
 - This is source review only. No application code, database, production resource or local test account was changed. Local staging runtime state is not re-certified.
 
 ---
-## Current verified checkpoint â€” 2026-10-31 (PostgreSQL + SMTP sink acceptance)
+## Current verified checkpoint — 2026-10-31 (PostgreSQL + SMTP sink acceptance)
 
 - Evidence baseline: `main` at `f90211484b0b64f042785cd7f69504ef0449ccd9`; PR #1327 merged the acceptance documentation as `46d1407c8171de936556dd616bc68e50fdc023ae` after all CodeQL and Release identity checks passed.
 - Docker Desktop is running; Docker Engine 29.8.2. The dedicated PostgreSQL 16.15 container `ai-employee-support-test-postgres` is healthy on localhost:15433, using isolated database `support_test`. Its named volume was preserved.
-- Backed up `support_test` before migration (custom-format dump, 456,448 bytes). Applied Alembic migrations w24â€“w27; database is at `w27_product_inventory_nullable`.
+- Backed up `support_test` before migration (custom-format dump, 456,448 bytes). Applied Alembic migrations w24–w27; database is at `w27_product_inventory_nullable`.
 - PostgreSQL-backed verified-email/customer-scoped-order acceptance: 1 passed; PostgreSQL handoff persistence/tenant-isolation tests: 2 passed. Combined focused support/email suite including the DB test: 92 passed in 1.89s. A further handoff/notification/dispatcher/worker regression group passed 25 tests in 2.28s. Expanded customer-support matrix across 18 files: **136 passed in 69.24s** (rerun with both validated async/sync test DB URLs).
-- Actual application email worker delivered two synthetic messages to a local Mailpit SMTP sink (localhost:1025): a customer email-verification message and a configured staff handoff notification (`Customer requested human support` to `ops@example.test`). Mailpit confirmed both receipts; PostgreSQL confirmed both outbox rows reached `dispatched` with no error. This proves local non-production SMTP transport onlyâ€”not real provider delivery, inbox placement, SPF/DKIM/DMARC, actual staff response, or an SLA.
+- Actual application email worker delivered two synthetic messages to a local Mailpit SMTP sink (localhost:1025): a customer email-verification message and a configured staff handoff notification (`Customer requested human support` to `ops@example.test`). Mailpit confirmed both receipts; PostgreSQL confirmed both outbox rows reached `dispatched` with no error. This proves local non-production SMTP transport only—not real provider delivery, inbox placement, SPF/DKIM/DMARC, actual staff response, or an SLA.
 - Issue #1258 remains OPEN. Remaining gates: real-provider SMTP validation, actual staff owner/response and an approved measurable SLA (#1288), broader tenant/privacy + multi-turn order/ETA/handoff acceptance, and real customer validation. Notification/assignment/SLA semantics are documented in `docs/architecture/CUSTOMER_HANDOFF_NOTIFICATION.md`.
 - Original Windows checkout remains dirty and 132 commits behind; preserve it. All latest acceptance work ran in a separate clean worktree based on this `main`; no reset/clean/fast-forward was performed on the original checkout.
 - PR #1257 remains Draft/on hold pending authenticated real-runtime desktop/mobile evidence and explicit human visual approval. Latest production-certified release remains `v1.4.17`; no production deployment or release promotion is claimed.
 
 ---
 
-## Historical checkpoint â€” 2026-10-31 (PR #1325 merged; superseded by the current checkpoint above)
+## Historical checkpoint — 2026-10-31 (PR #1325 merged; superseded by the current checkpoint above)
 
 - Current `main`: `b1c956ab4f7ee2500cd07b7acb7cc4a2bbddef3d`. PR #1325 merged after Documentation Truth Consistency and all CodeQL checks passed.
 - PR #1324 added test-only email-verification security regression coverage; all 12/12 exact-head checks passed and the focused local support/email suite reported 91 passed. No application behavior changed in that PR.
@@ -182,7 +182,7 @@ The dated records below are historical evidence and are superseded wherever they
 
 ---
 
-## Verified checkpoint â€” 2026-10-31 (PR #1322 merged)
+## Verified checkpoint — 2026-10-31 (PR #1322 merged)
 
 - Current main: 9afec9b16d4e932347ea3d018124ec902e449758. PR #1320 passed all 17 exact-head checks; PR #1322 passed all 35 exact-head checks before squash merge.
 - Shopify product freshness is independent via last_product_sync_at. Missing/null Shopify inventoryQuantity remains SQL/API NULL; provider-reported zero remains zero. Manual product creation retains zero default; manual updates remain explicit.
@@ -195,7 +195,7 @@ The dated records below are historical evidence and are superseded wherever they
 
 ---
 
-## Verified checkpoint â€” 2026-10-30 (PRs #1310 and #1311 merged)
+## Verified checkpoint — 2026-10-30 (PRs #1310 and #1311 merged)
 
 Application baseline: `main` at `3d3f7f72c4c5e56a4d7e3f1c73cd282c41aea10f` after the two merges below. This documentation checkpoint does not change application behavior.
 
@@ -214,7 +214,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Follow-up checkpoint â€” provider-boundary fix PR #1310 (2026-10-30)
+## Follow-up checkpoint — provider-boundary fix PR #1310 (2026-10-30)
 
 - Documentation reconciliation PR #1308 merged as `315e3ea71a136bca3ce64772bf28d8a03687f744`; its post-merge CodeQL runs were still running at last inspection.
 - PR #1309 was closed as superseded after backend CI showed its new test patched the memory-extraction facade wrapper, which correctly receives disabled settings during preflight. This was a test-design false positive, not proof of a provider call.
@@ -224,7 +224,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Customer-support Run slot preflight â€” PR #1307 merged (2026-10-30)
+## Customer-support Run slot preflight — PR #1307 merged (2026-10-30)
 
 - PR [#1307](https://github.com/ijoolaie/AI-Employee/pull/1307) was squash-merged to `main` as [`31e869542d12aa141745667b8d44b9c1d9650c93`](https://github.com/ijoolaie/AI-Employee/commit/31e869542d12aa141745667b8d44b9c1d9650c93), from exact tested head `f202aa0208f112ed7b8c773f2530fd276a64ae2d`.
 - All **15/15 exact-head check-runs passed**, including backend, frontend, semantic E2E, tenant hierarchy/RBAC, DAST, infrastructure, recovery, security/privacy, observability, architecture, rollback contract, real-stack W21 and both CodeQL analyses.
@@ -236,7 +236,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Customer conversation slots â€” PR #1303 merged (2026-10-30)
+## Customer conversation slots — PR #1303 merged (2026-10-30)
 
 - PR [#1303](https://github.com/ijoolaie/AI-Employee/pull/1303) was squash-merged to `main` as [`1cb51001d3a8922b1e48c9d87b376a1cb4aa7831`](https://github.com/ijoolaie/AI-Employee/commit/1cb51001d3a8922b1e48c9d87b376a1cb4aa7831), from exact tested head `c38c6dda9ab835995a5e457f9079cc49dabd9e7f`.
 - All 23/23 check-runs passed on that exact PR head, including backend, frontend, PostgreSQL-backed tests, tenant isolation/RBAC, security/privacy, DAST, infrastructure, recovery, semantic real-stack E2E, architecture and both CodeQL analyses.
@@ -249,7 +249,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Workspace listing artifact-kind guard â€” merged and CI-verified (2026-10-28)
+## Workspace listing artifact-kind guard — merged and CI-verified (2026-10-28)
 
 - PR [#1282](https://github.com/ijoolaie/AI-Employee/pull/1282) was squash-merged as [`e792c33155d16cba8a32f0e6b0ec85aafe6b221c`](https://github.com/ijoolaie/AI-Employee/commit/e792c33155d16cba8a32f0e6b0ec85aafe6b221c), from exact tested head `255ee2dc70c5591585ec528d91d44feb38dc1804`.
 - `workspace_list` now includes only persisted artifacts whose `kind` is `workspace_file`; non-workspace artifacts are excluded. A regression test verifies that a content artifact in the same tenant does not appear in the workspace file listing.
@@ -258,7 +258,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Software Developer workspace path validation â€” merged and CI-verified (2026-10-28)
+## Software Developer workspace path validation — merged and CI-verified (2026-10-28)
 
 - PR [#1279](https://github.com/ijoolaie/AI-Employee/pull/1279) was squash-merged as [`752c5dccec69779e4590a6a5ee63edb5b536f663`](https://github.com/ijoolaie/AI-Employee/commit/752c5dccec69779e4590a6a5ee63edb5b536f663), from exact head `c6ad1da000d676bc5101918426a62083e1e72ea0`.
 - The workspace logical-path validator now rejects backslashes and NUL bytes as well as empty paths, POSIX absolute paths, and `..` path segments. Three regression cases cover Windows-style traversal and absolute paths.
@@ -267,7 +267,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Customer support multi-turn acceptance â€” merged and CI-verified (2026-10-28)
+## Customer support multi-turn acceptance — merged and CI-verified (2026-10-28)
 
 - PR [#1277](https://github.com/ijoolaie/AI-Employee/pull/1277) was squash-merged as [`174ea5805e558ad238ac4e96e080a3197e3de9d8`](https://github.com/ijoolaie/AI-Employee/commit/174ea5805e558ad238ac4e96e080a3197e3de9d8), after exact-head CI passed on `3dda64e4b256f4fddee7335b38748381a8774ecd` ([CI run](https://github.com/ijoolaie/AI-Employee/actions/runs/40656304476)). Backend and frontend jobs both passed.
 - Added deterministic planner acceptance coverage for delivery ETA, product variants, bulk discounts, returns/exchanges, payment issues, and damaged orders, plus a Run-path regression that blocks model invocation when the requested city's trusted shipping rate is absent. No application behavior changed.
@@ -276,7 +276,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Customer support explicit human handoff â€” merged and CI-verified (2026-10-25)
+## Customer support explicit human handoff — merged and CI-verified (2026-10-25)
 
 - PR [#1264](https://github.com/ijoolaie/AI-Employee/pull/1264) was squash-merged as [`ef30af24c47d3ddea20bf420be1ada044d2adaf8`](https://github.com/ijoolaie/AI-Employee/commit/ef30af24c47d3ddea20bf420be1ada044d2adaf8). The branch was safely synchronized with current `main` before final checks; no force-push was used.
 - All 16 exact-head checks completed successfully, including backend tests with the isolated PostgreSQL handoff test, frontend, security/privacy, tenant isolation/RBAC, architecture, infrastructure, recovery, DAST, semantic real-stack E2E, and both CodeQL analyses. This is CI evidence, not a fresh local full-suite run.
@@ -285,18 +285,18 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Post-merge reconciliation â€” 2026-10-22 (PR #1252)
+## Post-merge reconciliation — 2026-10-22 (PR #1252)
 
 - World mobile framing implementation merge SHA: [`8a03df9d7dcb46e465b5ea0c5ee355226730c642`](https://github.com/ijoolaie/AI-Employee/commit/8a03df9d7dcb46e465b5ea0c5ee355226730c642), PR [#1252](https://github.com/ijoolaie/AI-Employee/pull/1252) from exact head `0427938a0f1179ef08569d27135ef576574bedac`. Latest application fix: PR [#1255](https://github.com/ijoolaie/AI-Employee/pull/1255), merge SHA `71dca017e078e0eaaf701e37e4da29d367dd1932`, removes the undefined Three.js material-map warning and adds a regression assertion. Documentation-only reconciliations #1253 (`cdd5577bec6ebe0ddab2a28c228f4365d03690a0`) and #1254 added no application changes.
 - All reported checks passed on that exact PR head: frontend, backend, CodeQL (Python and JavaScript/TypeScript), Ephemeral DAST, Production Infrastructure and HA Failure Recovery.
 - The World mobile camera-framing correction and reordered Playwright pan interaction are merged. Issue [#1053](https://github.com/ijoolaie/AI-Employee/issues/1053) is closed.
-- Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) remains open for broader World visual acceptance. The existing GLB provenance record, five focused `WorldNavigation` unit cases, and fresh 1440Ã—900/390Ã—844 screenshots were inspected; navigation remains fixed-footprint collision avoidance rather than general pathfinding, and character details remain small at full-scene zoom. Explicit user approval of the art direction is still required; CI does not satisfy this gate.
+- Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) remains open for broader World visual acceptance. The existing GLB provenance record, five focused `WorldNavigation` unit cases, and fresh 1440×900/390×844 screenshots were inspected; navigation remains fixed-footprint collision avoidance rather than general pathfinding, and character details remain small at full-scene zoom. Explicit user approval of the art direction is still required; CI does not satisfy this gate.
 - Live inventory after merge: **0 open PRs, 7 open issues**. Reviewed issue dispositions: #1250 stays open pending advisory/upstream change or a reviewed exception; #1061 stays open, blocked on real prospect access/customer-demand evidence; #1044 stays open for visual acceptance; #269, #259, #210 and #19 remain intentional external production/release/RBAC evidence gates.
 - **Release boundary:** latest published exact-SHA certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`. No deployment or release was performed.
 
 ---
 
-## Post-merge reconciliation â€” 2026-10-21 (PR #1243)
+## Post-merge reconciliation — 2026-10-21 (PR #1243)
 
 - Current `main` SHA: [`b7b6bb3856f291d6110578e9e7b666e883caf7bc`](https://github.com/ijoolaie/AI-Employee/commit/b7b6bb3856f291d6110578e9e7b666e883caf7bc).
 - PR [#1243](https://github.com/ijoolaie/AI-Employee/pull/1243) was squash-merged from exact head `d5d17b80f29749a0034084292d006b82dcb91026`. It fixes a strict-mode Playwright locator by matching the exact `Support` heading; no application or production code changed.
@@ -309,7 +309,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Run artifact UI delivery checkpoint â€” 2026-10-20 (PR #1236)
+## Run artifact UI delivery checkpoint — 2026-10-20 (PR #1236)
 
 - PR [#1236](https://github.com/ijoolaie/AI-Employee/pull/1236) merged as `4956dafc50febd380ee3bcbf70e474aa7dcd5c00` from exact tested head `96981a3fd2138310faed2b89fff369bb3ed123fd`.
 - The Run detail API now lists and downloads persisted workforce JSON artifacts using the authenticated tenant's Run ownership and trusted tool-call audit references. Audit metadata stores a storage-key digest rather than the raw storage path; the browser never submits a storage key.
@@ -320,28 +320,28 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Local acceptance and repeatable test-user runbook â€” 2026-10-18
+## Local acceptance and repeatable test-user runbook — 2026-10-18
 
-- The isolated secondary checkout `C:\Users\Ali\AI-Employee-main-sync` passed the bounded local Employee â†’ Run â†’ tool â†’ result acceptance: auth, Employee creation/version/list/get, successful Run, tool-call audit and tenant-scoped artifact, then API reread with identical persisted output. Checklist: 6/6 for this scenario only.
+- The isolated secondary checkout `C:\Users\Ali\AI-Employee-main-sync` passed the bounded local Employee → Run → tool → result acceptance: auth, Employee creation/version/list/get, successful Run, tool-call audit and tenant-scoped artifact, then API reread with identical persisted output. Checklist: 6/6 for this scenario only.
 - Tool: `workforce_keyword_research`; provider execution: `not_configured`. This proves deterministic local tool execution and persistence, not live search/provider behavior, production readiness, or customer acceptance. Certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`; no release claim changed.
 - Canonical test-account and license runbook: `docs/local/LOCAL_TEST_TENANT_ACCOUNTS.md`. It records stable Vendor/Reseller/Customer slugs, the supported UI/API provisioning path, login verification, how to issue a fresh time-limited license when a test license expires, feature-scoped entitlement examples, and safety rules. Passwords and tokens are not stored.
 - Historical next-step note (superseded by PR #1236): expose the persisted tool artifact in the product UI and link it to the corresponding Run. The remaining action is a fresh local UI acceptance run; avoid repeating already-passed infrastructure checks unless a specific regression appears.
 
 ---
 
-## Workforce publication provenance checkpoint â€” 2026-10-17 (PR #1213â€“#1216)
+## Workforce publication provenance checkpoint — 2026-10-17 (PR #1213–#1216)
 
 - Reviewed the stacked path: [#1213](https://github.com/ijoolaie/AI-Employee/pull/1213) materializes a first-party Software Developer template as DRAFT; [#1215](https://github.com/ijoolaie/AI-Employee/pull/1215) dispatches a fixed server-owned workspace acceptance suite to Celery and persists an `AgentEvaluation`; [#1216](https://github.com/ijoolaie/AI-Employee/pull/1216) gates publication on trusted provenance. All three were subsequently merged: #1213, #1215 and #1216. Their merge status supersedes this dated checkpoint; the security/provenance conclusions below remain historical evidence.
 - Security gap found in the original #1216 implementation: caller-controlled evaluation JSON plus a recomputable SHA-256 did not prove a Celery task had run. The publish gate now also requires a matching server-written `agent_template.workspace_acceptance_completed` audit event, bound to tenant, template, evaluation ID, worker task ID, suite/version, passed outcome, evidence hash and local-only boundary, with the audit ledger sequence/hash present.
 - Added a regression that supplies fully matching caller-visible evidence with a recomputed hash but no corresponding trusted worker audit event; publication must reject it. Existing valid-evidence test now supplies the corresponding trusted audit record.
 - Latest code/test commits: source `841891498c5eb877e62939f2d08a23ecb26a026a`; regression tests `8f3a007507cffdd4ad8c217b99e4c7f98033bf67`. All five GitHub Actions workflows completed successfully on exact PR head `c462d95ccb46233132649f03bb88d24e236cbc1d`: Production Observability, Production Rollback & Alerting, Architecture Guard, Runtime Isolation and RBAC Contract, and Workforce Semantic Real-Stack E2E. This confirms those automated workflows only; local tests and user-side acceptance remain unverified.
-- Evidence/action comparison: GitHub Actions success proves only the automated checks attached to the exact commit. It does not replace the local acceptance flow, and this suite proves only the tenant-scoped workspace artifact lifecycleâ€”not provider-backed code execution, Git commit/PR creation, deployment, or production behavior.
-- Historical gate order: review #1213 materialization â†’ #1215 worker/evidence persistence â†’ #1216 provenance regression and CI â†’ local acceptance. All three PRs have since merged, so the old instruction to keep them Draft/unmerged is obsolete. Their merge status does not by itself certify production readiness; preserve the stated limits on local acceptance and external-provider evidence.
+- Evidence/action comparison: GitHub Actions success proves only the automated checks attached to the exact commit. It does not replace the local acceptance flow, and this suite proves only the tenant-scoped workspace artifact lifecycle—not provider-backed code execution, Git commit/PR creation, deployment, or production behavior.
+- Historical gate order: review #1213 materialization → #1215 worker/evidence persistence → #1216 provenance regression and CI → local acceptance. All three PRs have since merged, so the old instruction to keep them Draft/unmerged is obsolete. Their merge status does not by itself certify production readiness; preserve the stated limits on local acceptance and external-provider evidence.
 - Progress scores remain unchanged: operational 78%; product scope 46%; actionable 77%; A0/A1/A2/A3/A4 = 100/30/100/0/0. Local acceptance has not been run by this connector session.
 
 ---
 
-## Support acceptance checkpoint â€” 2026-10-17 (PR #1209 + local PostgreSQL test)
+## Support acceptance checkpoint — 2026-10-17 (PR #1209 + local PostgreSQL test)
 
 - PR [#1209](https://github.com/ijoolaie/AI-Employee/pull/1209) merged at `acaf451141505856fc92fae3cee664e1664d29f5` after its required GitHub checks passed. Added Playwright route-guard tests for customer/reseller support route separation.
 - Local test passed: dedicated `support_test` DB created and migrated to Alembic head `w23_support_message_attachments`; user-run `python -m pytest -p no:cacheprovider tests/test_support_escalation_postgres_api.py -q` from `backend/` returned `1 passed in 5.81s`. Covered API create/reply/reload, independent-session PostgreSQL persistence, customer/reseller tenant isolation, reseller persistence, and concurrent attachment-link conflict.
@@ -351,18 +351,18 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Local validation checkpoint â€” Report Employee real-tool run (2026-10-16)
+## Local validation checkpoint — Report Employee real-tool run (2026-10-16)
 
 - The user completed one real local Report Employee Run after setting both API and Worker to `AI_DEFAULT_PROVIDER=lm_studio`, with model `google/gemma-4-e4b` and LM Studio endpoint `http://host.docker.internal:1234/v1`.
 - Run: `30979101-70fb-4944-b978-55ee03dc550b`; status `success`; Trace contains 7 events and a successful `tool.call` for `analyze_dataset` with `error=null`, latency 675 ms, 3 rows, 3 columns, 3 products, total revenue 2800, total units sold 23, `forecast_available=false`, and `artifact_count=5`.
 - Model provider evidence: `lm_studio` / `google/gemma-4-e4b`; two provider calls and a completed Run were recorded.
 - Report totals matched the test fixture: Book A $1200, Book B $1000, Book C $600; 23 units and $2800 total revenue. User confirmed all generated files downloaded and opened successfully: PDF, Excel and three charts.
 - Trace stores only allowlisted result metrics; raw tool arguments/results remain intentionally absent from audit metadata.
-- This closes the local acceptance criteria for the Report Employee â†’ CSV analysis â†’ report artifact path. It does not prove every employee role, customer acceptance, external provider operations, production deployment, or a new certified release.
+- This closes the local acceptance criteria for the Report Employee → CSV analysis → report artifact path. It does not prove every employee role, customer acceptance, external provider operations, production deployment, or a new certified release.
 - Progress rubric remains unchanged: operational readiness 78%; product-scope coverage 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%. The successful local path is evidence for one bounded capability, not a basis for inflating coarse phase scores.
-- Next: resume the bounded Software Developer source/test audit through role contract â†’ Tool Registry/permissions â†’ semantic handler/approval â†’ provider â†’ persisted result/audit. Keep the GitHub adapter boundary explicit (CI-status reads and branch creation only); any live branch-write trial requires verified tenant/repository/token configuration, a disposable branch, an explicit authorization and cleanup plan. Do not execute a live external write as part of this documentation checkpoint.
+- Next: resume the bounded Software Developer source/test audit through role contract → Tool Registry/permissions → semantic handler/approval → provider → persisted result/audit. Keep the GitHub adapter boundary explicit (CI-status reads and branch creation only); any live branch-write trial requires verified tenant/repository/token configuration, a disposable branch, an explicit authorization and cleanup plan. Do not execute a live external write as part of this documentation checkpoint.
 
-## Current status update â€” 2026-10-15 (PR #1175)
+## Current status update — 2026-10-15 (PR #1175)
 
 - Main source fix merged: PR [#1175](https://github.com/ijoolaie/AI-Employee/pull/1175), merge commit [`8c1067a030f3aff7d54d3fdee64a664ea0bc3bae`](https://github.com/ijoolaie/AI-Employee/commit/8c1067a030f3aff7d54d3fdee64a664ea0bc3bae).
 - All 15/15 exact-head check-runs passed on `9a05e5ad2a232aebfaf3fdcca04a9ddce8194d88`.
@@ -376,7 +376,7 @@ The older dated checkpoints below are retained as historical records; this verif
 
 ---
 
-## Progress checkpoint â€” GitHub branch-create response ref identity hardened (#1168, 2026-10-15)
+## Progress checkpoint — GitHub branch-create response ref identity hardened (#1168, 2026-10-15)
 
 PR [#1168](https://github.com/ijoolaie/AI-Employee/pull/1168) was squash-merged as [`9f64f8f78b9e828911629bce4ea2230c7015042f`](https://github.com/ijoolaie/AI-Employee/commit/9f64f8f78b9e828911629bce4ea2230c7015042f) from exact tested head [`79c28b1e5926ea2379846ddc6d3a413cd898cf4f`](https://github.com/ijoolaie/AI-Employee/commit/79c28b1e5926ea2379846ddc6d3a413cd898cf4f). All 17/17 check runs succeeded on that exact head.
 
@@ -388,7 +388,7 @@ Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%
 
 ---
 
-## Progress checkpoint â€” ambiguous GitHub branch-write reconciliation merged (#1160, 2026-10-14)
+## Progress checkpoint — ambiguous GitHub branch-write reconciliation merged (#1160, 2026-10-14)
 
 PR [#1160](https://github.com/ijoolaie/AI-Employee/pull/1160) was squash-merged as [`5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd`](https://github.com/ijoolaie/AI-Employee/commit/5e451a5c3891edaa59b6616e3ba1a4c5cd9a97cd), from exact tested head [`0ee845eb4499234db653e96e51264e07cca254fe`](https://github.com/ijoolaie/AI-Employee/commit/0ee845eb4499234db653e96e51264e07cca254fe). All 17/17 check-runs succeeded on that exact head.
 
@@ -398,7 +398,7 @@ Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%
 
 ---
 
-## Progress checkpoint â€” provider outcome audit persistence fixed (#1157/#1158, 2026-10-14)
+## Progress checkpoint — provider outcome audit persistence fixed (#1157/#1158, 2026-10-14)
 
 
 PR [#1157](https://github.com/ijoolaie/AI-Employee/pull/1157) added semantic-handler regression coverage for `outcome_unknown` pass-through. PR [#1158](https://github.com/ijoolaie/AI-Employee/pull/1158) was squash-merged as [`e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe`](https://github.com/ijoolaie/AI-Employee/commit/e77ff28441266b8b2acf2489f9d9ddbbf0bd11fe) from exact tested head `05349f23eb02c5d96e141439c836e2050d4de1d3`; all 16/16 check-runs succeeded on that head.
@@ -411,7 +411,7 @@ Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%
 
 ---
 
-## Progress checkpoint â€” ambiguous GitHub branch-write outcome made explicit (2026-10-14)
+## Progress checkpoint — ambiguous GitHub branch-write outcome made explicit (2026-10-14)
 
 PR [#1155](https://github.com/ijoolaie/AI-Employee/pull/1155) was squash-merged as [`6947679d0fe89e8c81584f19ba2560480eb336b0`](https://github.com/ijoolaie/AI-Employee/commit/6947679d0fe89e8c81584f19ba2560480eb336b0) from exact tested head [`eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf`](https://github.com/ijoolaie/AI-Employee/commit/eca8e2fa5bdbfcb8279f1f415d02ed64cc947aaf). All 17/17 check-runs and 14/14 workflow runs succeeded on that exact head.
 
@@ -421,29 +421,29 @@ Provider capability remains limited to CI-status reads and branch creation; comm
 
 ---
 
-## Progress checkpoint â€” GitHub branch lookup and ref validation fixes merged (2026-10-14)
+## Progress checkpoint — GitHub branch lookup and ref validation fixes merged (2026-10-14)
 
 PR [#1152](https://github.com/ijoolaie/AI-Employee/pull/1152) corrected the GitHub Get-a-reference endpoint from `/git/refs/heads/...` to `/git/ref/heads/...`; squash merge: `398cddef834c1d845cce0352ea5aeccb7f4d3dc4`. PR [#1153](https://github.com/ijoolaie/AI-Employee/pull/1153) hardened branch-name validation for invalid ref components; exact tested head `21723a046957b3c0ee56579e901ec768390ea605`, all 17/17 check-runs succeeded, squash merge: `a3746d8f18271549c979f0fa0c104bc34dd51e67`.
 
 The merged provider can perform a narrowly scoped GitHub branch operation when an operator has configured tenant repository/token settings; tests and CI do not prove that those settings exist or that a live branch write was performed. Commit creation, PR creation, deploy and rollback remain unsupported by this provider. Do not infer production readiness from successful CI.
 
-Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%; full-scope 46%. Next: continue source/test-backed Software Developer audit through approval â†’ registry â†’ provider â†’ persisted result, prioritizing only reproducible gaps. No score increase is justified by these two bounded fixes alone.
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable 77%; full-scope 46%. Next: continue source/test-backed Software Developer audit through approval → registry → provider → persisted result, prioritizing only reproducible gaps. No score increase is justified by these two bounded fixes alone.
 
 ---
 
-## Progress checkpoint â€” PR #1150 workspace-key collision fix merged (2026-10-14)
+## Progress checkpoint — PR #1150 workspace-key collision fix merged (2026-10-14)
 
 - PR [#1150](https://github.com/ijoolaie/AI-Employee/pull/1150) was squash-merged into `main` as [`5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7`](https://github.com/ijoolaie/AI-Employee/commit/5bd31f8823d83e1cbb00515ed80ada2b4d4c2ca7) from exact tested head [`7335e2d90bfd0057560343794c168a59b6fd2e81`](https://github.com/ijoolaie/AI-Employee/commit/7335e2d90bfd0057560343794c168a59b6fd2e81).
 - Exact-head evidence: 27/27 commit check-runs concluded success. [Workforce Semantic Real-Stack E2E run 38583617654](https://github.com/ijoolaie/AI-Employee/actions/runs/38583617654) passed, including deterministic real-stack startup, migration graph verification, deterministic market provider, the semantic workforce matrix, diagnostics collection and shutdown.
 - The fix replaces lossy slash-to-underscore workspace key mapping with a SHA-256-derived key based on the normalized logical path. Regression coverage asserts distinct keys and independent readback for paths such as `src/app.py` and `src_app.py`; the E2E lookup was corrected to validate persisted workspace payloads by logical path and content rather than assuming the old key format.
 - Evidence boundary: this establishes the merged source fix and automated CI/real-stack test evidence only. It does not establish live GitHub write execution, external provider execution, deployment, production readiness, customer acceptance, or a new release certification.
 - Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; agent-actionable progress 77%; full-scope context 46%. One additional correctness defect is fixed, but the broad A1 role/operation evidence threshold is not met, so do not raise the rubric scores.
-- Follow-up: continue the source/test-backed role-operation audit through role contract â†’ Tool Registry/permission â†’ semantic handler â†’ approval/governance â†’ provider â†’ persisted result/audit and positive/negative tests. In particular, do not equate `git_commit_proposal` role binding with actual Git commit execution: provider support remains `not_configured`.
-- PR metadata reconciliation: the stale â€œCI is pendingâ€ wording in PR #1150 was corrected after exact-head checks passed.
+- Follow-up: continue the source/test-backed role-operation audit through role contract → Tool Registry/permission → semantic handler → approval/governance → provider → persisted result/audit and positive/negative tests. In particular, do not equate `git_commit_proposal` role binding with actual Git commit execution: provider support remains `not_configured`.
+- PR metadata reconciliation: the stale “CI is pending” wording in PR #1150 was corrected after exact-head checks passed.
 
 ---
 
-## Progress checkpoint â€” Software Developer capability binding merged (2026-10-14)
+## Progress checkpoint — Software Developer capability binding merged (2026-10-14)
 
 PR [#1144](https://github.com/ijoolaie/AI-Employee/pull/1144) was squash-merged as [`3a95c0649c0f884f43d694c0a9dd76c060c3d70c`](https://github.com/ijoolaie/AI-Employee/commit/3a95c0649c0f884f43d694c0a9dd76c060c3d70c), from exact tested head [`f47b25a764c7b39696ae78b55e5991d630999894`](https://github.com/ijoolaie/AI-Employee/commit/f47b25a764c7b39696ae78b55e5991d630999894). All 28 check runs passed on that exact head.
 
@@ -453,7 +453,7 @@ Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 
 
 ---
 
-## Progress checkpoint â€” truncated CI-status response regression merged (2026-10-14)
+## Progress checkpoint — truncated CI-status response regression merged (2026-10-14)
 
 PR [#1143](https://github.com/ijoolaie/AI-Employee/pull/1143) was squash-merged as [`6d17a52ea4c607e371f5acc197c7f82e9ef4bba9`](https://github.com/ijoolaie/AI-Employee/commit/6d17a52ea4c607e371f5acc197c7f82e9ef4bba9), from exact tested head [`045a37c6cfb8b36f8e6d09e8d81698bd20dd48a6`](https://github.com/ijoolaie/AI-Employee/commit/045a37c6cfb8b36f8e6d09e8d81698bd20dd48a6). All 13 check runs passed on that exact head.
 
@@ -461,11 +461,11 @@ Added a regression test proving the read-only GitHub CI-status provider handles 
 
 **Evidence boundary:** the test uses a mocked response; it does not prove live GitHub connectivity, production provider configuration, or external CI execution. For branch-creation writes, an unreadable response still leaves the external outcome unverified.
 
-Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next: continue the source/test-backed Software Developer role audit across role contract â†’ Tool Registry â†’ semantic handler â†’ provider â†’ persisted result and failure tests. Do not claim deployment or broad external engineering execution without separate evidence.
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next: continue the source/test-backed Software Developer role audit across role contract → Tool Registry → semantic handler → provider → persisted result and failure tests. Do not claim deployment or broad external engineering execution without separate evidence.
 
 ---
 
-## Progress checkpoint â€” incomplete HTTP response stream handling merged (2026-10-14)
+## Progress checkpoint — incomplete HTTP response stream handling merged (2026-10-14)
 
 PR [#1142](https://github.com/ijoolaie/AI-Employee/pull/1142) was squash-merged as [`b3da7b6273e6967d6f34797fb24a5c10a2f92783`](https://github.com/ijoolaie/AI-Employee/commit/b3da7b6273e6967d6f34797fb24a5c10a2f92783), from exact tested head [`605d482d063615a7befa057e2d2916f5e4865679`](https://github.com/ijoolaie/AI-Employee/commit/605d482d063615a7befa057e2d2916f5e4865679). All 17 check runs passed on that exact head.
 
@@ -473,11 +473,11 @@ The GitHub engineering provider now catches `http.client.HTTPException` response
 
 **Evidence boundary:** if the branch-create response body cannot be read, GitHub may already have accepted the write; its external outcome remains unverified. These mocked regression tests and passing CI do not prove live GitHub provider configuration or production execution.
 
-Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next: continue the source/test-backed Software Developer role audit across role contract â†’ registry â†’ semantic handler â†’ provider â†’ persisted result and failure tests. Do not claim deployment or broad external engineering execution without separate evidence. A3/A4 remain externally gated.
+Progress rubric unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%. Next: continue the source/test-backed Software Developer role audit across role contract → registry → semantic handler → provider → persisted result and failure tests. Do not claim deployment or broad external engineering execution without separate evidence. A3/A4 remain externally gated.
 
 ---
 
-## Progress checkpoint â€” provider response stream errors fixed and merged (2026-10-14)
+## Progress checkpoint — provider response stream errors fixed and merged (2026-10-14)
 
 PR [#1141](https://github.com/ijoolaie/AI-Employee/pull/1141) was squash-merged as [`d1751bea33b6fd0c0eb024cc11984dba754dab78`](https://github.com/ijoolaie/AI-Employee/commit/d1751bea33b6fd0c0eb024cc11984dba754dab78), from exact tested head [`c142997b06a19446015f57b04e31cbf3e9b7c4b2`](https://github.com/ijoolaie/AI-Employee/commit/c142997b06a19446015f57b04e31cbf3e9b7c4b2). All 17 check runs passed on that exact head, including backend, provider-contract, frontend, semantic E2E, security/privacy, CodeQL, DAST, infrastructure, architecture, observability, recovery, rollback, tenant isolation/RBAC, and real-stack checks.
 
@@ -487,7 +487,7 @@ A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress remains 77%, full-scop
 
 ---
 
-## Progress checkpoint â€” GitHub CI-status provider failure-path tests merged (2026-10-14)
+## Progress checkpoint — GitHub CI-status provider failure-path tests merged (2026-10-14)
 
 PR [#1139](https://github.com/ijoolaie/AI-Employee/pull/1139) was squash-merged as [`bdf6efbc777af41d2fb8081ff93708bc0aed8c33`](https://github.com/ijoolaie/AI-Employee/commit/bdf6efbc777af41d2fb8081ff93708bc0aed8c33) from exact tested head [`e7c3f31842f0449451633b337ce60e0623c62080`](https://github.com/ijoolaie/AI-Employee/commit/e7c3f31842f0449451633b337ce60e0623c62080). All 13 check runs passed on that exact head, including frontend, backend, provider-contract, semantic E2E, security, infrastructure, architecture, and recovery checks.
 
@@ -497,7 +497,7 @@ A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress remains 77%, full-scop
 
 ---
 
-# Current status â€” website health provider merged; A1 audit continues (2026-10-14)
+# Current status — website health provider merged; A1 audit continues (2026-10-14)
 
 - PR [#1135](https://github.com/ijoolaie/AI-Employee/pull/1135) squash-merged as [`dce5371656fba372b0df06f3c25a010fdbb7e747`](https://github.com/ijoolaie/AI-Employee/commit/dce5371656fba372b0df06f3c25a010fdbb7e747) from exact tested head [`cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54`](https://github.com/ijoolaie/AI-Employee/commit/cd8414eea9dc483aaa0a9fb75dbf21a49f5e5c54). All 32 check runs passed on that exact head.
 - Implemented `website_health_check` as a bounded, read-only provider: tenant/site-alias mapping to operator-configured HTTPS URLs, bounded timeout, disabled redirects, URL safety checks, persisted HTTP/health evidence and tenant provenance.
@@ -506,7 +506,7 @@ A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress remains 77%, full-scop
 - A0/A1/A2/A3/A4 remain 100/30/100/0/0; actionable progress 77%; full-scope context 46%. These are rubric indicators, not commercial readiness. Live providers, external deployment, customer acceptance and revenue remain unproven.
 
 ---
-# Current status â€” PR #1129 merged; W16 fixture repaired (2026-10-14)
+# Current status — PR #1129 merged; W16 fixture repaired (2026-10-14)
 
 PR [#1129](https://github.com/ijoolaie/AI-Employee/pull/1129) was squash-merged as [ece6b805f02a28b27cb30da34e31dcf2efb132f7](https://github.com/ijoolaie/AI-Employee/commit/ece6b805f02a28b27cb30da34e31dcf2efb132f7), from exact tested head [d593b5650673174ce9579df166f9a72b76904f9e](https://github.com/ijoolaie/AI-Employee/commit/d593b5650673174ce9579df166f9a72b76904f9e).
 
@@ -528,28 +528,28 @@ A1 audit increment: Content Producer drafts and its QA are tenant-scoped; QA che
 
 ---
 
-# Workforce progress update â€” PR #1125 (2026-10-14)
+# Workforce progress update — PR #1125 (2026-10-14)
 
 ## Sales & Lead Generation lifecycle proof
 
 - PR [#1125](https://github.com/ijoolaie/AI-Employee/pull/1125) squash-merged as [`8c9f79904241b9a5899ee38f0067719496fb4913`](https://github.com/ijoolaie/AI-Employee/commit/8c9f79904241b9a5899ee38f0067719496fb4913), from exact tested head [`92d2654ca3098a9e0f5865a3502fa0f5756c01ba`](https://github.com/ijoolaie/AI-Employee/commit/92d2654ca3098a9e0f5865a3502fa0f5756c01ba).
-- Added `workforce_lead_research` to the deterministic E2E provider and tenant-license fixture; tested `ai_sales_lead_generation` through WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run, including Run/version identity, tool-call audit identity, and active runtime binding.
+- Added `workforce_lead_research` to the deterministic E2E provider and tenant-license fixture; tested `ai_sales_lead_generation` through WorkItem assignment → dispatch → worker → successful Run, including Run/version identity, tool-call audit identity, and active runtime binding.
 - All 11 workflow groups passed on the exact tested head: [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241883), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241894), [Production Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241886), [W21 AI Business Network E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241942), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241938), [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241951), [HA Failure Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241911), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241968), [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38531242020), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38531241978), and [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38531243313).
 - The W21 workflow's API startup was hardened with `nohup` and a bounded health-check retry; W21 passed on the tested head after this change.
 - Evidence boundary: deterministic tenant-scoped lead-research artifact only. Provider remains `not_configured`; this does not prove live lead sourcing, external CRM enrichment, outreach delivery, production deployment/outcomes, customer acceptance, or revenue.
 
 ## Progress calculation
 
-All 12 canonical workforce roles now have at least one successful canonical WorkItem â†’ assignment â†’ dispatch â†’ worker â†’ successful Run path: **12/12 = 100%**.
+All 12 canonical workforce roles now have at least one successful canonical WorkItem → assignment → dispatch → worker → successful Run path: **12/12 = 100%**.
 
-- A0 â€” source-of-truth documentation: **100%**
-- A1 â€” role-by-role capability reality audit: **30%**
-- A2 â€” canonical lifecycle role coverage: **100%**
-- A3 â€” commercial/pilot readiness: **0%** (external gate)
-- A4 â€” independence/reliability and outcome evidence: **0%** (external/operational gate)
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **100%**
+- A3 — commercial/pilot readiness: **0%** (external gate)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate)
 
-**Actionable progress (A0â€“A2):** (100 + 30 + 100) / 3 = **76.7% â†’ 77%**.
-**Full-scope progress (A0â€“A4):** (100 + 30 + 100 + 0 + 0) / 5 = **46%**.
+**Actionable progress (A0–A2):** (100 + 30 + 100) / 3 = **76.7% → 77%**.
+**Full-scope progress (A0–A4):** (100 + 30 + 100 + 0 + 0) / 5 = **46%**.
 
 These rubric indicators are not commercial or release readiness. Real provider execution, external production operation, customer acceptance, and revenue remain unproven.
 
@@ -559,12 +559,12 @@ The canonical role-breadth lifecycle matrix is complete. Next prioritize the rol
 
 ---
 
-# Workforce progress update â€” PR #1119 (2026-10-14)
+# Workforce progress update — PR #1119 (2026-10-14)
 
 ## Social Media read-only analytics lifecycle proof
 
 - PR [#1119](https://github.com/ijoolaie/AI-Employee/pull/1119) was squash-merged as [`14e401324507243a903e8655267ea26d261860c0`](https://github.com/ijoolaie/AI-Employee/commit/14e401324507243a903e8655267ea26d261860c0), from exact tested head `1208fae5ae8132baae34772d9dbea2e198b74dcd`.
-- Added an E2E-only deterministic `workforce_read_analytics` fixture for `ai_social_media`, exercising WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run.
+- Added an E2E-only deterministic `workforce_read_analytics` fixture for `ai_social_media`, exercising WorkItem assignment → dispatch → worker → successful Run.
 - The real-stack E2E verifies tool-call audit identity, active runtime binding, exactly one tenant-scoped social artifact, tenant provenance, read-only/no-external-side-effect semantics, and `provider_execution=not_configured`.
 - All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38525207752), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38525207887), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208102), [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38525207942), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208012), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208038), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208013), [W21 AI Business Network E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208046), [HA Failure Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208024), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38525207946), and [Production Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38525208049).
 - The E2E job log reports `WORKFORCE SOCIAL_MEDIA READ_ANALYTICS FULL WORKITEM LIFECYCLE PASS`, artifact + tenant provenance PASS, `provider_execution=not_configured; no live analytics fetched`, all denial-path checks PASS, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
@@ -572,17 +572,17 @@ The canonical role-breadth lifecycle matrix is complete. Next prioritize the rol
 
 ## Progress calculation
 
-A2 measures the share of 12 canonical workforce roles with at least one successful canonical WorkItem assignment â†’ dispatch â†’ worker â†’ Run path. Evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, and Social Media: **8/12 = 66.7%**.
+A2 measures the share of 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. Evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, and Social Media: **8/12 = 66.7%**.
 
-- A0 â€” source-of-truth documentation: **100%**
-- A1 â€” role-by-role capability reality audit: **30%**
-- A2 â€” canonical lifecycle role coverage: **66.7%**
-- A3 â€” commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
-- A4 â€” independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **66.7%**
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
 
-**Actionable progress (A0â€“A2):** `(100 + 30 + 66.7) / 3 = 65.6%` â†’ **66%**.
+**Actionable progress (A0–A2):** `(100 + 30 + 66.7) / 3 = 65.6%` → **66%**.
 
-**Full-scope progress (A0â€“A4):** `(100 + 30 + 66.7 + 0 + 0) / 5 = 39.3%` â†’ **39%**.
+**Full-scope progress (A0–A4):** `(100 + 30 + 66.7 + 0 + 0) / 5 = 39.3%` → **39%**.
 
 These rubric-based phase indicators are not a claim of commercial readiness. Real provider execution, production deployment, customer acceptance, production reliability and revenue remain unproven.
 
@@ -592,12 +592,12 @@ Continue with one of the four unrepresented canonical roles. Select a distinct b
 
 ---
 
-# Workforce progress update â€” PR #1117 (2026-10-14)
+# Workforce progress update — PR #1117 (2026-10-14)
 
 ## QA & DevOps lifecycle proof
 
 - PR [#1117](https://github.com/ijoolaie/AI-Employee/pull/1117) squash-merged as [`44ab9ca323b378f712898a3ebd07c63a65e8acfd`](https://github.com/ijoolaie/AI-Employee/commit/44ab9ca323b378f712898a3ebd07c63a65e8acfd), from exact tested head `1721a6857f0185ac375583a0b75acc6a16b90907`.
-- Added `workforce_qa_test_plan` under `ai_qa_devops` to the deterministic semantic E2E, covering WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run.
+- Added `workforce_qa_test_plan` under `ai_qa_devops` to the deterministic semantic E2E, covering WorkItem assignment → dispatch → worker → successful Run.
 - The E2E verifies tool-call audit identity, active runtime binding, one tenant-scoped `qa_devops_artifact`, repository/commit/test-scope persistence, tenant provenance, `approval_required=false`, `external_side_effect=false`, and `provider_execution=not_configured`.
 - All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332325), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332305), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332431), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332301), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332311), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332381), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332316), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332281), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332285), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332338), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38523332344).
 - The E2E job log explicitly reports `WORKFORCE QA DEVOPS TEST_PLAN FULL WORKITEM LIFECYCLE PASS`, artifact/provenance PASS, `provider_execution=not_configured; tests_not_executed`, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
@@ -605,17 +605,17 @@ Continue with one of the four unrepresented canonical roles. Select a distinct b
 
 ## Progress calculation
 
-A2 measures the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment â†’ dispatch â†’ worker â†’ Run path. The evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, and QA & DevOps: **7/12 = 58.3%**.
+A2 measures the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. The evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, and QA & DevOps: **7/12 = 58.3%**.
 
-- A0 â€” source-of-truth documentation: **100%**
-- A1 â€” role-by-role capability reality audit: **30%**
-- A2 â€” canonical lifecycle role coverage: **58.3%**
-- A3 â€” commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
-- A4 â€” independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **58.3%**
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
 
-**Actionable progress (A0â€“A2):** `(100 + 30 + 58.3) / 3 = 62.8%` â†’ **63%**.
+**Actionable progress (A0–A2):** `(100 + 30 + 58.3) / 3 = 62.8%` → **63%**.
 
-**Full-scope progress (A0â€“A4):** `(100 + 30 + 58.3 + 0 + 0) / 5 = 37.7%` â†’ **38%**.
+**Full-scope progress (A0–A4):** `(100 + 30 + 58.3 + 0 + 0) / 5 = 37.7%` → **38%**.
 
 These are rubric-based phase indicators, not a claim that 63% of the product is commercially ready. Real provider execution, production deployment, customer acceptance, reliability under production workloads, and revenue remain unproven.
 
@@ -625,12 +625,12 @@ Continue with one of the five unrepresented canonical roles, prioritizing a dist
 
 ---
 
-# Workforce progress update â€” PR #1115 (2026-10-14)
+# Workforce progress update — PR #1115 (2026-10-14)
 
 ## SEO & Growth lifecycle proof
 
 - PR [#1115](https://github.com/ijoolaie/AI-Employee/pull/1115) squash-merged as [`afbb80357f6e946340798a2d07153227f7863ed8`](https://github.com/ijoolaie/AI-Employee/commit/afbb80357f6e946340798a2d07153227f7863ed8), from exact tested head `895fa3382b8329bfc21aa8ba021522db594c2608`.
-- Added `workforce_keyword_research` under `ai_seo_growth_employee` to the deterministic Workforce Semantic Real-Stack E2E, covering WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run.
+- Added `workforce_keyword_research` under `ai_seo_growth_employee` to the deterministic Workforce Semantic Real-Stack E2E, covering WorkItem assignment → dispatch → worker → successful Run.
 - The E2E confirms tool-call audit identity, active runtime binding, one tenant-scoped `seo_growth_artifact`, `research` status, tenant provenance, `approval_required=false`, `external_side_effect=false`, and `provider_execution=not_configured`.
 - All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671832), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671733), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671718), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671664), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671802), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671796), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671607), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671676), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671900), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671861), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38522671777).
 - The E2E log explicitly reports `WORKFORCE SEO GROWTH KEYWORD_RESEARCH FULL WORKITEM LIFECYCLE PASS`, SEO artifact/provenance PASS, wrong-role denial PASS, stale-capability denial PASS, approval-required denial PASS, cross-tenant denial PASS, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
@@ -638,17 +638,17 @@ Continue with one of the five unrepresented canonical roles, prioritizing a dist
 
 ## Progress calculation
 
-A2 measures the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment â†’ dispatch â†’ worker â†’ Run path. The evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, and SEO & Growth: **6/12 = 50%**.
+A2 measures the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. The evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, and SEO & Growth: **6/12 = 50%**.
 
-- A0 â€” source-of-truth documentation: **100%**
-- A1 â€” role-by-role capability reality audit: **30%**
-- A2 â€” canonical lifecycle role coverage: **50%**
-- A3 â€” commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
-- A4 â€” independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle role coverage: **50%**
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcome evidence: **0%** (external/operational gate; excluded from actionable denominator)
 
-**Actionable progress (A0â€“A2):** `(100 + 30 + 50) / 3 = 60%` â†’ **60%**.
+**Actionable progress (A0–A2):** `(100 + 30 + 50) / 3 = 60%` → **60%**.
 
-**Full-scope progress (A0â€“A4):** `(100 + 30 + 50 + 0 + 0) / 5 = 36%` â†’ **36%**.
+**Full-scope progress (A0–A4):** `(100 + 30 + 50 + 0 + 0) / 5 = 36%` → **36%**.
 
 These are rubric-based phase indicators, not a claim that 60% of the product is commercially ready. Real provider execution, deployment, customer acceptance, reliability under production workloads, and revenue remain unproven.
 
@@ -658,12 +658,12 @@ Continue with an unrepresented role and add denial/failure-path coverage alongsi
 
 ---
 
-# Workforce progress update â€” PR #1110 (2026-10-14)
+# Workforce progress update — PR #1110 (2026-10-14)
 
 ## New verified role lifecycle
 
 - PR [#1110](https://github.com/ijoolaie/AI-Employee/pull/1110) merged as [`4e89b5a6ffe7e9b561b404ec6789d2580b492bd0`](https://github.com/ijoolaie/AI-Employee/commit/4e89b5a6ffe7e9b561b404ec6789d2580b492bd0), with exact-head validation at `2ff32caf5d031aea66577339814b3fdd74cca2b9`.
-- Added Software Developer `workforce_workspace_create_file` to the deterministic Workforce Semantic Real-Stack E2E: WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run.
+- Added Software Developer `workforce_workspace_create_file` to the deterministic Workforce Semantic Real-Stack E2E: WorkItem assignment → dispatch → worker → successful Run.
 - Exact-head E2E confirms tool-call audit identity, active runtime binding, one tenant-scoped workspace file, and exact path/content persistence.
 - All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558694), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558732), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558646), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558743), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558786), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558824), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38429559290), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558547), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558760), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558818), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558517).
 - E2E logs report `WORKFORCE SOFTWARE DEVELOPER WORKSPACE_CREATE_FILE FULL WORKITEM LIFECYCLE PASS`, tenant-scoped file persistence PASS, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
@@ -671,17 +671,17 @@ Continue with an unrepresented role and add denial/failure-path coverage alongsi
 
 ## Progress calculation
 
-A2 remains defined as the share of 12 canonical workforce roles with at least one successful canonical WorkItem assignment â†’ dispatch â†’ worker â†’ Run path. The currently evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, and Software Developer: **5/12 = 41.7%**.
+A2 remains defined as the share of 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. The currently evidenced roles are Trader, Content Producer, Graphic Designer, Customer Success, and Software Developer: **5/12 = 41.7%**.
 
-- A0 â€” source-of-truth documentation: **100%**
-- A1 â€” audit of actual role capabilities: **30%**
-- A2 â€” canonical lifecycle coverage: **41.7%**
-- A3 â€” commercial/pilot readiness: **0%** (external gate, excluded from actionable denominator)
-- A4 â€” independence/reliability and outcomes: **0%** (external/operational gate, excluded from actionable denominator)
+- A0 — source-of-truth documentation: **100%**
+- A1 — audit of actual role capabilities: **30%**
+- A2 — canonical lifecycle coverage: **41.7%**
+- A3 — commercial/pilot readiness: **0%** (external gate, excluded from actionable denominator)
+- A4 — independence/reliability and outcomes: **0%** (external/operational gate, excluded from actionable denominator)
 
-**Actionable progress (A0â€“A2):** `(100 + 30 + 41.7) / 3 = 57.2%` â†’ **57%**.
+**Actionable progress (A0–A2):** `(100 + 30 + 41.7) / 3 = 57.2%` → **57%**.
 
-**Full-scope progress (A0â€“A4):** `(100 + 30 + 41.7 + 0 + 0) / 5 = 34.3%` â†’ **34%**.
+**Full-scope progress (A0–A4):** `(100 + 30 + 41.7 + 0 + 0) / 5 = 34.3%` → **34%**.
 
 These percentages are phase-level indicators, not a claim that 57% of the product is production-ready. Deterministic fixtures do not prove live provider integrations, production deployment, customer acceptance, or revenue.
 
@@ -691,29 +691,29 @@ Broaden lifecycle proof to a role not yet represented, then test meaningful deni
 
 ---
 
-# Current workforce progress update â€” PR #1110 (2026-10-13)
+# Current workforce progress update — PR #1110 (2026-10-13)
 
 ## Newly verified role lifecycle
 
 - PR [#1110](https://github.com/ijoolaie/AI-Employee/pull/1110) squash-merged as [`4e89b5a6ffe7e9b561b404ec6789d2580b492bd0`](https://github.com/ijoolaie/AI-Employee/commit/4e89b5a6ffe7e9b561b404ec6789d2580b492bd0) from exact tested head `2ff32caf5d031aea66577339814b3fdd74cca2b9`.
-- Added AI Software Developer `workforce_workspace_create_file` to the deterministic Workforce Semantic Real-Stack E2E through WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run.
+- Added AI Software Developer `workforce_workspace_create_file` to the deterministic Workforce Semantic Real-Stack E2E through WorkItem assignment → dispatch → worker → successful Run.
 - Exact-head evidence verifies tool-call audit identity, active runtime binding, one tenant-scoped workspace file, and exact persisted path/content (`src/semantic-e2e.txt`).
 - All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558694), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558732), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558646), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558743), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558786), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558824), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38429559290), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558547), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558760), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558818), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38429558517).
 - The E2E job log explicitly reports Software Developer workspace-create-file full lifecycle PASS, persisted workspace file and tenant-scope PASS, and the complete semantic matrix PASS.
 
 ## Progress calculation
 
-A2 is role-breadth coverage: canonical roles with at least one successful WorkItem assignment â†’ dispatch â†’ worker â†’ Run path divided by the 12-role catalog. Operation count within a role already represented does not increase A2.
+A2 is role-breadth coverage: canonical roles with at least one successful WorkItem assignment → dispatch → worker → Run path divided by the 12-role catalog. Operation count within a role already represented does not increase A2.
 
-- A0 â€” source-of-truth documentation: **100%**
-- A1 â€” role-by-role capability reality audit: **30%**
-- A2 â€” canonical lifecycle coverage: **5 of 12 roles = 41.7%** (Trader, Content Producer, Graphic Designer, Customer Success, Software Developer)
-- A3 â€” commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
-- A4 â€” independence/reliability and outcomes: **0%** (external/operational gate; excluded from actionable denominator)
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle coverage: **5 of 12 roles = 41.7%** (Trader, Content Producer, Graphic Designer, Customer Success, Software Developer)
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcomes: **0%** (external/operational gate; excluded from actionable denominator)
 
-**Actionable progress (A0â€“A2):** `(100 + 30 + 41.7) / 3 = 57.2%` â†’ **57%**.
+**Actionable progress (A0–A2):** `(100 + 30 + 41.7) / 3 = 57.2%` → **57%**.
 
-**Full-scope progress (A0â€“A4):** `(100 + 30 + 41.7 + 0 + 0) / 5 = 34.3%` â†’ **34%**.
+**Full-scope progress (A0–A4):** `(100 + 30 + 41.7 + 0 + 0) / 5 = 34.3%` → **34%**.
 
 Evidence boundary: this is a local tenant-scoped workspace file operation. It does not prove provider-backed tests, lint/build, Git operations, code review, deployment, production execution, customer acceptance, or revenue. Post-merge workflow runs for the merge SHA were not returned; validation cited above is exact-head pre-merge evidence.
 
@@ -723,29 +723,29 @@ Continue with an unrepresented role (Internal Manager, Marketing, Social Media, 
 
 ---
 
-# Current workforce progress update â€” PR #1108 (2026-10-13)
+# Current workforce progress update — PR #1108 (2026-10-13)
 
 ## Newly verified role lifecycle
 
 - PR [#1108](https://github.com/ijoolaie/AI-Employee/pull/1108) squash-merged as [`be013724b5ac598a4e97dabf6bcbdb395b38d203`](https://github.com/ijoolaie/AI-Employee/commit/be013724b5ac598a4e97dabf6bcbdb395b38d203) from exact tested head `de90ecbace8c2634873a58a4c1ba330ba5b7c9b9`.
-- Added AI Customer Success `workforce_customer_context` to the deterministic Workforce Semantic Real-Stack E2E through WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run.
+- Added AI Customer Success `workforce_customer_context` to the deterministic Workforce Semantic Real-Stack E2E through WorkItem assignment → dispatch → worker → successful Run.
 - Exact-head evidence verifies tool-call audit identity, active runtime binding, one tenant-scoped `customer_success_artifact`, `analysis` status, tenant provenance, no external side effect, and `provider_execution=not_configured`.
 - All 11 exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487899), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487894), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38428488006), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487871), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487709), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487756), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487896), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487919), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487972), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487722), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38428487881).
 - The E2E job log explicitly reports Customer Success full WorkItem lifecycle PASS, persistence/provenance PASS, provider-boundary PASS, and the complete semantic matrix PASS. Existing W8 certification was direct registry execution with manually created pending Runs; this new check specifically covers the canonical WorkItem lifecycle.
 
-## Progress calculation â€” clarified and updated
+## Progress calculation — clarified and updated
 
-For consistent role-breadth accounting, A2 is measured as the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment â†’ dispatch â†’ worker â†’ Run path. This matches the prior A2 value of 25% when three roles were evidenced. Operation count within an already represented role does not increase A2.
+For consistent role-breadth accounting, A2 is measured as the share of the 12 canonical workforce roles with at least one successful canonical WorkItem assignment → dispatch → worker → Run path. This matches the prior A2 value of 25% when three roles were evidenced. Operation count within an already represented role does not increase A2.
 
-- A0 â€” source-of-truth documentation: **100%**
-- A1 â€” role-by-role capability reality audit: **30%**
-- A2 â€” canonical lifecycle coverage: **4 of 12 roles = 33.3%** (Trader, Content Producer, Graphic Designer, Customer Success)
-- A3 â€” commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
-- A4 â€” independence/reliability and outcomes: **0%** (external/operational gate; excluded from actionable denominator)
+- A0 — source-of-truth documentation: **100%**
+- A1 — role-by-role capability reality audit: **30%**
+- A2 — canonical lifecycle coverage: **4 of 12 roles = 33.3%** (Trader, Content Producer, Graphic Designer, Customer Success)
+- A3 — commercial/pilot readiness: **0%** (external gate; excluded from actionable denominator)
+- A4 — independence/reliability and outcomes: **0%** (external/operational gate; excluded from actionable denominator)
 
-**Actionable progress (A0â€“A2):** `(100 + 30 + 33.3) / 3 = 54.4%` â†’ **54%**.
+**Actionable progress (A0–A2):** `(100 + 30 + 33.3) / 3 = 54.4%` → **54%**.
 
-**Full-scope progress (A0â€“A4):** `(100 + 30 + 33.3 + 0 + 0) / 5 = 32.7%` â†’ **33%**.
+**Full-scope progress (A0–A4):** `(100 + 30 + 33.3 + 0 + 0) / 5 = 32.7%` → **33%**.
 
 Evidence boundary: these are deterministic engineering fixtures. They do not prove live CRM access, production provider execution, customer data correctness, deployment, customer acceptance, or revenue. The workflow query did not return post-merge runs for the merge SHA, so the evidence above is exact-head pre-merge validation only.
 
@@ -755,45 +755,45 @@ Continue the canonical lifecycle audit with an unrepresented role (Internal Mana
 
 ---
 
-## PR #1102 merged â€” secondary content/creative lifecycle proof (2026-10-13)
+## PR #1102 merged — secondary content/creative lifecycle proof (2026-10-13)
 
 - PR [#1102](https://github.com/ijoolaie/AI-Employee/pull/1102) squash-merged as [`170a9179450435d44086b8776d43de3e456e6a42`](https://github.com/ijoolaie/AI-Employee/commit/170a9179450435d44086b8776d43de3e456e6a42), from exact tested head `02874df0cd55014f777c2e5d01d8a4e73a3a8340`.
-- The Workforce Semantic Real-Stack E2E now certifies two additional operations through WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run: Content Producer `workforce_produce_social_caption` and Graphic Designer `workforce_revise_visual_asset`. Assertions cover tool-call audit, active runtime binding, tenant-scoped persisted artifact, operation identity and provenance.
+- The Workforce Semantic Real-Stack E2E now certifies two additional operations through WorkItem assignment → dispatch → worker → successful Run: Content Producer `workforce_produce_social_caption` and Graphic Designer `workforce_revise_visual_asset`. Assertions cover tool-call audit, active runtime binding, tenant-scoped persisted artifact, operation identity and provenance.
 - All 11 workflow groups passed on the exact PR head: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063580), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063345), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063498), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063209), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063264), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063471), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063411), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063280), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063233), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063276), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38424063250).
 - Scope boundary: the caption is a deterministic draft artifact; visual revision is a persisted request with `provider_execution=not_configured`. Neither test proves a production LLM, external image rendering, publishing, or end-to-end completion of every operation in either role.
 - Next action: inspect the actual role capability contracts and binding/handler coverage, then target the highest-value uncovered operation with a complete lifecycle test. Keep external provider and approval-gated steps visible as blockers, not counted as locally proven.
 - Progress remains A0 100%, A1 30%, A2 25%, A3 0%, A4 0%; actionable progress 52%, full-scope progress 31%. The scoring rubric has not been changed, and these two additional operation tests alone do not justify changing the phase-level A2 score. A3/A4 remain outside the actionable denominator and unresolved.
 
-## PR #1092 merged â€” fail-closed workforce operation contracts (2026-10-13)
+## PR #1092 merged — fail-closed workforce operation contracts (2026-10-13)
 
 - PR [#1092](https://github.com/ijoolaie/AI-Employee/pull/1092) squash-merged as `69c1ad187f8c50ae0ef79808a12d826d0e043bd2` from exact head `89fb498a5af02e2fadab9b41af38dbc1519d7e0f`.
 - Adds parameterized regression coverage for Marketing `analyze_campaign_performance` and Trader `stage_order_for_review`: both must have no Tool Registry binding and attempts to bind them to an arbitrary tool fail closed with the approved-binding validation error.
 - All eight exact-head workflow groups passed on the merged head: CI [38399841561](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841561), CodeQL [38399841477](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841477), Architecture Guard [38399841379](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841379), W21 E2E [38399841400](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841400), Workforce Semantic Real-Stack E2E [38399841437](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841437), Ephemeral DAST [38399841440](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841440), HA Failure Recovery [38399841413](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841413), and Production Infrastructure Validation [38399841486](https://github.com/ijoolaie/AI-Employee/actions/runs/38399841486).
 - The CI failure on the earlier head was an assertion-message mismatch; the regression now expects `Workforce operation has no approved Tool Registry binding`. The existing assertion for the separate wrong-tool-binding case remains unchanged.
 - Scope boundary: no campaign-attribution domain or order-staging capability was implemented. These operations intentionally remain non-executable pending real domain/service implementations and reviewed explicit bindings. CI evidence is engineering evidence, not production/customer validation.
-- Progress remains 48% agent-actionable (A0â€“A2) and 29% full-scope (A0â€“A4); no stage acceptance criterion changed.
+- Progress remains 48% agent-actionable (A0–A2) and 29% full-scope (A0–A4); no stage acceptance criterion changed.
 
-## PR #1083 merged â€” responsive World camera-control anchors (2026-10-13)
+## PR #1083 merged — responsive World camera-control anchors (2026-10-13)
 
 - PR [#1083](https://github.com/ijoolaie/AI-Employee/pull/1083) merged by squash as `7ffd7720cbd7c931724a281c875152170d188afe`, from exact PR head `19bc76052955f2b22ceafe43aab2f2983f77fe65`.
 - Change: removed the inline `right: 12px` positioning that overrode responsive classes; controls now use `right-3 bottom-4` by default and `sm:left-4 sm:right-auto` on desktop.
 - All five observed exact-head workflow groups passed: [CI / frontend+backend+Playwright 38381090279](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090279), [CodeQL 38381090284](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090284), [Production Infrastructure 38381090299](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090299), [HA Failure Recovery 38381090566](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090566), and [Ephemeral DAST 38381090384](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090384).
-- Fresh [desktop/mobile artifact 11803596084](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090279/artifacts/11803596084) was manually inspected at 1440Ã—900 and 390Ã—844. Desktop controls are bottom-left; mobile controls are bottom-right and visibly separate from the bottom-left joystick.
+- Fresh [desktop/mobile artifact 11803596084](https://github.com/ijoolaie/AI-Employee/actions/runs/38381090279/artifacts/11803596084) was manually inspected at 1440×900 and 390×844. Desktop controls are bottom-left; mobile controls are bottom-right and visibly separate from the bottom-left joystick.
 - This is a bounded layout fix. It does not complete Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044), skeletal animation, role-specific character art, obstacle-aware pathfinding, release certification, or production deployment. The available workflow wrapper did not return post-merge runs for the merge SHA; post-merge state must not be inferred from pre-merge checks.
 
-## PR #1082 merged â€” reduced-motion-aware working employee sway (2026-10-13)
+## PR #1082 merged — reduced-motion-aware working employee sway (2026-10-13)
 
 - PR: [#1082](https://github.com/ijoolaie/AI-Employee/pull/1082), squash-merged after exact-head CI/security/infra checks and fresh desktop/mobile screenshot review passed.
 - Exact PR head: `9a8cb2179cb7675a773b7dd51e99251a9e2838fb`; merge commit: `f1b4f782d8753da6c5f960b50942e9a5a6f16b06`.
 - Implementation: `getWorkerBodySway` adds a small deterministic body rotation only for `WORKING` employees; it returns zero for other states and when `prefers-reduced-motion: reduce` is active. Four Vitest cases cover state gating, reduced motion, amplitude/determinism and phase variation.
 - Exact-head workflows passed: [CI 38378436816](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436816) (backend and frontend; lint, contracts, unit tests, production build and Playwright), [CodeQL 38378436770](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436770), [Ephemeral DAST 38378436804](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436804), [Production Infrastructure Validation 38378436717](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436717), and [HA Failure Recovery Validation 38378436814](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436814).
-- Desktop/mobile artifact [11802346424](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436816/artifacts/11802346424) was inspected. Desktop layout is intact; on the 390Ã—844 mobile screenshot the joystick stays bottom-left and camera controls bottom-right with no visible overlap. Static screenshots confirm layout only, not the animation over time.
+- Desktop/mobile artifact [11802346424](https://github.com/ijoolaie/AI-Employee/actions/runs/38378436816/artifacts/11802346424) was inspected. Desktop layout is intact; on the 390×844 mobile screenshot the joystick stays bottom-left and camera controls bottom-right with no visible overlap. Static screenshots confirm layout only, not the animation over time.
 - Post-merge workflows on the merge SHA: [SLO Contract Manual v2 38378936646](https://github.com/ijoolaie/AI-Employee/actions/runs/38378936646) and [Delivery Manifest Bundle 38378937055](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937055) passed. At this documentation checkpoint, post-merge [CI 38378936957](https://github.com/ijoolaie/AI-Employee/actions/runs/38378936957), [Production Compose Validation 38378937006](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937006), [Production Infrastructure Validation 38378937068](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937068), [CodeQL 38378937201](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937201), and [Ephemeral DAST 38378937394](https://github.com/ijoolaie/AI-Employee/actions/runs/38378937394) were still running; update this status after their final results.
 - Scope boundary: this is an ambient presentation cue, not skeletal rigging or a walk cycle. Issue [#1044](https://github.com/ijoolaie/AI-Employee/issues/1044) remains open for the broader World redesign. No release certification, deployment, or customer-acceptance claim is implied; certified release remains `v1.4.17`.
 
-# Current Status â€” 2026-10-13
+# Current Status — 2026-10-13
 
-## PR #1081 merged â€” mobile World camera controls (2026-10-13)
+## PR #1081 merged — mobile World camera controls (2026-10-13)
 
 - PR: [#1081](https://github.com/ijoolaie/AI-Employee/pull/1081), merged by squash after the exact PR-head checks and visual review passed.
 - Validated PR head: `7a6b410c5bbf1b27b72a024a2b823bf19711de82`; merge commit on `main`: `71755e07660f380116f3c157f3e78e9e1c7f79d6`.
@@ -802,15 +802,15 @@ Continue the canonical lifecycle audit with an unrepresented role (Internal Mana
 - Post-merge checks on `71755e07660f380116f3c157f3e78e9e1c7f79d6` all passed: [CI 38377667568](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667568), [CodeQL 38377667634](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667634), [Ephemeral DAST 38377667574](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667574), [Production Infrastructure Validation 38377667722](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667722), [Production Compose Validation 38377667804](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667804), [SLO Contract Manual v2 38377667569](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667569), and [Delivery Manifest Bundle 38377667751](https://github.com/ijoolaie/AI-Employee/actions/runs/38377667751).
 - Release boundary: this is an engineering UI fix, not a new release certification, production deployment, or customer-acceptance claim. Latest certified release remains `v1.4.17` unless the release ledger is updated by a separate certification.
 
-## Exact-main CI and Architecture Guard checkpoint â€” 2026-10-13
+## Exact-main CI and Architecture Guard checkpoint — 2026-10-13
 
 Both manually dispatched workflows passed on the same exact `main` head, `8cd10f175df4a4f532f3e2d1ea0ac2b6486f2c3d`:
 
-- [CI run #3654](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101) â€” **PASS**; frontend and backend jobs succeeded.
+- [CI run #3654](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101) — **PASS**; frontend and backend jobs succeeded.
   - Frontend: 143 contract checks passed; Vitest 14 files / 76 tests passed; Playwright 10 tests passed; production build completed.
   - Backend: 1,452 passed, 1 deselected, 22 warnings.
   - CI uploaded the World visual-review artifact [11800165354](https://github.com/ijoolaie/AI-Employee/actions/runs/38371564101/artifacts/11800165354). Artifact availability is recorded; visual acceptance is not claimed here.
-- [Architecture Guard run #3008](https://github.com/ijoolaie/AI-Employee/actions/runs/38371581649) â€” **PASS**; 20 architecture tests passed; `M15 FINAL ARCHITECTURE AUDIT: PASS`; `PRODUCTION COMPLETENESS BASELINE: PASS`.
+- [Architecture Guard run #3008](https://github.com/ijoolaie/AI-Employee/actions/runs/38371581649) — **PASS**; 20 architecture tests passed; `M15 FINAL ARCHITECTURE AUDIT: PASS`; `PRODUCTION COMPLETENESS BASELINE: PASS`.
 
 ### Follow-up / interpretation
 
@@ -820,19 +820,19 @@ Both manually dispatched workflows passed on the same exact `main` head, `8cd10f
 - The CI run included a transient initial localhost connection refusal before the browser suite later passed. No final workflow failure resulted; investigate only if it recurs.
 - These are **engineering checks on the exact SHA above**, not release certification, live provider validation, production deployment, customer acceptance, or realized revenue. The published certified release remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`.
 
-## Documentation-truth reconciliation checkpoint â€” 2026-10-13
+## Documentation-truth reconciliation checkpoint — 2026-10-13
 
 - The latest published and exact-SHA certified release documented by the release ledger remains `v1.4.17` / `b403c0dcdea579e017738a6fdea138c2b1a2999c`, certification run `37625345534`, job `112805570856`.
 - This release certification does not certify the mutable current `main` head and does not prove external production deployment, live customer acceptance, or realized revenue.
 - The manifest, production gap register, and production evidence index had older current-state summaries (September / v1.4.11 / v1.4.0-rc.4) even though the README and release ledger recorded v1.4.17. This is documentation drift, not proof that the certified release is invalid.
 - Root-cause assessment and the role-by-role capability audit sequence are recorded in [Capability Reality Audit & Commercial Readiness Plan](../current/CAPABILITY_REALITY_AUDIT_AND_COMMERCIAL_READINESS_PLAN_2026-10-13.md).
-- PR #1072 merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6` from exact head `98e740fbc95d6597440fee2216977762e008fa0a` after all five workflow groups passed and the fresh 1440Ã—900 desktop / 390Ã—844 portrait screenshots were manually reviewed. Acceptance is limited to the glass-partition material pass; broader redesign, authored GLB/GLTF models and obstacle-aware pathfinding remain incomplete.
+- PR #1072 merged at `c097eedbc5674d788d72b5b3a2d334adba1737e6` from exact head `98e740fbc95d6597440fee2216977762e008fa0a` after all five workflow groups passed and the fresh 1440×900 desktop / 390×844 portrait screenshots were manually reviewed. Acceptance is limited to the glass-partition material pass; broader redesign, authored GLB/GLTF models and obstacle-aware pathfinding remain incomplete.
 - PR #1073 merged at `6b5963f4c8409eb75d0be50c2ebdb3b4908a48d5`; PR #1074 merged the documentation consistency gate and initial static role audit. Its post-merge Release identity consistency check passed; branch protection still does not require status checks. PR #1075's room/floor/portrait-fit slice passed exact-head checks and manual screenshot review; PR #1076 adds an original static employee GLB, runtime `GLTFLoader`, deterministic material variation and procedural fallback; exact-head checks and desktop/portrait review passed on `5ed83ed782e7c004f252e0bf3b89b97306f7278c` (artifact `11795276739`). Rigging/animation and full pathfinding remain open; continue runtime role audit and the commercial workflow.
 
 ## Latest verified state
 - Current `main` contains viewport consolidation PR [#1062](https://github.com/ijoolaie/AI-Employee/pull/1062), merged at `d6e4f9297dbf7122aab22bdf8bbea467a6f8f038`, and viewport-framing follow-up PR [#1071](https://github.com/ijoolaie/AI-Employee/pull/1071), merged at `ff3a138a4164c793c06678f9ca9d790ab2c14cd8`.
 - The exact source head `7dd0a54709a6b8660dc7fb3d32051160ac50fbb2` passed CI/Playwright, CodeQL, Ephemeral DAST, HA Failure Recovery and Production Infrastructure Validation. Links and detailed evidence are in [World Master Handoff](AI_EMPLOYEE_WORLD_MASTER_HANDOFF_2026-10-12.md).
-- PR #1071 exact head `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` passed all five required workflows. Reviewed CI artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` at 1440Ã—900 and 390Ã—844: full office floor is visible in both desktop and portrait frames. Viewport-framing acceptance is met for this bounded criterion.
+- PR #1071 exact head `712a687a119aca0f82d3cce9df5aab5d0d53f2e0` passed all five required workflows. Reviewed CI artifact `world-visual-review-79cf5b031bc4bc4bd12cd60d38dd29753af85a71` at 1440×900 and 390×844: full office floor is visible in both desktop and portrait frames. Viewport-framing acceptance is met for this bounded criterion.
 - PR #1072 adds low translucent glass partitions, department-colored cap rails and mullions. Its fresh exact-head artifact is [run 38356980574 / artifact 11793500701](https://github.com/ijoolaie/AI-Employee/actions/runs/38356980574/artifacts/11793500701); CI, CodeQL, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST all passed on head `98e740fbc95d6597440fee2216977762e008fa0a`. The World smoke timeout was raised to 60 seconds after the prior exact-head run hit the 30-second limit near the final viewport check.
 - Visual-review correction: the PR #1071/#1072 portrait artifacts place the outer right edge at or beyond the canvas boundary, so their acceptance did not close the current framing gate. PR #1075 exact head `f316ef147b43eccf5b82a2776dfc4bf124f4b6cf` adds a portrait fit/label-scale adjustment; all six workflow groups passed and artifact `11793314632` was manually reviewed. The office floor now fits the portrait canvas; this bounded slice is visually accepted on the exact code head. The GitHub PR page is authoritative for merge lifecycle.
 - Dependency PRs #1063 (Playwright), #1066 (lucide-react), #1065 (eslint-config-next) and #1064 (Next.js) were merged after their exact-head checks passed.
@@ -854,7 +854,7 @@ Both manually dispatched workflows passed on the same exact `main` head, `8cd10f
 World remains a read-only projection of authorized business state. Do not fabricate employees, revenue, orders, approvals, entitlements, room access or game-only economy.
 
 
-## PR #1085 merged â€” workforce E2E trigger coverage (2026-10-13)
+## PR #1085 merged — workforce E2E trigger coverage (2026-10-13)
 
 - PR [#1085](https://github.com/ijoolaie/AI-Employee/pull/1085) merged as `0a6025e6dae1ed473fafdee8f3ca1833f2c27068` from exact PR head `e262faa29fe2a4b05f5109652781c7939434ed4f`.
 - W9 QA & DevOps real-stack E2E [run 38382195260](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195260), W23 Customer Success real-stack E2E [run 38382195369](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195369), and CodeQL [run 38382195585](https://github.com/ijoolaie/AI-Employee/actions/runs/38382195585) passed on the exact PR head.
@@ -864,68 +864,68 @@ World remains a read-only projection of authorized business state. Do not fabric
 - Execution phase tracker remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%, overall 29%. This CI-trigger fix improves verification reliability but does not independently satisfy role-runtime or commercial acceptance criteria.
 
 
-## Agent-actionable progress and W8 trigger audit â€” 2026-10-13
+## Agent-actionable progress and W8 trigger audit — 2026-10-13
 
-Agent-actionable progress is 48% across A0â€“A2; full-scope context remains 29% across A0â€“A4. A3/A4 remain open and are excluded only from the actionable denominator. W8/W9/W23 scripts are real-stack certification fixtures and explicitly keep provider execution `not_configured`; no live customer/provider action is established. PR [#1086](https://github.com/ijoolaie/AI-Employee/pull/1086) aligns W8 `push` and `pull_request` dependency filters. Exact head `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`; exact-head workflow results are not yet available, so merge is deferred pending evidence.
+Agent-actionable progress is 48% across A0–A2; full-scope context remains 29% across A0–A4. A3/A4 remain open and are excluded only from the actionable denominator. W8/W9/W23 scripts are real-stack certification fixtures and explicitly keep provider execution `not_configured`; no live customer/provider action is established. PR [#1086](https://github.com/ijoolaie/AI-Employee/pull/1086) aligns W8 `push` and `pull_request` dependency filters. Exact head `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`; exact-head workflow results are not yet available, so merge is deferred pending evidence.
 
 
-## Workforce E2E trigger coverage â€” follow-up (2026-10-13)
+## Workforce E2E trigger coverage — follow-up (2026-10-13)
 
 - [PR #1086](https://github.com/ijoolaie/AI-Employee/pull/1086) merged as `65bf5e6ba5faa376526f168b8a66670c1050ff6a` from exact head `16051f3bf03a626fccd9c452484ad9c5cdd3e4f4`. Pre-merge W8 real-stack [38384054138](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054138) and CodeQL [38384054092](https://github.com/ijoolaie/AI-Employee/actions/runs/38384054092) passed. The available run query returned no post-merge runs for the merge SHA; post-merge status is not verified.
 - [PR #1087](https://github.com/ijoolaie/AI-Employee/pull/1087) merged as `2599944c515f464747f8cd00cdbd2e865d9bce09` from exact head `3aea69f297fdd3c215f6d592ebac38ace6c7156d`. Static path-filter parity passed (28 matching entries); exact-head W10 real-stack [38384295412](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295412) and CodeQL [38384295452](https://github.com/ijoolaie/AI-Employee/actions/runs/38384295452) passed. The available run query returned no post-merge runs for the merge SHA, so post-merge status is not verified.
 - These are test-trigger coverage fixes, not capability-completion changes. W8/W9/W23 provider execution remains `not_configured`; W10 normal dogfood uses synthetic payment reconciliation and an SMTP test sink. Live provider/customer/real-revenue evidence is still absent. Progress remains 48% agent-actionable and 29% full-scope.
 
 
-## Remaining workforce E2E trigger parity â€” merged (2026-10-13)
+## Remaining workforce E2E trigger parity — merged (2026-10-13)
 
 - [PR #1088](https://github.com/ijoolaie/AI-Employee/pull/1088) merged as `092e54364c5fd40a7a1c32b27e94a92b97272db1` from head `49b7c9b8b9c235d223c841fe677e1544493ea8d6`. Exact-head W2 [38384891430](https://github.com/ijoolaie/AI-Employee/actions/runs/38384891430), W7 [38384891449](https://github.com/ijoolaie/AI-Employee/actions/runs/38384891449), W18 [38384891497](https://github.com/ijoolaie/AI-Employee/actions/runs/38384891497), and CodeQL [38384891426](https://github.com/ijoolaie/AI-Employee/actions/runs/38384891426) passed. Path parity: W2 10/10, W7 7/7, W18 11/11.
 - [PR #1089](https://github.com/ijoolaie/AI-Employee/pull/1089) merged as `e23bae8777e05698175160749df4ad09281df98a` from head `8f31eb6dac8a0291d4f280bc4c3bf79ff255953b`. Exact-head W20 [38384977674](https://github.com/ijoolaie/AI-Employee/actions/runs/38384977674), W10 Customer Outcome [38384977722](https://github.com/ijoolaie/AI-Employee/actions/runs/38384977722), W22 [38384977736](https://github.com/ijoolaie/AI-Employee/actions/runs/38384977736), and CodeQL [38384977580](https://github.com/ijoolaie/AI-Employee/actions/runs/38384977580) passed. Path parity: W20 13/13, W22 11/11, W10 Customer Outcome 9/9.
-- Post-merge run queries for these merge SHAs returned no runs; post-merge status remains unverified. These changes improve test triggering only. Progress remains 48% agent-actionable (A0â€“A2) and 29% full-scope (A0â€“A4); no external customer/provider/revenue acceptance is implied.
+- Post-merge run queries for these merge SHAs returned no runs; post-merge status remains unverified. These changes improve test triggering only. Progress remains 48% agent-actionable (A0–A2) and 29% full-scope (A0–A4); no external customer/provider/revenue acceptance is implied.
 
 
-## W21 post-merge trigger â€” merged (2026-10-13)
+## W21 post-merge trigger — merged (2026-10-13)
 
 [PR #1090](https://github.com/ijoolaie/AI-Employee/pull/1090) merged as `880d46cff762e57cdbda97f95c3347e6f0c071b9` from exact head `22c5b8e6f471057cebd84ab9670068442f693da2`. Exact-head W21 real-stack [38385311942](https://github.com/ijoolaie/AI-Employee/actions/runs/38385311942) and CodeQL [38385312104](https://github.com/ijoolaie/AI-Employee/actions/runs/38385312104) passed. The workflow-run query returned no post-merge runs (its wrapper only exposes PR-triggered runs), so post-merge execution is not verified here.
 
-The static trigger audit found and fixed gaps in W2, W7, W8, W10 dogfood, W10 Customer Outcome, W18, W20, W21, W22 and W23/W9 dependency filters. These changes improve test coverage triggers, not role capability acceptance. Progress remains 48% actionable A0â€“A2 and 29% full-scope A0â€“A4; A3/A4 remain open.
+The static trigger audit found and fixed gaps in W2, W7, W8, W10 dogfood, W10 Customer Outcome, W18, W20, W21, W22 and W23/W9 dependency filters. These changes improve test coverage triggers, not role capability acceptance. Progress remains 48% actionable A0–A2 and 29% full-scope A0–A4; A3/A4 remain open.
 
 
-## Approval-binding negative-path tests merged â€” 2026-10-13
+## Approval-binding negative-path tests merged — 2026-10-13
 
 [PR #1091](https://github.com/ijoolaie/AI-Employee/pull/1091) merged as `651116bb1a19a93fd4008e93d7e437e42884c443`. It adds tests for exact approval-argument matching, changed-argument rejection, and ambiguous duplicate approvals. Exact-head CI, Workforce Semantic Real-Stack E2E, W21 E2E, CodeQL, Architecture Guard, Production Infrastructure Validation, HA Failure Recovery and Ephemeral DAST all passed on head `aaf8cd21ed46ebe8e9ad756e47f38d07283b5c76`. The available post-merge workflow query returned no runs for the merge SHA; post-merge execution is therefore not asserted.
 
 The next role-audit finding is that Marketing `analyze_campaign_performance` and Trader `stage_order_for_review` have intentionally empty tool bindings. They must remain non-executable until a dedicated domain/service and reviewed binding exist; generic growth reporting is not campaign attribution, and market research/planning is not order staging. Regression tests for this fail-closed boundary are proposed in [PR #1092](https://github.com/ijoolaie/AI-Employee/pull/1092), pending exact-head CI.
 
-Progress remains 48% agent-actionable (A0â€“A2) and 29% full-scope (A0â€“A4).
+Progress remains 48% agent-actionable (A0–A2) and 29% full-scope (A0–A4).
 
-## PR #1093 merged â€” registry binding consistency guard (2026-10-13)
+## PR #1093 merged — registry binding consistency guard (2026-10-13)
 
 - PR [#1093](https://github.com/ijoolaie/AI-Employee/pull/1093) squash-merged as `50fc153492a1b5fbe810eb7f25ebd7e1c042dce3` from exact head `49cebd69c4dc8c63b1c9e1757349f77e7664e1a6`.
 - Adds a unit regression guard in `backend/tests/unit/test_ai_workforce_roles.py`: every non-empty `tool_names` entry across all workforce capability contracts must resolve through `registry.get()`; failures identify role, operation and tool.
 - All eight exact-head workflow groups passed: [CI 38400766533](https://github.com/ijoolaie/AI-Employee/actions/runs/38400766533), [Architecture Guard 38400766617](https://github.com/ijoolaie/AI-Employee/actions/runs/38400766617), [W21 E2E 38400766607](https://github.com/ijoolaie/AI-Employee/actions/runs/38400766607), [Workforce Semantic Real-Stack E2E 38400766870](https://github.com/ijoolaie/AI-Employee/actions/runs/38400766870), [CodeQL 38400766637](https://github.com/ijoolaie/AI-Employee/actions/runs/38400766637), [Ephemeral DAST 38400766598](https://github.com/ijoolaie/AI-Employee/actions/runs/38400766598), [HA Failure Recovery 38400766561](https://github.com/ijoolaie/AI-Employee/actions/runs/38400766561), and [Production Infrastructure Validation 38400767054](https://github.com/ijoolaie/AI-Employee/actions/runs/38400767054).
 - Evidence boundary: this enforces catalog-to-registry consistency only; it does not prove authorization, tenant isolation, persistence, recovery, configured providers, live customer delivery or revenue. The unbound Marketing campaign-attribution and Trader order-staging operations remain intentionally non-executable.
-- Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; 48% agent-actionable (A0â€“A2), 29% full-scope (A0â€“A4). Next: add/verify negative-path runtime coverage for tenant isolation, denied permissions, stale or mismatched approvals, replay/idempotency, provider failure and persisted outputs; do not infer post-merge checks from exact-head pre-merge runs.
+- Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; 48% agent-actionable (A0–A2), 29% full-scope (A0–A4). Next: add/verify negative-path runtime coverage for tenant isolation, denied permissions, stale or mismatched approvals, replay/idempotency, provider failure and persisted outputs; do not infer post-merge checks from exact-head pre-merge runs.
 
-## PR #1094 merged â€” tenant-scoped workforce lookup test (2026-10-13)
+## PR #1094 merged — tenant-scoped workforce lookup test (2026-10-13)
 
 - PR [#1094](https://github.com/ijoolaie/AI-Employee/pull/1094) squash-merged as `d2fbd94de07ba49aaff1b44bedac2a99abe8325b` from exact tested head `409fe5e9dbf562ab984cdf7bc00cfac69e53d6aa`.
 - All eight exact-head workflow groups passed: [CI 38402074212](https://github.com/ijoolaie/AI-Employee/actions/runs/38402074212), [CodeQL 38402074097](https://github.com/ijoolaie/AI-Employee/actions/runs/38402074097), [Architecture Guard 38402074088](https://github.com/ijoolaie/AI-Employee/actions/runs/38402074088), [W21 E2E 38402074124](https://github.com/ijoolaie/AI-Employee/actions/runs/38402074124), [Workforce Semantic Real-Stack E2E 38402074258](https://github.com/ijoolaie/AI-Employee/actions/runs/38402074258), [Ephemeral DAST 38402074110](https://github.com/ijoolaie/AI-Employee/actions/runs/38402074110), [HA Failure Recovery 38402074193](https://github.com/ijoolaie/AI-Employee/actions/runs/38402074193), and [Production Infrastructure Validation 38402074158](https://github.com/ijoolaie/AI-Employee/actions/runs/38402074158).
 - New unit test asserts the canonical workforce tool guard's SQL query binds both the AgentInstance ID and requested tenant ID, and expects fail-closed behavior when no tenant-scoped agent is found. This does not establish complete cross-tenant isolation or database RLS behavior.
-- Next: test mismatched tenant/agent and permission-denied runtime paths, stale/mismatched approvals, idempotency/replay, provider failure, and persisted outputs. Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; 48% actionable (A0â€“A2), 29% full-scope (A0â€“A4).
+- Next: test mismatched tenant/agent and permission-denied runtime paths, stale/mismatched approvals, idempotency/replay, provider failure, and persisted outputs. Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; 48% actionable (A0–A2), 29% full-scope (A0–A4).
 
 
-## PR #1095 merged â€” Outbox exception crosses nested savepoint (2026-10-13)
+## PR #1095 merged — Outbox exception crosses nested savepoint (2026-10-13)
 
 - PR [#1095](https://github.com/ijoolaie/AI-Employee/pull/1095) squash-merged as `343aeb2a963768da1d70b02c0c854d7105dc7920` from exact tested head `fd558bf9a8d5db64e9d85db8a944eee40494e416`.
 - All eight exact-head workflow groups passed: [CI 38403175273](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175273), [Architecture Guard 38403175276](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175276), [W21 E2E 38403175220](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175220), [Workforce Semantic Real-Stack E2E 38403175456](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175456), [CodeQL 38403175244](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175244), [Ephemeral DAST 38403175405](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175405), [HA Failure Recovery 38403175395](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175395), and [Production Infrastructure Validation 38403175356](https://github.com/ijoolaie/AI-Employee/actions/runs/38403175356).
 - The unit test now asserts that the outbox enqueue `RuntimeError` exits the nested savepoint context exceptionally. This checks exception propagation at the context-manager boundary only; it is not database-backed proof that a persisted Run is rolled back.
 - Completed by PR #1096: added a PostgreSQL-backed regression test proving the Run row is absent after outbox enqueue failure both in the active session after savepoint exit and in a fresh session after the outer transaction commits. This closes the narrow persisted-Run rollback evidence gap only; it does not prove provider behavior, the full workflow, or production/customer delivery.
-- Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; 48% actionable (A0â€“A2), 29% full-scope (A0â€“A4).
+- Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; 48% actionable (A0–A2), 29% full-scope (A0–A4).
 
 
-## PR #1096 â€” PostgreSQL Run rollback evidence (2026-10-13)
+## PR #1096 — PostgreSQL Run rollback evidence (2026-10-13)
 
-- PR: https://github.com/ijoolaie/AI-Employee/pull/1096 â€” merged by squash as `94cf861d0efc637cdb75b3fb2924bb782aed2852`.
+- PR: https://github.com/ijoolaie/AI-Employee/pull/1096 — merged by squash as `94cf861d0efc637cdb75b3fb2924bb782aed2852`.
 - Exact tested head: `7afb3f84855432c27aeb3970f4fa164526e5b30e`.
 - PostgreSQL regression test: `backend/tests/test_agent_execution_adapter_postgres.py`; inserts and flushes a real Run, forces `outbox_service.enqueue` to raise, then checks the Run is absent in the current session and a fresh session after commit.
 - All eight exact-head workflow runs succeeded: - CI: 38406235810
@@ -937,39 +937,39 @@ Progress remains 48% agent-actionable (A0â€“A2) and 29% full-scope (A0â€
 - HA Failure Recovery: 38406235452
 - Production Infrastructure Validation: 38406236606.
 - Evidence boundary: this validates rollback for this Run/outbox savepoint path only. It does not prove all 12 organizational roles end-to-end, external provider integration, complete tenant isolation, production deployment, or customer delivery.
-- Progress remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0â€“A2), full-scope progress 29% (A0â€“A4).
+- Progress remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0–A2), full-scope progress 29% (A0–A4).
 
 
-## PR #1097 â€” Internal Manager runtime identity guards (2026-10-13)
+## PR #1097 — Internal Manager runtime identity guards (2026-10-13)
 
-- PR: https://github.com/ijoolaie/AI-Employee/pull/1097 â€” squash merged as `c96863ed78256976fb3527863bdd6bcb9607a04c`.
+- PR: https://github.com/ijoolaie/AI-Employee/pull/1097 — squash merged as `c96863ed78256976fb3527863bdd6bcb9607a04c`.
 - Exact tested head: `19389b1e3e6112a14b80446a2b8bd673f00f6dea`.
 - Added two negative-path tests in `backend/tests/unit/test_workforce_runtime_governance.py`: a runtime tenant identity mismatch must fail before delegation is consulted, and a missing durable Run identity must fail before delegation is consulted.
 - All eight exact-head workflow runs succeeded: CI [38411249309](https://github.com/ijoolaie/AI-Employee/actions/runs/38411249309), Workforce Semantic Real-Stack E2E [38411249282](https://github.com/ijoolaie/AI-Employee/actions/runs/38411249282), W21 AI Business Network E2E [38411250480](https://github.com/ijoolaie/AI-Employee/actions/runs/38411250480), Architecture Guard [38411250745](https://github.com/ijoolaie/AI-Employee/actions/runs/38411250745), CodeQL [38411249211](https://github.com/ijoolaie/AI-Employee/actions/runs/38411249211), Ephemeral DAST [38411248787](https://github.com/ijoolaie/AI-Employee/actions/runs/38411248787), HA Failure Recovery [38411249276](https://github.com/ijoolaie/AI-Employee/actions/runs/38411249276), Production Infrastructure Validation [38411250483](https://github.com/ijoolaie/AI-Employee/actions/runs/38411250483).
 - Evidence boundary: these tests validate two Internal Manager rejection paths only. They do not establish complete workforce end-to-end execution, provider integration, comprehensive tenant isolation, or production/customer delivery.
-- Progress remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0â€“A2), full-scope progress 29% (A0â€“A4).
+- Progress remains A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0–A2), full-scope progress 29% (A0–A4).
 
-## PR #1098 â€” Internal Manager runtime Agent identity mismatch (merged 2026-10-13)
+## PR #1098 — Internal Manager runtime Agent identity mismatch (merged 2026-10-13)
 - PR: https://github.com/ijoolaie/AI-Employee/pull/1098
 - Merge commit: `48fd604807e8fe977d5f078168af94bfa514de15`; tested head: `c0fc2ab5bad778faf61b206806d22fc0f7fc5d39`.
 - Added `test_internal_manager_rejects_runtime_agent_identity_mismatch`: tenant identity matches but runtime Agent ID differs; the test asserts rejection occurs before delegation is checked.
 - All 8 exact-head workflows passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38413426560), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38413425754), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38413426260), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38413426095), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38413425255), [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38413425622), [HA Failure Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38413425313), [Production Infrastructure Validation](https://github.com/ijoolaie/AI-Employee/actions/runs/38413425286).
 - Evidence boundary: this adds one negative-path governance test. It does not demonstrate all 12 roles executing end-to-end, complete tenant isolation, provider-backed work, or commercial readiness. Do not increase project progress based on this test-only PR.
-- Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0â€“A2), full-scope progress 29% (A0â€“A4).
+- Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48% (A0–A2), full-scope progress 29% (A0–A4).
 
-## PR #1099 â€” workforce catalog reconciliation and next execution-proof boundary (2026-10-13)
+## PR #1099 — workforce catalog reconciliation and next execution-proof boundary (2026-10-13)
 - PR: https://github.com/ijoolaie/AI-Employee/pull/1099; merge commit: `c9107517825f8ac597e7563c664701dad03c5f77`.
 - Corrected `docs/blueprint/AI_WORKFORCE_IMPLEMENTATION_ROADMAP.md`: the current first-party workforce role catalog has 12 roles, not 9; SEO & Growth, Customer Success, and QA & DevOps are catalog entries, but catalog presence is not proof of end-to-end execution.
-- Existing W3 real-stack script `backend/scripts/e2e_workforce_w3_content_creative_verify.py` exercises Content Producer and Graphic Designer via `AgentExecutionAdapter.execute_tool`, validates durable tenant-scoped artifacts and provider boundaries. Evidence boundary: it manually creates pending Runs and directly invokes the adapter; it does not prove the full WorkItem assignment â†’ dispatch â†’ queued Run worker lifecycle for Content Producer.
-- Existing `backend/scripts/e2e_workforce_semantic_verify.py` proves the WorkItem â†’ dispatch â†’ Run worker path for market research (trader fixture) plus wrong-role/stale-capability/cross-tenant denials. Next product proof should connect that full lifecycle to Content Producer's `workforce_produce_article`, and verify persisted artifact/provenance and audit evidence from the completed Run. Avoid duplicating the existing W3 direct-adapter test.
+- Existing W3 real-stack script `backend/scripts/e2e_workforce_w3_content_creative_verify.py` exercises Content Producer and Graphic Designer via `AgentExecutionAdapter.execute_tool`, validates durable tenant-scoped artifacts and provider boundaries. Evidence boundary: it manually creates pending Runs and directly invokes the adapter; it does not prove the full WorkItem assignment → dispatch → queued Run worker lifecycle for Content Producer.
+- Existing `backend/scripts/e2e_workforce_semantic_verify.py` proves the WorkItem → dispatch → Run worker path for market research (trader fixture) plus wrong-role/stale-capability/cross-tenant denials. Next product proof should connect that full lifecycle to Content Producer's `workforce_produce_article`, and verify persisted artifact/provenance and audit evidence from the completed Run. Avoid duplicating the existing W3 direct-adapter test.
 - PR #1099 was documentation-only; CodeQL passed on its exact head before merge. No runtime capability was added by this PR.
 - Progress unchanged: A0 100%, A1 30%, A2 15%, A3 0%, A4 0%; actionable progress 48%, full-scope progress 29%.
 
 
-## PR #1100 â€” Content Producer full WorkItem lifecycle proof (2026-10-13)
+## PR #1100 — Content Producer full WorkItem lifecycle proof (2026-10-13)
 
 - PR #1100: https://github.com/ijoolaie/AI-Employee/pull/1100 merged as `368817ee08ad684a966a3ba66ef0b3c0454d63bf`; tested exact head `97513a2b33be49f92dd5dc9e20cac72ee5a4c2ea`.
-- The deterministic real-stack Workforce E2E now provisions a governed `ai_content_producer`, licenses `workforce_produce_article`, then exercises WorkItem assignment â†’ dispatch â†’ outbox/queued Run â†’ Celery worker â†’ successful Run. It verifies the tool-call audit record, active AgentRuntimeBinding, persisted tenant-scoped content draft, provenance tenant ID, `provider_execution=not_required`, and `approval_status=not_required` for draft creation.
+- The deterministic real-stack Workforce E2E now provisions a governed `ai_content_producer`, licenses `workforce_produce_article`, then exercises WorkItem assignment → dispatch → outbox/queued Run → Celery worker → successful Run. It verifies the tool-call audit record, active AgentRuntimeBinding, persisted tenant-scoped content draft, provenance tenant ID, `provider_execution=not_required`, and `approval_status=not_required` for draft creation.
 - Exact-head checks passed: CI [38420287061](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287061), Workforce Semantic Real-Stack E2E [38420287169](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287169), CodeQL [38420287110](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287110), Architecture Guard [38420287118](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287118), W21 E2E [38420287177](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287177), HA Recovery [38420287254](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287254), Runtime Isolation/RBAC [38420287073](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287073), Production Infrastructure [38420287111](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287111), Production Observability [38420287163](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287163), Rollback & Alerting [38420287123](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287123), and Ephemeral DAST [38420287154](https://github.com/ijoolaie/AI-Employee/actions/runs/38420287154).
 - One initial E2E attempt failed because the test filtered storage keys using the wrong filename prefix; the storage abstraction prepends a generated UUID. The assertion was corrected to match the actual tenant-scoped key shape, and the rerun passed.
 - Scope boundary: this is a deterministic local-provider certification for one draft-generation operation. It does not prove a production LLM/provider, external publication, all Content Producer operations, or all 12 workforce roles. W3 direct-adapter evidence remains distinct from this full WorkItem lifecycle evidence.
@@ -977,16 +977,16 @@ Progress remains 48% agent-actionable (A0â€“A2) and 29% full-scope (A0â€
 - Progress: A0 100%, A1 30%, A2 20%, A3 0%, A4 0%; actionable progress `(100+30+20)/3 = 50%`; full-scope progress `(100+30+20+0+0)/5 = 30%`. A2 increased because a second role's full WorkItem-to-worker path is now evidenced; A1 remains 30% because the broad all-role runtime audit is still incomplete. A3/A4 remain outside the actionable denominator and open.
 
 
-## PR #1101 â€” Graphic Designer full WorkItem lifecycle proof (2026-10-13)
+## PR #1101 — Graphic Designer full WorkItem lifecycle proof (2026-10-13)
 
 - PR #1101: https://github.com/ijoolaie/AI-Employee/pull/1101 merged as `e199833ab416307a3f4fe473b92af206dc0ad58a`; tested exact head `3d22f4ca5a01dc8d73ea1381203d46c74ab5f552`.
-- The deterministic real-stack Workforce E2E now provisions a governed `ai_graphic_designer`, licenses `workforce_create_visual_asset`, and exercises WorkItem assignment â†’ dispatch â†’ queued Run worker â†’ successful Run. It verifies the tool-call audit record, active AgentRuntimeBinding, persisted tenant-scoped creative request, provenance tenant ID, and `provider_execution=not_configured`.
+- The deterministic real-stack Workforce E2E now provisions a governed `ai_graphic_designer`, licenses `workforce_create_visual_asset`, and exercises WorkItem assignment → dispatch → queued Run worker → successful Run. It verifies the tool-call audit record, active AgentRuntimeBinding, persisted tenant-scoped creative request, provenance tenant ID, and `provider_execution=not_configured`.
 - Exact-head checks passed: CI [38422397924](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397924), Workforce Semantic Real-Stack E2E [38422397942](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397942), CodeQL [38422397774](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397774), Architecture Guard [38422397807](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397807), W21 E2E [38422397787](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397787), HA Recovery [38422397759](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397759), Runtime Isolation/RBAC [38422397766](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397766), Production Infrastructure [38422397812](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397812), Production Observability [38422397838](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397838), Rollback & Alerting [38422397887](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397887), and Ephemeral DAST [38422397810](https://github.com/ijoolaie/AI-Employee/actions/runs/38422397810).
 - Scope boundary: this proves a governed creative request is persisted by the local deterministic stack; it explicitly does not claim that an image was rendered or that an external image provider ran. Other Graphic Designer operations and all-role execution coverage remain open.
 - Next runtime target: audit and certify the remaining Content Producer/Graphic Designer operations, then move to the next role with the largest business-value gap. Avoid treating tool catalog presence as execution proof.
 - Progress: A0 100%, A1 30%, A2 25%, A3 0%, A4 0%; actionable progress `(100+30+25)/3 = 51.67%` (report as 52%); full-scope progress `(100+30+25+0+0)/5 = 31%`. A2 increased because Graphic Designer now has a second role-specific operation proved through the complete WorkItem-to-worker path; A1 remains 30% because broad all-role runtime audit is incomplete. A3/A4 remain outside the actionable denominator and open.
 
-## PR #1104 merged â€” deterministic structural content QA (2026-10-13)
+## PR #1104 merged — deterministic structural content QA (2026-10-13)
 
 - PR [#1104](https://github.com/ijoolaie/AI-Employee/pull/1104) squash-merged as [`aef5fb2f2cc97712b17cf25dd18e98d60f6999c8`](https://github.com/ijoolaie/AI-Employee/commit/aef5fb2f2cc97712b17cf25dd18e98d60f6999c8) from exact tested head `711a6b9733349f3a7db097df3f9896fd6af1335d`.
 - Implementation: `workforce_content_qa` now checks title presence and body presence as errors, flags common placeholder markers (`lorem ipsum`, `[insert`, `todo`, `tbd`) as warnings, and persists a tenant-scoped `content_qa_report` with checks, findings, limitations, and `passed` / `needs_revision` status.
@@ -994,12 +994,12 @@ Progress remains 48% agent-actionable (A0â€“A2) and 29% full-scope (A0â€
 - All 24 workflow runs on the exact PR head completed successfully, including [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706364), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706444), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706302), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706418), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706536), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706546), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706016), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706552), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38425706342). The exact-head run inventory reported 24/24 completed with success and no failures.
 - Regression coverage includes passing and needs-revision reports, persistence, provider boundary, and tenant isolation.
 - Evidence boundary: this is one bounded QA operation and its deterministic tests, not end-to-end proof for every workforce role or commercial/customer readiness. Do not raise the phase-level progress score on this merge alone.
-- Progress unchanged: A0 100%, A1 30%, A2 25%, A3 0%, A4 0%; actionable progress 52% (A0â€“A2), full-scope progress 31% (A0â€“A4). A3/A4 remain excluded from the actionable denominator but remain unresolved full-scope gates.
+- Progress unchanged: A0 100%, A1 30%, A2 25%, A3 0%, A4 0%; actionable progress 52% (A0–A2), full-scope progress 31% (A0–A4). A3/A4 remain excluded from the actionable denominator but remain unresolved full-scope gates.
 
-## PR #1106 merged â€” Content QA full WorkItem lifecycle evidence (2026-10-13)
+## PR #1106 merged — Content QA full WorkItem lifecycle evidence (2026-10-13)
 
 - PR [#1106](https://github.com/ijoolaie/AI-Employee/pull/1106) squash-merged as [`9e979d10f74cc1f4cb194f7f14e864db728a750b`](https://github.com/ijoolaie/AI-Employee/commit/9e979d10f74cc1f4cb194f7f14e864db728a750b) from exact tested head `413bb22f7d35895e75571a7fe0aa3744d213a0be`.
-- The deterministic Workforce Semantic Real-Stack E2E now provisions a governed Content Producer with `workforce_content_qa`, licenses the tool in the isolated test tenant, and exercises WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run.
+- The deterministic Workforce Semantic Real-Stack E2E now provisions a governed Content Producer with `workforce_content_qa`, licenses the tool in the isolated test tenant, and exercises WorkItem assignment → dispatch → worker → successful Run.
 - The test verifies tool-call audit identity, active AgentRuntimeBinding, exactly one tenant-scoped persisted `content_qa_report`, `passed` status, the three expected structural checks, no findings for the clean fixture, tenant provenance, and `provider_execution=not_required`.
 - Exact-head workflow groups passed: [CI](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491568), [Workforce Semantic Real-Stack E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491685), [CodeQL](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491628), [Architecture Guard](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491491), [W21 E2E](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491567), [HA Recovery](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491865), [Runtime Isolation/RBAC](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491574), [Production Infrastructure](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491616), [Production Observability](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491416), [Rollback & Alerting](https://github.com/ijoolaie/AI-Employee/actions/runs/38427491734), and [Ephemeral DAST](https://github.com/ijoolaie/AI-Employee/actions/runs/38427492157). All 11 exact-head workflow groups completed successfully.
 - The E2E job log explicitly reports `WORKFORCE CONTENT QA FULL WORKITEM LIFECYCLE PASS`, report persistence/provenance PASS, provider-boundary PASS, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
@@ -1008,49 +1008,49 @@ Progress remains 48% agent-actionable (A0â€“A2) and 29% full-scope (A0â€
 
 
 
-## Verified update â€” 2026-10-14 (PR #1121)
+## Verified update — 2026-10-14 (PR #1121)
 
 - PR #1121 merged as d4101848d53d93ee20b350546cc23509cac33a8e after all 11 workflow groups passed on exact tested head 5d77d33b0e226b6d124731aea0989ae4a0bf8655. PR: https://github.com/ijoolaie/AI-Employee/pull/1121
 - Workforce Semantic Real-Stack E2E confirms WEBSITE REQUIREMENTS FULL WORKITEM LIFECYCLE PASS, tenant-scoped artifact/provenance PASS, provider_execution=not_configured; no site deployed, and overall semantic matrix PASS. Run: https://github.com/ijoolaie/AI-Employee/actions/runs/38526169492
-- Website Employee is role 9/12 with canonical WorkItem â†’ assignment â†’ dispatch â†’ worker â†’ successful Run evidence (75%). Evidenced roles: Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, Social Media, Website.
+- Website Employee is role 9/12 with canonical WorkItem → assignment → dispatch → worker → successful Run evidence (75%). Evidenced roles: Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, Social Media, Website.
 - This is requirements planning only; no real site build, live provider execution, deployment, rollback, production availability, customer acceptance, or revenue is demonstrated.
-- Progress rubric: A0 100%; A1 30%; A2 9/12 = 75%; A3 0%; A4 0%. Actionable A0â€“A2 = (100 + 30 + 75) / 3 = 68.3% (68%). Full scope A0â€“A4 = (100 + 30 + 75 + 0 + 0) / 5 = 41%. These are phase indicators, not readiness certification.
+- Progress rubric: A0 100%; A1 30%; A2 9/12 = 75%; A3 0%; A4 0%. Actionable A0–A2 = (100 + 30 + 75) / 3 = 68.3% (68%). Full scope A0–A4 = (100 + 30 + 75 + 0 + 0) / 5 = 41%. These are phase indicators, not readiness certification.
 
 
-## Verified update â€” 2026-10-14 (PR #1123)
+## Verified update — 2026-10-14 (PR #1123)
 
 - PR [#1123](https://github.com/ijoolaie/AI-Employee/pull/1123) merged as `7a7aed9d3b7ab5c998f7b7b64b698a86e3151820`; tested exact head `a43dd63673e9db61fe9a6f77c14bd5204543669e`.
 - All 11 exact-head workflow groups passed: CI, CodeQL, Architecture Guard, Workforce Semantic Real-Stack E2E, Runtime Isolation/RBAC, Ephemeral DAST, W21 AI Business Network E2E, HA Failure Recovery, Production Infrastructure, Production Observability, and Production Rollback & Alerting.
 - Semantic E2E log confirms `WORKFORCE INTERNAL MANAGER PREPARE_CEO_REPORT FULL WORKITEM LIFECYCLE PASS`, read-only tenant-scoped report boundary, wrong-role/stale-capability/approval-required/cross-tenant denial checks, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`. Run: https://github.com/ijoolaie/AI-Employee/actions/runs/38527603953
 - The test fixture grants only a time-bounded `prepare_ceo_report` CEO delegation. This proves a read-only report lifecycle in the deterministic real-stack CI fixture, not autonomous staffing, hiring, budget commitments, live external integrations, or production outcomes.
 - Canonical lifecycle role coverage is now 10/12 = 83.3%: Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, Social Media, Website, and Internal Manager.
-- Progress rubric: A0 100%; A1 30%; A2 10/12 = 83.3%; A3 0%; A4 0%. Actionable A0â€“A2 = (100 + 30 + 83.3) / 3 = 71.1% (71%). Full scope A0â€“A4 = (100 + 30 + 83.3 + 0 + 0) / 5 = 42.7% (43%). These phase indicators do not imply commercial or production readiness.
+- Progress rubric: A0 100%; A1 30%; A2 10/12 = 83.3%; A3 0%; A4 0%. Actionable A0–A2 = (100 + 30 + 83.3) / 3 = 71.1% (71%). Full scope A0–A4 = (100 + 30 + 83.3 + 0 + 0) / 5 = 42.7% (43%). These phase indicators do not imply commercial or production readiness.
 
 
-## Verified update â€” 2026-10-14 (PR #1124)
+## Verified update — 2026-10-14 (PR #1124)
 
 - PR [#1124](https://github.com/ijoolaie/AI-Employee/pull/1124) merged successfully. Tested exact head: `db7ad80181c56dc000aa8662dd467544c8192b31`; squash merge SHA: `42cb0024a79ddeff79d5a5ad029dc0c98baf1967`.
 - All 11 workflow groups passed on the exact tested head: Workforce Semantic Real-Stack E2E, CI, CodeQL, Architecture Guard, Runtime Isolation/RBAC, Ephemeral DAST, W21 AI Business Network E2E, HA Failure Recovery, Production Infrastructure Validation, Production Observability, and Production Rollback & Alerting.
 - Workforce E2E run: https://github.com/ijoolaie/AI-Employee/actions/runs/38529979935 . Log confirms `WORKFORCE MARKETING MANAGER PREPARE_GROWTH_REPORT FULL WORKITEM LIFECYCLE PASS`, read-only tenant-owned orders/deals boundary, negative-path denials, and `WORKFORCE SEMANTIC REAL-STACK E2E MATRIX PASS`.
-- The deterministic provider fixture now registers `workforce_prepare_growth_report`. Evidence proves WorkItem assignment â†’ dispatch â†’ worker â†’ successful Run, audit identity and active runtime binding in CI. It does not prove live marketing providers, campaign attribution, ad spend, campaign launch, external outreach, customer acceptance, or revenue.
+- The deterministic provider fixture now registers `workforce_prepare_growth_report`. Evidence proves WorkItem assignment → dispatch → worker → successful Run, audit identity and active runtime binding in CI. It does not prove live marketing providers, campaign attribution, ad spend, campaign launch, external outreach, customer acceptance, or revenue.
 - Canonical lifecycle role coverage is now 11/12 = 91.7%: Trader, Content Producer, Graphic Designer, Customer Success, Software Developer, SEO & Growth, QA & DevOps, Social Media, Website, Internal Manager, and Marketing/Advertising Manager. Remaining uncovered role: Sales & Lead Generation.
 - Progress rubric: A0 100%; A1 30%; A2 11/12 = 91.7%; A3 0%; A4 0%. Actionable progress = (100 + 30 + 91.7)/3 = 73.9% (74%). Full-scope context = (100 + 30 + 91.7 + 0 + 0)/5 = 44.3% (44%). These are rubric-based engineering phase indicators, not commercial or production readiness.
-## A1 audit increment â€” SEO & Growth and Customer Success (2026-10-14)
+## A1 audit increment — SEO & Growth and Customer Success (2026-10-14)
 
 The role contracts and semantic handlers for SEO & Growth and Customer Success were traced on main. Both expose named routine operations, but their current handlers persist tenant-scoped artifacts using caller-supplied input and report `provider_execution=not_configured`. SEO operations do not establish live keyword research, crawling, Search Console ingestion, growth measurement or experiment execution. Customer Success operations do not establish connected helpdesk/customer-history lookup, measured churn prediction, message delivery, account changes, refunds or cancellations. Approval status/proposal artifacts are governance scaffolding, not completed external actions. This increment was source inspection only; no new tests were run and no A1 score increase is justified. See the capability reality audit for operation-level details.
-## A1 audit increment â€” Software Developer provider boundary (2026-10-14)
+## A1 audit increment — Software Developer provider boundary (2026-10-14)
 
 The Software Developer handler and provider selector were traced. Default provider configuration is `none` and fails closed; the contract-test adapter performs no external side effects; GitHub read-only supports CI-status reads; the GitHub adapter supports CI-status reads and a narrowly scoped branch creation operation when tenant-mapped repository/token configuration exists. Test/lint/build, PR/commit, health check, deploy and rollback are not implemented by those GitHub provider adapters and return `not_configured`. Branch creation is a real external side effect when configured and must stay governed/approval-gated. This was source inspection only; no live provider invocation or new test pass is claimed.
 
 
-## Latest verified change â€” Customer Success support triage (2026-10-14)
+## Latest verified change — Customer Success support triage (2026-10-14)
 
 PR [#1131](https://github.com/ijoolaie/AI-Employee/pull/1131) merged as [`3764e7502cb0837a74645a1fcdb88d4bf29d4289`](https://github.com/ijoolaie/AI-Employee/commit/3764e7502cb0837a74645a1fcdb88d4bf29d4289), from tested head `4bd18db4922b0ce00f15dad9aa6a97a0a0eb73b3`. All 14 exact-head check runs passed, including semantic E2E, backend/frontend, tenant isolation/RBAC, W21, infrastructure, DAST, recovery, observability, rollback and both language CodeQL checks.
 
-The deterministic Customer Success support-triage workflow now has full WorkItem â†’ assignment â†’ dispatch â†’ worker â†’ successful Run evidence with runtime binding, audit identity, tenant-scoped artifact and provenance assertions. Provider execution remains `not_configured`; no live helpdesk lookup, triage accuracy on real cases, message delivery, customer acceptance or production outcome is proven. Phase indicators remain A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%, full-scope 46%.
+The deterministic Customer Success support-triage workflow now has full WorkItem → assignment → dispatch → worker → successful Run evidence with runtime binding, audit identity, tenant-scoped artifact and provenance assertions. Provider execution remains `not_configured`; no live helpdesk lookup, triage accuracy on real cases, message delivery, customer acceptance or production outcome is proven. Phase indicators remain A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%, full-scope 46%.
 
 
-## Latest verified change â€” GitHub engineering response contract (2026-10-14)
+## Latest verified change — GitHub engineering response contract (2026-10-14)
 
 PR [#1137](https://github.com/ijoolaie/AI-Employee/pull/1137) merged at [`6ae34445f7eabef8dc8cf8a5926b21d7cdc3dfac`](https://github.com/ijoolaie/AI-Employee/commit/6ae34445f7eabef8dc8cf8a5926b21d7cdc3dfac). Exact tested head: `27b176b3e0020388d45ab04e13ef7f5c138bdd09`; all 18 check runs succeeded on that exact head, including backend/frontend, semantic E2E, tenant isolation/RBAC, W2/W21, provider contract, infrastructure, DAST, observability, recovery, rollback and CodeQL checks. The provider now validates GitHub branch lookup/create response shapes and SHA values, including a mismatch guard against the requested source SHA. Regression tests cover malformed lookup/create payloads and SHA mismatch.
 
@@ -1059,7 +1059,7 @@ Evidence boundary: this is automated contract hardening only. No live GitHub bra
 Next bounded increment: inspect and strengthen the read-only GitHub CI-status adapter's transport failure, malformed-response and missing tenant-to-repository mapping tests. Keep provider writes out of scope and retain the fail-closed contract.
 
 
-## Progress-accounting checkpoint â€” PR #1146 â€” 2026-10-14
+## Progress-accounting checkpoint — PR #1146 — 2026-10-14
 
 PR [#1146](https://github.com/ijoolaie/AI-Employee/pull/1146) squash-merged as 088fefd65832020476638ffef45b8bde04717410 from exact tested head 7064dbb340a10e550268ac6421f1582432251940; all 13 check runs passed on that exact head. The regression test asserts that the GitHub engineering provider does not execute git_commit_proposal: it returns not_configured and executed=False. This protects the fail-closed boundary; it does not implement Git commits or prove live GitHub integration.
 
@@ -1071,14 +1071,14 @@ This is a coarse phase-level metric, not a PR-count or engineering-velocity metr
 
 ### Next measurable work
 
-1. Trace Software Developer approval end-to-end: role contract â†’ Tool Registry and permissions â†’ persisted approval request/decision â†’ runtime governance â†’ adapter dispatch â†’ provider result and audit. A requires_approval flag or proposal artifact alone is not proof of approval.
+1. Trace Software Developer approval end-to-end: role contract → Tool Registry and permissions → persisted approval request/decision → runtime governance → adapter dispatch → provider result and audit. A requires_approval flag or proposal artifact alone is not proof of approval.
 2. Build an evidence matrix for every workforce role and operation, recording contract, registry/license, semantic handler, governance/approval, provider support, persisted result/audit, positive and negative tests, exact-head CI, and external validation separately.
 3. Define explicit A1 exit criteria and a stable operation-level denominator before revising any score. Fix only confirmed mismatches; preserve fail-closed controls.
 
 Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope context 46%. No live provider write, production readiness, or commercial readiness is implied.
 
 
-## 2026-10-14 checkpoint â€” PR #1148 approval-gated workforce resume
+## 2026-10-14 checkpoint — PR #1148 approval-gated workforce resume
 
 - PR #1148: https://github.com/ijoolaie/AI-Employee/pull/1148; merged as `0a38c57cb80f80ae6a522eac8933d0f7b4fc8ddd` from exact tested head `e7f308e2bea13dee5ad3e22da8e7b2a7210feb8b`.
 - Verified 13 GitHub Actions workflow runs on that exact head; all 13 completed successfully. This includes CI, CodeQL, architecture, security/privacy, semantic real-stack E2E, W1 control-plane E2E, infrastructure, observability, rollback/alerting, and failure recovery.
@@ -1088,34 +1088,34 @@ Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable 77%; full-scope c
 - Metrics unchanged: A0/A1/A2/A3/A4 = 100/30/100/0/0; actionable progress 77%; full-scope context 46%.
 - Next: build and maintain an operation-level evidence matrix across roles (role contract, Tool Registry/permissions, semantic handler, persisted approval/governance, provider support, persisted result/audit, positive/negative tests, exact-head CI, and external validation). Fix only confirmed gaps; keep A1 at 30% until its documented evidence threshold is met.
 
-## 2026-10-14 â€” PR #1162: reconciled provider audit semantics
+## 2026-10-14 — PR #1162: reconciled provider audit semantics
 
 - Merged PR #1162 at `ed3d27bc22cc3b89752e3f237aac9d68cba15f48`; tested head was `315c5a4a0e9a40d66275c4a4500519ff3b8f01b3`, with all 16 check runs successful on that exact SHA.
 - Durable `tool.call` audit status now preserves both `outcome_unknown` and `reconciled`. `reconciled` means a read-only GET confirmed the expected ref/SHA after an ambiguous create response; it does **not** mean this invocation created the branch.
 - Evidence remains CI/test-based. No live GitHub mutation, production credentials/configuration, deployment, or production readiness is established. Metrics unchanged: actionable progress 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
 
 
-## 2026-10-14 â€” PR #1164: exact branch-ref lookup contract
+## 2026-10-14 — PR #1164: exact branch-ref lookup contract
 
 - PR #1164 merged as `245beb6b335a794bb0220d2d17a87f61f205e6ab`; all 17 check runs passed on exact tested head `229a57a67ce7022403d64a980c8e06e13d18c6b9`.
 - The initial GitHub branch lookup now requires the returned `ref` to equal `refs/heads/{requested branch}` as well as a valid SHA. A mismatched ref fails closed as `provider_error`; regression coverage asserts no POST/write is attempted.
 - Evidence is automated tests/CI only. No live GitHub mutation, production credentials/configuration, deployment, or production readiness is established. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
 
 
-## 2026-10-14 â€” PR #1166: GitHub read-only provider fail-closed regression tests
+## 2026-10-14 — PR #1166: GitHub read-only provider fail-closed regression tests
 
 - PR #1166 merged as `4de70b6389e012d9416818c837287cc900a3ed6c`; exact tested head `61d46b1fdfee2792db694da5fed4549b64404f6e` has all 13 check runs successful after rerunning the frontend job. The rerun passed; the earlier frontend attempt had unrelated World-mode Playwright failures.
 - Added regression tests for malformed CI-status JSON/contracts, transport failure, and missing tenant repository mapping. This PR changed tests only; it did not add provider behavior or prove live GitHub writes.
 - Evidence remains CI/test-only. Live mutation, production credentials/configuration, deployment, and production readiness remain unverified. Metrics unchanged: actionable 77%; full-scope 46%; A0/A1/A2/A3/A4 = 100/30/100/0/0.
 
-## Implementation slice 1 â€” direct Vendor-owned Customers
+## Implementation slice 1 — direct Vendor-owned Customers
 
 Draft PR [#1353](https://github.com/ijoolaie/AI-Employee/pull/1353) is open from `feature/multi-vendor-foundation-20261102` at `b73e03537801824be6ace88b483fae029aacfbb1`.
 
 Implemented in this slice:
 - Vendor direct Customer provision/list/suspend/resume/deprovision endpoints.
 - Vendor license target listing includes direct Customers.
-- Tenant provisioning, direct-child access and entitlement delegation support Vendorâ†’Customer while preserving Vendorâ†’Resellerâ†’Customer and denying Vendorâ†’grandchild access.
+- Tenant provisioning, direct-child access and entitlement delegation support Vendor→Customer while preserving Vendor→Reseller→Customer and denying Vendor→grandchild access.
 - Commercial license hierarchy supports both direct Vendor Customer and Reseller-owned Customer, with malformed/foreign hierarchy rejection.
 - Explicit API-key route scopes and contract docs.
 
@@ -1125,14 +1125,14 @@ Not implemented by this slice: per-user action grants, child user invitation/cre
 
 Local branch and GitHub PR head match. Local worktree clean after commit/push. Handoff and Current Status in the implementation branch record this checkpoint.
 
-## Delegated authorization contract â€” 2026-11-02
+## Delegated authorization contract — 2026-11-02
 
 - Added [MULTI_VENDOR_DELEGATED_AUTHORIZATION_CONTRACT.md](../current/MULTI_VENDOR_DELEGATED_AUTHORIZATION_CONTRACT.md) as the source-backed implementation contract for action-level permissions, delegation ceilings, tenant-local user invitations, portal authorization, required tests and rollout.
 - This is a design/acceptance contract, not implementation completion. Existing edition Admin/Owner gates remain until the permission enforcement slice is implemented and tested.
 - PR #1353 exact-head CI has completed successfully (all recorded workflows green) and remains Draft pending PostgreSQL-backed API validation and review.
 - Next implementation slice: permission dependency enforcement + permission catalogue/role authoring, then secure tenant-local user invitation.
 
-## First delegated action-permission enforcement slice â€” 2026-11-02
+## First delegated action-permission enforcement slice — 2026-11-02
 
 - Added `require_reseller_customer_create` in `backend/app/core/edition_deps.py` and wired it to `POST /edition/reseller/customers`.
 - The endpoint now requires both Reseller edition/admin boundary and explicit tenant-local `reseller.customer.create`; a superuser flag alone does not bypass the action grant. Foreign-tenant role permissions do not count.
@@ -1140,19 +1140,19 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Focused tests: `26 passed` across action-permission, Vendor edition dependency and edition-boundary suites. Ruff passed on all changed Python files; `git diff --check` passed.
 - Commit: `c15e44d1`. This is a narrow first slice, not full Vendor/Reseller permission enforcement or secure user invitation. PR #1353 remains Draft pending PostgreSQL-backed API validation.
 
-## Reseller action coverage expansion â€” 2026-11-02
+## Reseller action coverage expansion — 2026-11-02
 
 - Generalized the action dependency factory and enforced tenant-local grants on all Reseller-owned Customer control-plane routes: list (`reseller.customer.read`), create (`reseller.customer.create`), suspend/resume/deprovision (`reseller.customer.manage`), and entitlement delegation (`reseller.entitlement.delegate`).
 - Existing API-key route scopes remain a second independent gate. Focused suite now: 29 passed; Ruff passed; `git diff --check` passed.
 - Commit: `65e4e2af`. Vendor operations and remaining edition/license/support action permissions are not yet migrated; user invitation, role delegation-ceiling and portal grants remain outstanding.
 
-## PostgreSQL CI fixture correction â€” 2026-11-02
+## PostgreSQL CI fixture correction — 2026-11-02
 
 - Exact-head CI for `48a4c46a` exposed two PostgreSQL API fixture failures: reseller list requests now correctly return 403 unless the fixture grants `reseller.customer.read`.
 - Updated both `test_edition_live_api_access.py` and `test_commercial_license_postgres_api.py` to seed an explicit tenant-local read permission and attach it to the Reseller role. Production authorization was not weakened.
 - Commit: `708d9300`. Offline focused suite remains 29 passed; Ruff passes on changed tests and implementation files. PostgreSQL tests are awaiting the new exact-head CI run; they were not run against shared Staging locally.
 
-## Vendor control-plane action permission slice â€” 2026-11-02
+## Vendor control-plane action permission slice — 2026-11-02
 
 - Added a tenant-local Vendor action permission dependency factory and applied it to Vendor edition control-plane operations: direct Customer list/create/manage, Reseller list/create/manage, and vendor tenant/license-target listing.
 - Permission codes: `vendor.tenant.read`, `vendor.reseller.read/create/manage`, `vendor.customer.read/create/manage`. Every check filters role grants to the active Vendor tenant. `is_superuser` and foreign-tenant role grants do not bypass the action permission. API-key route scopes remain independently enforced.
@@ -1161,14 +1161,14 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Exact-head CI for `4272164e` had all 22 workflows green before this commit; new exact-head CI for `8f93e098` is pending.
 
 
-## Vendor permission PostgreSQL fixture correction â€” 2026-11-02
+## Vendor permission PostgreSQL fixture correction — 2026-11-02
 
 - Exact-head CI for `90a7484e656fe41b55b43b06fe3833427e13f5e2` exposed two PostgreSQL API fixture failures: Vendor list-Reseller requests now correctly require the tenant-local `vendor.reseller.read` grant.
 - Updated `test_edition_live_api_access.py` and `test_commercial_license_postgres_api.py` to attach that permission to the appropriate Vendor test Admin roles (including the second Vendor fixture used for cross-Vendor isolation). Production authorization was not weakened.
 - The same exact-head run had frontend success and all non-CI workflows green; Backend CI failed only in those two PostgreSQL API assertions (1,842 passed, 2 failed). Re-run required after fixture correction.
 - Ruff passed for both changed fixtures; `git diff --check` passed. PR #1353 remains Draft; no merge or deployment.
 
-## Exact-head CI fixture follow-up â€” 2026-11-02
+## Exact-head CI fixture follow-up — 2026-11-02
 
 - CI run #4284 on `c38f3adf` passed all workflows except Backend CI. Backend had `1 failed, 1843 passed, 1 deselected`; the single failure was `test_license_http_hierarchy_revocation_and_audit` inserting multiple `Permission` rows with the same globally unique `vendor.reseller.read` code (two Vendor roles plus a duplicated assignment in the fixture).
 - Corrected the PostgreSQL fixture to look up or create the shared `vendor.reseller.read` Permission row once and attach the same row to both Vendor roles. No production authorization code was changed.
@@ -1176,7 +1176,7 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Exact-head CI run #4285 has started on `550afd29`; Documentation Truth Consistency is green, remaining workflows are queued/running at the latest check. PR remains Draft; do not merge until PostgreSQL CI and all required checks pass.
 - Local implementation worktree was fast-forwarded from `3375bde4` to `c38f3adf`, then the fixture correction was committed/pushed. Recheck local HEAD and clean status after documentation updates. The separate primary checkout remains dirty and untouched; Staging/Production were not changed.
 
-## Vendor permission bootstrap investigation + exact-head CI â€” 2026-11-03
+## Vendor permission bootstrap investigation + exact-head CI — 2026-11-03
 
 - Exact PR head `841ca8072cd04de45d2d80411c60ee9df5867c1b` was rechecked: all **22/22** associated GitHub Actions workflows completed successfully, with zero failures. This includes Backend CI run #4286, CodeQL, Runtime Isolation/RBAC, Ephemeral DAST, Security Privacy Compliance, Architecture Guard, Production Observability, recovery and infrastructure validation.
 - PR #1353 remains open and Draft. Green repository CI is not a substitute for dedicated local PostgreSQL API acceptance or review. `COMMERCIAL_LICENSE_TEST_DATABASE_URL` remains absent locally; no shared Staging or Production database was used.
@@ -1186,7 +1186,7 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - No application code or migration was changed in this investigation. Next implementation is staged: (1) idempotent least-privilege permission catalogue/role bootstrap for the canonical Vendor root and explicitly identified existing Vendor Admin role; (2) safe backfill migration with deterministic eligibility and audit evidence; (3) public signup routing to the configured default Vendor as a child Customer, failing closed if the default Vendor is missing/ambiguous; (4) isolated PostgreSQL tests for fresh bootstrap, rerun/idempotency, existing role preservation, non-Vendor exclusion, missing/ambiguous default Vendor, and cross-Vendor isolation. Keep PR Draft until these gates pass.
 - No Staging/Production changes, no user provisioning, and no merge occurred.
 
-## Vendor Admin permission backfill migration â€” 2026-11-03 (local validation)
+## Vendor Admin permission backfill migration — 2026-11-03 (local validation)
 
 - Added `backend/alembic/versions/w29_vendor_admin_action_permissions.py` (revision `w29_vendor_admin_perms`, based on `w28_customer_slot_expiry_index`). It seeds the seven Vendor action permission catalogue rows idempotently and attaches them only to tenant-local Admin/Owner/Tenant_Admin roles already assigned to an `is_platform_admin` user in a root Vendor tenant. Child tenants and arbitrary Vendor users/roles are excluded. Downgrade intentionally retains grants to avoid silently revoking access later curated or relied upon.
 - Added `backend/tests/test_vendor_permission_backfill_migration.py` to verify the migration's permission set, idempotent inserts, strict root-Vendor/platform-admin eligibility, role-name allowlist, and non-destructive downgrade contract. Focused test after final revision-ID shortening: **2 passed**. Ruff passed on the final migration and test.
@@ -1194,7 +1194,7 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Remaining bootstrap gap: this migration handles legacy root Vendor admins identified by `is_platform_admin`; canonical fresh default-Vendor creation/bootstrap and public-signup-to-default-Vendor child-Customer routing are still not implemented. Keep the feature Draft and do not deploy action gates until those paths and dedicated PostgreSQL tests are complete.
 
 
-## Default Vendor bootstrap + public signup routing â€” 2026-11-03 (implementation in progress)
+## Default Vendor bootstrap + public signup routing — 2026-11-03 (implementation in progress)
 
 - Exact-head CI for 12784da030af6c7dcf9ea3e9b8380958433b4785 completed **24/24 workflows successfully, zero failures** (CI #4290 plus all associated E2E/security workflows). This green result applies to that commit, not yet to the current uncommitted signup/bootstrap changes.
 - Public registration now resolves DEFAULT_VENDOR_TENANT_SLUG to exactly one active root Vendor. Missing configuration or no eligible root Vendor returns HTTP 503 (fail-closed); the public endpoint never creates a Vendor.
@@ -1206,7 +1206,7 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - PR #1353 remains Draft. No migration was applied, no Vendor was provisioned, no Staging/Production settings or databases were changed, and no merge/deployment occurred.
 
 
-## CI follow-up â€” seed disposable Vendor fixtures and preserve audit immutability (2026-11-03)
+## CI follow-up — seed disposable Vendor fixtures and preserve audit immutability (2026-11-03)
 
 - Exact-head CI #4291 on 628e96a0 exposed seven E2E workflows that still expected public signup to create a standalone tenant. The API correctly failed closed with HTTP 503 because those disposable stacks had not configured/bootstrapped a default Vendor. Corrected the workflow setup for Public Widget, W21, W16 Skill API, W16 Third-Party Publishing, W3, Runtime Isolation/RBAC and Workforce Semantic: each now configures a test-only default Vendor and invokes the operator bootstrap against its isolated database after migrations. Docker Compose passes the configured slug and test bootstrap values only into the E2E API service; production compose passes only the configured slug, with bootstrap credentials supplied only to the one-off ephemeral validation command.
 - The same CI backend run found the new bootstrap PostgreSQL acceptance test attempted to delete its audit rows during cleanup. PostgreSQL correctly rejected that operation because the audit ledger is immutable. The test now retains its random-slug bootstrap evidence and relies on the disposable CI support database being reset per workflow run; production ledger immutability is unchanged.
@@ -1215,7 +1215,7 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - These CI setup and audit-test corrections are a follow-up commit still awaiting push/exact-head CI at this checkpoint. Previous exact-head 24/24 success applies to 12784da0 only; CI #4291 on 628e96a0 is not green. Keep PR #1353 Draft and unmerged until a fresh exact-head matrix is fully green.
 
 
-## Follow-up pushed â€” CI fixture provisioning corrections (2026-11-03)
+## Follow-up pushed — CI fixture provisioning corrections (2026-11-03)
 
 - Follow-up commit `cd4ef18a62a923b71a5e458a56511b77c7c9af47` is pushed to the PR branch. It bootstraps a disposable root Vendor in each affected E2E stack (Public Widget, W21, W16 Skill API, W16 publishing, W3, Runtime Isolation/RBAC and Workforce Semantic) after migrations, using a test-only slug and Admin credentials. This preserves the production rule that public signup never creates a Vendor or silently falls back to a root Customer.
 - The bootstrap PostgreSQL acceptance test no longer attempts to delete immutable audit-ledger rows. It asserts that creation, Admin assignment and permission-grant events are each recorded exactly once across two idempotent bootstrap invocations. Random fixture identities remain in the disposable support database, which is reset per workflow run.
@@ -1231,13 +1231,13 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - The next exact-head CI matrix must verify these additional workflows as well as the seven fixes above. No claim is made that the new workflow setup has passed until that matrix completes.
 
 
-### Bootstrap script import-path correction â€” 2026-11-03
+### Bootstrap script import-path correction — 2026-11-03
 
 - Exact-head CI #4293 found W21's standalone bootstrap invocation could not import the backend app package because Python set sys.path to the script directory. Added an explicit backend-root path derived from the script's own file location before application imports; this is independent of the caller's working directory and also hardens compose-based E2E invocations.
 - Local direct invocation from repository root now imports successfully and stops at the intended fail-closed guard when DEFAULT_VENDOR_TENANT_SLUG is unset; it does not connect to or mutate a database. Ruff passed, compileall passed, and the 27 focused unit/contract tests passed again. Exact-head CI after this path correction is pending.
 
 
-### Customer marketplace purchase grant correction â€” 2026-11-03
+### Customer marketplace purchase grant correction — 2026-11-03
 
 - W16 Cross-Tenant Purchase API reached the actual purchase endpoint after successful Vendor bootstrap and public signup, then received HTTP 403 because the Customer edition Admin grant set did not include the explicit skill_marketplace.purchase permission. The endpoint's permission gate is correct; the Customer role's default grant set was incomplete for the documented purchase flow.
 - Added skill_marketplace.purchase only to CUSTOMER_PERMISSIONS and extended both the focused permission contract and PostgreSQL live-registration assertions. Vendor/Reseller grants and API-key scopes were not broadened.
@@ -1249,7 +1249,7 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Added the same disposable Vendor bootstrap to the manually dispatched Production Certification and Release Certification workflows after their isolated application-stack migrations. Their product gates exercise multiple /auth/register consumers; these workflows now receive a test-only Vendor fixture and retain the fail-closed signup contract. These workflows are certification-only and were not run as part of the current PR matrix; no real production or staging environment was targeted.
 
 
-### Celery/Kombu/Redis worker compatibility correction â€” 2026-11-03
+### Celery/Kombu/Redis worker compatibility correction — 2026-11-03
 
 - Public Widget E2E now completes migration, Vendor bootstrap and API fixture provisioning, then its Celery worker fails before consuming tasks. The exact runtime error is Kombu Redis transport requiring redis-py >=6.1.0 while the installed dependency set supplies redis-py 5.2.0. This is a dependency compatibility issue, not an API signup or authorization failure.
 - Aligned all backend dependency declarations: Celery is bounded below 5.6, Kombu is bounded below 5.6 and pinned to 5.5.4 in the direct lock, and redis-py remains on the compatible 5.x line. This avoids Kombu 5.6's newer Redis transport requirement without broadening or changing the application runtime contract.
@@ -1262,18 +1262,18 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Local validation after the parity change: **28 focused tests passed**, Ruff passed and compileall passed. The exact-head PostgreSQL API/bootstrap tests remain CI-gated because the local dedicated SUPPORT_TEST_DATABASE_URL is absent.
 
 
-### Employee Marketplace Admin permission parity â€” 2026-11-03
+### Employee Marketplace Admin permission parity — 2026-11-03
 
 - W20's 403 was at POST /employee-marketplace/packages and required employee_marketplace.publish. The corresponding W20 migration, like the W16 marketplace migrations, grants explicit marketplace actions to existing Admin roles. Newly provisioned edition Admin roles must receive the equivalent grants through their role permission sets.
 - Added marketplace.install and employee_marketplace.publish/install/revoke to the common Admin, Reseller and Customer permission sets. The operator-created Vendor bootstrap Admin also receives these specific marketplace actions alongside its Vendor control-plane grants. The grants remain tenant-local and are not superuser/API-key bypasses.
 - Extended the public-signup permission contract, live PostgreSQL registration assertions, and bootstrap least-privilege acceptance assertions. Local focused suite and exact-head CI must be rerun after this change; no pass is claimed yet.
 
-## Final security and scope review â€” 2026-11-03
+## Final security and scope review — 2026-11-03
 
 - Rechecked the two previously tracked dependency findings against current main and PR files. sharp is now 0.35.5 on both branches (the old 0.35.3 finding is closed). The braces GHSA/CVE was withdrawn by GitHub on 2026-10-23; no guessed override or audit suppression was introduced.
 - A fresh official npm registry audit on the PR worktree found a newer production dependency issue: follow-redirects@1.16.1 (GHSA-mrwp-f3q8-3g9p / CVE-2026-116689). Updated only its lockfile entry to patched 1.16.2; package.json remains unchanged. Re-audit reports zero production vulnerabilities. Full audit still reports 16 moderate records, all through the development-only ESLint/minimatch toolchain; npm's suggested remediation requires incompatible major changes. No forced upgrade was applied.
 - Code review found the Vendor permission backfill could grant a shared Role based on one platform-admin member, thereby affecting other users assigned to that Role. Tightened the migration with a NOT EXISTS exclusion: a role is backfilled only if every same-tenant member is platform-admin. Added contract assertions. Focused migration tests: 2 passed; Ruff and git diff --check passed.
-- Exact-head CI for `2746e7fd30abd98b628644444e17f19871d7e8c7` completed **41/41 workflows successfully, zero failures**. The backend suite passed on isolated CI PostgreSQL services: 1,854 passed, 1 deselected, 20 warnings; this includes Vendor bootstrap and permission migration coverage. Frontend browser regressions, Security/Privacy, DAST, W20 real-stack and all other gates are green. Frontend local checks: npm ci passed, 145 contract/governance assertions passed, ESLint exit 0 with five existing warnings, Next.js 16.4.2 build passed (82 static pages). Production-only npm audit is clean (0 vulnerabilities); full audit retains 16 moderate records from the development ESLint/minimatch graph. Installed tree confirms axios 1.20.0 â†’ follow-redirects 1.16.2.
+- Exact-head CI for `2746e7fd30abd98b628644444e17f19871d7e8c7` completed **41/41 workflows successfully, zero failures**. The backend suite passed on isolated CI PostgreSQL services: 1,854 passed, 1 deselected, 20 warnings; this includes Vendor bootstrap and permission migration coverage. Frontend browser regressions, Security/Privacy, DAST, W20 real-stack and all other gates are green. Frontend local checks: npm ci passed, 145 contract/governance assertions passed, ESLint exit 0 with five existing warnings, Next.js 16.4.2 build passed (82 static pages). Production-only npm audit is clean (0 vulnerabilities); full audit retains 16 moderate records from the development ESLint/minimatch graph. Installed tree confirms axios 1.20.0 → follow-redirects 1.16.2.
 - PR #1353 remains open, Draft and unmerged. No Staging/Production databases, settings, or deployments were changed.
 
 ## 2026-11-03 - PR #1353 merge and lifecycle/RBAC handoff
@@ -1304,7 +1304,7 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - The only remaining application use of `is_superuser` is requiring explicit scopes when a superuser creates an API key; it is not an authorization grant. Model field and user constructors remain for compatibility, but no longer elevate tenant operations.
 - Focused regression suite: 65 passed; Ruff and `git diff --check` passed. Documentation truth validator passed.
 
-## Public signup account-kind slice â€” 2026-11-05
+## Public signup account-kind slice — 2026-11-05
 
 - New isolated branch `feature/public-signup-pending-20261105` starts from exact `main` SHA `c98e4c0d43a0a53e630945d8448da60231ca87ed`.
 - Public registration now accepts only `customer` or `reseller` (`customer` remains the backwards-compatible default); Vendor creation remains prohibited by schema validation.
@@ -1316,32 +1316,32 @@ Local branch and GitHub PR head match. Local worktree clean after commit/push. H
 - Not run locally: PostgreSQL HTTP integration test (no approved `SUPPORT_TEST_DATABASE_URL` is configured) and frontend lint/build (frontend `node_modules` is absent; `eslint` is unavailable). Exact-head CI is required before merge.
 - No DB migration, staging/production change, payment activation, or account mutation was performed.
 
-## Latest evidence â€” 2026-11-18
+## Latest evidence — 2026-11-18
 
 - Notification recipient lookup now has one direct, focused assertion against the real Tenant.settings query predicate: 1 passed, 2 deselected; no DB used. This closes recipient lookup ownership only, not the full notification topology matrix.
 - Next acceptance domain is entitlement expiry/suspension for already-issued portal grants and in-flight/background work. Existing tenant-access tests already cover expired paid/Demo access, denial of an existing portal grant after commercial expiry, and paused subscription denial; remaining work is limited to the in-flight/background boundary.
 
-## Latest entitlement evidence â€” 2026-11-18
+## Latest entitlement evidence — 2026-11-18
 
 - Outbound Email/WhatsApp side-effect fence now reuses assert_run_execution_entitlement before the existing Tenant lifecycle lock; deterministic entitlement denial maps to TenantInactiveError and the existing workers dead-letter before provider I/O.
-- Focused helper contract: 1 passed, 13 deselected; diff check passed. No PostgreSQL test. CI must still prove Subscription â†’ Tenant concurrency behavior on an isolated database.
+- Focused helper contract: 1 passed, 13 deselected; diff check passed. No PostgreSQL test. CI must still prove Subscription → Tenant concurrency behavior on an isolated database.
 - Next: inventory remaining async/Celery workers for tenant provenance and execution-time authority, then choose one uncovered class only.
 
-## Latest worker evidence â€” 2026-11-18
+## Latest worker evidence — 2026-11-18
 
-- Test Center worker now revalidates current tenant/commercial entitlement from the TestRun's durable tenant_id before QUEUED â†’ RUNNING. Added one PostgreSQL integration case for a suspended tenant; not run locally. Focused Ruff and diff check passed.
+- Test Center worker now revalidates current tenant/commercial entitlement from the TestRun's durable tenant_id before QUEUED → RUNNING. Added one PostgreSQL integration case for a suspended tenant; not run locally. Focused Ruff and diff check passed.
 - Worker inventory found no other concrete missing tenant binding in the reviewed schedule/event/Run/Workflow/outbox task paths; exact-head isolated CI evidence remains pending.
 - Next acceptance domain: server-side cache isolation, then sampled reports/exports expansion only where the audit still shows partial coverage.
 
-## Cache isolation decision â€” 2026-11-18
+## Cache isolation decision — 2026-11-18
 
-- Targeted backend scan found no tenant-scoped server response/data cache or cache decorator. Redis is used for IP rate limiting, tenant resource leases and fair scheduling, not response caching. Frontend QueryClient identity clearing is already evidenced by #1413â€“#1415.
+- Targeted backend scan found no tenant-scoped server response/data cache or cache decorator. Redis is used for IP rate limiting, tenant resource leases and fair scheduling, not response caching. Frontend QueryClient identity clearing is already evidenced by #1413–#1415.
 - Do not build a cache subsystem or add cache tests. Mark backend cache isolation not applicable for this source baseline; retain a guard for any future server cache to include effective tenant/context and revoke/switch invalidation.
 - Next: reports, privacy exports and generated artifact ownership gaps.
 
-## Latest report/export evidence â€” 2026-11-18
+## Latest report/export evidence — 2026-11-18
 
-- Added one Resellerâ†’Customer negative assertion: sibling Customer invoice PDF export must return 404. Ruff and diff check passed; PostgreSQL scenario not run locally.
+- Added one Reseller→Customer negative assertion: sibling Customer invoice PDF export must return 404. Ruff and diff check passed; PostgreSQL scenario not run locally.
 - Existing portal live-API evidence already covers owned invoice PDF export/download and revoked-grant denial; the new assertion closes only the sibling export action gap.
 - CI execution remains pending.
 
@@ -1395,7 +1395,7 @@ Next ordered action is not more local test expansion: reconcile and package the 
 - Re-read GitHub PR #1434 and the complete Check Runs collection for exact head `fed62f56a75dd0f6de09c41e14a00506593d14c5`: **23/23 check runs completed successfully**, including CI backend/frontend, CodeQL (Python and JavaScript/TypeScript), security/privacy, architecture, tenant hierarchy isolation/RBAC, real-stack E2E, DAST, infrastructure, observability, recovery and rollback. This supersedes earlier handoff notes describing a queued/pending check on this same SHA.
 - PR #1434 remains OPEN and unmerged. PR #1447 remains OPEN, Draft, stacked on #1434. Issue #1350 remains OPEN.
 - Important evidence boundary: these GitHub checks ran against the pushed `fed62f56` tree. They do **not** include the current uncommitted worktree changes (87 changed paths), including the focused test additions and current documentation updates. No new workflow was triggered.
-- Ran DB-free acceptance contracts against the repository's dependency-complete Python 3.12 container with the backend mount read-only: `test_edition_api_key_scope_contract.py` and `test_vendor_permission_backfill_migration.py` â€” **17 passed**. Pytest emitted only a cache warning because the source mount was intentionally read-only; test results were successful and no repository artifacts were written by the runner.
+- Ran DB-free acceptance contracts against the repository's dependency-complete Python 3.12 container with the backend mount read-only: `test_edition_api_key_scope_contract.py` and `test_vendor_permission_backfill_migration.py` — **17 passed**. Pytest emitted only a cache warning because the source mount was intentionally read-only; test results were successful and no repository artifacts were written by the runner.
 - Legacy Vendor permission backfill PostgreSQL TEMP-table rehearsal remains **1 passed** on disposable PostgreSQL 16 (synthetic fixture; not a historical snapshot rehearsal). Action-grant/lifecycle PostgreSQL cases remain as recorded above.
 - No commit, push, merge, deploy, persistent database mutation, or Issue #1350 state change. Continue to preserve all local edits.
 
@@ -1414,14 +1414,14 @@ Source inspection confirms `edition_service.assert_can_access` is intentionally 
 The user-management implementation must therefore use a dedicated, database-backed target resolver that validates the complete persisted ancestry for the user-management routes only. It must support Vendor -> direct Reseller, Vendor -> direct Customer, Vendor -> Reseller -> Customer, and Reseller -> direct Customer; reject sibling Vendor and foreign ancestry; and lock/revalidate the target tenant before writes. The existing `tenant_admin` role loader is also actor-tenant-bound and rejects `vendor.*` permissions, while the Reseller router has a fixed Customer-member role and only list/invite/revoke/status operations. These cannot simply be reused unchanged for Vendor target administration.
 
 No authorization code was changed in this reconnaissance step. The next implementation slice is the dedicated hierarchy resolver plus its unit/PostgreSQL contract tests, followed by target-tenant-aware user lifecycle and role operations with explicit API-key route scopes.
-### Vendor delegated user-management resolver â€” implementation checkpoint (2026-11-20)
+### Vendor delegated user-management resolver — implementation checkpoint (2026-11-20)
 - Added `backend/app/services/tenant_user_management_service.py` with a DB-backed resolver that loads actor, target, parent, and (for nested Customer targets) grandparent from persisted `tenants` rows. It rejects inactive tenants, non-root Vendor actors, malformed Reseller ancestry, non-Customer actors, self-targeting, sibling/foreign ancestry, and unsupported hierarchy edges.
 - The resolver is intentionally separate from `edition_service.assert_can_access`; no global edition access policy was widened.
 - Added `backend/tests/test_tenant_user_management_service.py`; focused pure-policy tests: **8 passed**. `git diff --check` passed.
 - Not yet integrated into HTTP routes; no invitation/list/revoke/status/role API behavior changed. No PostgreSQL resolver integration test has run yet.
 - An attempted combined run with `test_edition_boundaries.py` had 18 passes and one environment/import failure because the local interpreter is Python 3.10 and an existing module imports `enum.StrEnum` (Python 3.11+); this is not evidence of a product regression. The first attempt also exposed an incorrect test expectation (a Reseller is allowed to manage all its own direct Customers); the test was corrected to use a Customer under a different Reseller.
 
-### Vendor descendant user read APIs â€” implementation checkpoint (2026-11-20)
+### Vendor descendant user read APIs — implementation checkpoint (2026-11-20)
 - Added `backend/app/api/v1/vendor_tenant_users.py` with target-tenant-scoped GET endpoints for tenant-local users and assignable roles, using the DB-backed ancestry resolver. The route only exposes users whose `User.tenant_id` matches the resolved target; role listing is limited to target-tenant roles and system roles.
 - Registered the router and added a dedicated API-key scope `edition.vendor.users.read` with explicit route-template mappings for both GET routes. The API-key scope contract remains fail-closed for unmapped routes.
 - Authorization requires the Vendor administrator context plus the target-kind read permission (`vendor.reseller.read` or `vendor.customer.read`). The resolver enforces active target and persisted Vendor subtree ancestry.
@@ -1518,18 +1518,18 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Reconciled the active branch against GitHub: local HEAD and `origin/test/knowledge-revoked-portal-context-20261108` are both `02d150c8fb548ad331a9e3cfc52fe42a80b3f059`; PR #1434 is OPEN (not draft), and all **35/35** displayed PR checks pass on that exact head. PR #1447 remains OPEN + Draft on its separate stacked head `425d40d081c56b0b66a26727772d900062cd9868`. Issue #1350 remains OPEN.
 - Preserved the 81 pre-existing modified/untracked worktree paths. No reset, clean, staging, code edit, commit, merge, deployment, or persistent database operation was performed in this verification slice.
 - Source review of `outbox_service.py`, `outbox_worker.py`, `assignment_command_service.py`, `assignment_command.py`, and `assignment_command_worker.py` confirms operational state transitions and durable retry/lease/recovery behavior, but no immutable AuditLog transition writes in these paths. Do not add audit writes until the unresolved event semantics, actor attribution, failure policy, privacy, and transaction/commit coupling are approved; generic exception logging is not a substitute.
-- Focused DB-free contracts passed on Python 3.12: AssignmentCommand service/worker contracts, Outbox lease/replay contracts, WorkItem locking, and workflow timeout reconciliation â€” **30 passed in 1.70s**. Full backend Ruff (`app` + `tests`) passed. `git diff --check` passed (only pre-existing LF/CRLF warnings).
+- Focused DB-free contracts passed on Python 3.12: AssignmentCommand service/worker contracts, Outbox lease/replay contracts, WorkItem locking, and workflow timeout reconciliation — **30 passed in 1.70s**. Full backend Ruff (`app` + `tests`) passed. `git diff --check` passed (only pre-existing LF/CRLF warnings).
 - PostgreSQL race/recovery tests in this slice are explicitly CI-only and were not locally executed; their CI guards require `CI=true` and a dedicated loopback `support_test` database. No guard was bypassed. The only running Docker services remain the pre-existing Staging PostgreSQL/Redis containers on ports 15434/16379.
 - Remaining acceptance gates are unchanged: approved immutable-audit/failure-event policy; sanitized historical Vendor permission-backfill snapshot; human visual acceptance of the distinct portals; and completion of the documented Actor x Resource x Action gaps. The Vendor descendant user-administration slice remains separately accepted by its disposable PostgreSQL live test and exact-head CI evidence; this does not close Issue #1350.
 ## 2026-11-20 - Notification destination tenant-predicate evidence
 
 - Revisited the exact remaining narrow gap named by the acceptance matrix: tenant handoff notification destination lookup must read `Tenant.settings` for the conversation-owning tenant, not an actor/portal-context or caller-selected tenant.
 - Executed the existing focused regression `tests/services/test_customer_handoff_notification_outbox.py`: **3 passed in 0.89s** on Python 3.12. The specific query-contract case compiles the SQL with the PostgreSQL dialect and asserts the `tenants.id` predicate and the conversation tenant UUID are bound in the statement.
-- This closes the narrow query-predicate evidence gap for the inspected handoff destination lookup only. It does not complete the broader Notifications/Outbox actor Ã— hierarchy Ã— delivery-kind matrix. The test and related Outbox implementation remain part of the preserved local in-progress worktree; they were not included in the documentation-only GitHub commit.
+- This closes the narrow query-predicate evidence gap for the inspected handoff destination lookup only. It does not complete the broader Notifications/Outbox actor × hierarchy × delivery-kind matrix. The test and related Outbox implementation remain part of the preserved local in-progress worktree; they were not included in the documentation-only GitHub commit.
 - No production code was changed in this verification step, and no database was used. Continue only with the next documented uncovered notification/worker case; do not infer full matrix acceptance from this focused contract.
 ## 2026-11-20 - Notification and Outbox delivery-contract verification
 
-- Continued the documented Notifications/Outbox actor Ã— hierarchy Ã— delivery-kind review with the existing focused delivery contracts; no production code or test definitions were changed in this verification slice.
+- Continued the documented Notifications/Outbox actor × hierarchy × delivery-kind review with the existing focused delivery contracts; no production code or test definitions were changed in this verification slice.
 - Python 3.12 focused run across email Outbox crash safety, worker crash safety, WhatsApp worker behavior, enqueue-race handling, tenant-scoped deduplication, approval-resume enqueue, run-creation enqueue, Outbox hardening, and tenant handoff notification destination: **36 passed in 2.04s**.
 - Targeted Ruff over the inspected notification/Outbox services, workers, and test files: **All checks passed**. `git diff --check` passed; existing LF/CRLF warnings relate to preserved unrelated dirty files.
 - These tests establish the listed local contracts only. They do not substitute for PostgreSQL race tests whose fixtures require CI-only `support_test`, nor do they prove the complete actor/hierarchy/delivery-kind matrix or immutable AuditLog coverage. No PostgreSQL, Staging, or Production database was accessed.
@@ -1725,6 +1725,6 @@ No authorization code was changed in this reconnaissance step. The next implemen
 
 ## Verified continuation - 2026-11-21 (PR #1488)
 
-- PR #1488 merged at 5bbe21fb3bf2657244bd1463cac156aa409b8228 after 12/12 exact-head checks passed. The WhatsApp worker now has a regression proving a cross-tenant Agent governance proof is rejected before any database lookup; focused module: 10 passed; Ruff lint and diff check passed.
-- This closes one bounded pre-lookup governance-binding test only. Notifications/Outbox actor Ã— hierarchy Ã— delivery-kind acceptance remains PARTIAL; Issue #1350 remains OPEN.
-- Current verified origin/main: 5bbe21fb3bf2657244bd1463cac156aa409b8228.
+- PR #1488 merged at `5bbe21fb3bf2657244bd1463cac156aa409b8228` after 12/12 exact-head checks passed. The WhatsApp worker now has a regression proving a cross-tenant Agent governance proof is rejected before any database lookup; focused module: 10 passed; Ruff lint and diff check passed.
+- This closes one bounded pre-lookup governance-binding test only. Notifications/Outbox actor-by-hierarchy-by-delivery-kind acceptance remains PARTIAL; Issue #1350 remains OPEN.
+- Current verified origin/main: `5bbe21fb3bf2657244bd1463cac156aa409b8228`.
