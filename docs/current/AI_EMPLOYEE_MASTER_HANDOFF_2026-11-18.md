@@ -800,3 +800,10 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Local Python 3.12 validation: **23 passed** across Run Worker, Agent Outbox governance, and Outbox dispatcher crash-safety tests; Ruff lint and `git diff --check` passed. Ruff format check still reports pre-existing unrelated formatting drift elsewhere in `run_worker.py`; no broad reformat was applied.
 - This is bounded query-level tenant isolation evidence, not live PostgreSQL acceptance or closure of the broader delayed Agent/Outbox matrix. Issue #1350 remains OPEN; audit/failure policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining concrete matrix cells remain open.
 - Current verified `origin/main`: `5c89221d41eec609ea00d22f731a5c3252ac0b70`.
+
+## 2026-11-21 - Agent Run post-execution tenant-qualified refresh
+
+- Tightened the post-runtime Run refresh in `backend/app/workers/run_worker.py` to require both the queued Run ID and the parsed queued tenant ID before updating aggregate token totals. The initial durable Run lookup already carries the same tenant predicate from PR #1478.
+- Extended the worker compatibility test to assert both Run SELECTs (initial load and post-execution refresh) include `runs.tenant_id`. Python 3.12 focused Run Worker, Agent Run governance bootstrap, Agent Outbox governance, and Outbox dispatcher crash-safety suites: **27 passed**. Ruff lint and `git diff --check` passed.
+- Ruff format check still reports pre-existing formatting drift elsewhere in `run_worker.py`; no broad unrelated reformat was applied. This is bounded query-level tenant-scope evidence, not full PostgreSQL/async delivery matrix acceptance. No DB, broker, provider, Staging, or Production service was accessed. Issue #1350 remains OPEN.
+
