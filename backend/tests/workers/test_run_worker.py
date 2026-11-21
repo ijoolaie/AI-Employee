@@ -179,6 +179,9 @@ async def test_run_worker_preserves_non_agent_run_compatibility_and_attribution(
     await run_worker._run_async(str(run_id), str(tenant_id))
 
     assert calls == [(db, run_id)]
+    run_queries = [query for query in db.queries if "FROM runs" in query]
+    assert len(run_queries) == 2
+    assert all("runs.tenant_id =" in query for query in run_queries)
     assert run.agent_instance_id is None
     assert db.committed is True
     assert run.total_tokens == run.prompt_tokens + run.completion_tokens

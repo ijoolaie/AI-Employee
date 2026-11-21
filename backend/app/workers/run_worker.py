@@ -184,7 +184,12 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
                         await runtime.execute(lambda: execute_run_locked(db, run_id=parsed_run_id), retryable=False)
                 else:
                     await runtime.execute(lambda: execute_run_locked(db, run_id=parsed_run_id), retryable=False)
-                refreshed = await db.execute(select(Run).where(Run.id == parsed_run_id))
+                refreshed = await db.execute(
+                    select(Run).where(
+                        Run.id == parsed_run_id,
+                        Run.tenant_id == parsed_tenant_id,
+                    )
+                )
                 completed_run = refreshed.scalar_one_or_none()
                 if completed_run is not None:
                     completed_run.total_tokens = int(completed_run.prompt_tokens or 0) + int(completed_run.completion_tokens or 0)
