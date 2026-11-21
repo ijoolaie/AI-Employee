@@ -647,3 +647,8 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added parameterized Email/WhatsApp regression tests for ambiguous publisher acknowledgement after worker terminal-state commit; the fake DB asserts the recovery query requests a row lock. Existing generic workflow publish-failure retry test remains green.
 - Focused Python 3.12 Outbox/Email/WhatsApp suite: 27 passed; targeted Ruff and git diff --check passed. No local DB, broker, external provider, Staging or Production access.
 - Status: dispatcher terminal-state overwrite race is closed at unit-contract level pending exact-head CI. Broader Notifications/Outbox actor ? hierarchy ? delivery-kind retry/dead-letter/revocation/content-isolation matrix remains PARTIAL. Audit event semantics remain unresolved and untouched. Issue #1350 remains OPEN.
+
+
+### PR #1464 exact-head acceptance
+
+- PR #1464 exact head ed36d567ef86bbf2a29b09e59507e1fbaa33bfb5 passed **17/17** exact-head checks, including Backend and W21 real-stack. It merged to main at b4e57a048dcc22c772552039cb40a2f61bacc1b3. The Outbox dispatcher terminal-state preservation correction is now integrated; the wider actor ? hierarchy ? delivery-kind matrix remains PARTIAL.

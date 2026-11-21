@@ -672,3 +672,8 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - Dispatcher now performs a SELECT OutboxMessage ... FOR UPDATE after rollback and preserves terminal states (dispatched, dead, uncertain). It retains retry/backoff for rows that are still nonterminal; existing workflow broker-failure retry behavior is unchanged.
 - Added parameterized Email/WhatsApp terminal-state race tests and a lock assertion. Python 3.12 focused Outbox/Email/WhatsApp suite: 27 passed; Ruff and git diff --check passed. No DB, broker or provider accessed locally.
 - This is bounded unit-contract evidence only. Exact-head CI is required; full Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance remains PARTIAL and Issue #1350 remains OPEN.
+
+
+### PR #1464 merged - 2026-11-21
+
+- The ambiguous broker acknowledgement terminal-state protection merged at b4e57a048dcc22c772552039cb40a2f61bacc1b3 after **17/17 exact-head checks** passed on ed36d567ef86bbf2a29b09e59507e1fbaa33bfb5. Issue #1350 remains OPEN; complete Notifications/Outbox matrix remains PARTIAL.

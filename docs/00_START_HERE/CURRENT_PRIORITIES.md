@@ -1828,3 +1828,8 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Next bounded Outbox correction is on fix/outbox-dispatch-ambiguous-ack-20261121: broker publish exceptions now reload the durable row under FOR UPDATE and never overwrite dispatched, dead, or uncertain states.
 - Focused evidence: 27 Python 3.12 tests passed across dispatcher, retry/lease, Email and WhatsApp; targeted Ruff and diff check passed. No database/broker/provider used locally.
 - Exact-head CI remains required. Keep the complete Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance PARTIAL; do not alter the unresolved immutable audit policy.
+
+
+### PR #1464 status
+
+- The ambiguous-broker-acknowledgement fix is integrated in main at b4e57a048dcc22c772552039cb40a2f61bacc1b3 after 17/17 exact-head checks passed. Continue from the next concrete uncovered acceptance cell; the full notification matrix remains PARTIAL.
