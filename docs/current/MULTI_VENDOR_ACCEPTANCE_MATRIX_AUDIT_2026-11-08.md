@@ -734,3 +734,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Tightened the initial durable Run lookup in `backend/app/workers/run_worker.py` to require both `Run.id` and the queued `Run.tenant_id` in SQL. The existing post-load tenant comparison remains as defense in depth.
 - Extended `test_run_worker_fails_closed_on_tenant_mismatch` to assert the Run SELECT includes the tenant predicate. Python 3.12 focused worker suite: **9 passed**; Ruff lint and `git diff --check` passed.
 - Ruff format check reports pre-existing formatting drift elsewhere in `run_worker.py`; no broad unrelated reformat was applied. This is a query-level isolation hardening with focused unit evidence, not live PostgreSQL acceptance or closure of the broader delayed Agent/Outbox matrix. No database, broker, provider, Staging, or Production service was accessed. Issue #1350 remains OPEN.
+
+## 2026-11-21 - Agent Run worker tenant-qualified lookup merged
+
+- PR #1478 merged at `5c89221d41eec609ea00d22f731a5c3252ac0b70` after **17/17 exact-head checks passed**. The initial Agent Run worker lookup now requires both Run ID and queued tenant ID in SQL; the existing post-load tenant comparison remains defense in depth.
+- Local Python 3.12 validation: **23 passed** across Run Worker, Agent Outbox governance, and Outbox dispatcher crash-safety tests; Ruff lint and `git diff --check` passed. Ruff format check still reports pre-existing unrelated formatting drift elsewhere in `run_worker.py`; no broad reformat was applied.
+- This is bounded query-level tenant isolation evidence, not live PostgreSQL acceptance or closure of the broader delayed Agent/Outbox matrix. Issue #1350 remains OPEN; audit/failure policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining concrete matrix cells remain open.
+- Current verified `origin/main`: `5c89221d41eec609ea00d22f731a5c3252ac0b70`.

@@ -1681,3 +1681,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - The two-tenant Customer Handoff Email SMTP-boundary isolation regression is integrated. Local focused Python 3.12 suite: **24 passed**; targeted Ruff lint, documentation truth validation, and `git diff --check` passed.
 - This closes bounded worker/provider-boundary Email Handoff isolation evidence only; full Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. Issue #1350 remains OPEN.
 - Current verified `origin/main`: `60a3421414cb70f7d4e0ed4a47ed2160292a8eed`.
+
+## 2026-11-21 - Agent Run worker tenant-qualified lookup merged
+
+- PR #1478 merged at `5c89221d41eec609ea00d22f731a5c3252ac0b70` after **17/17 exact-head checks passed**. The initial Agent Run worker lookup now requires both Run ID and queued tenant ID in SQL; the existing post-load tenant comparison remains defense in depth.
+- Local Python 3.12 validation: **23 passed** across Run Worker, Agent Outbox governance, and Outbox dispatcher crash-safety tests; Ruff lint and `git diff --check` passed. Ruff format check still reports pre-existing unrelated formatting drift elsewhere in `run_worker.py`; no broad reformat was applied.
+- This is bounded query-level tenant isolation evidence, not live PostgreSQL acceptance or closure of the broader delayed Agent/Outbox matrix. Issue #1350 remains OPEN; audit/failure policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining concrete matrix cells remain open.
+- Current verified `origin/main`: `5c89221d41eec609ea00d22f731a5c3252ac0b70`.
