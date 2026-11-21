@@ -1968,3 +1968,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - PR #1488 merged at `5bbe21fb3bf2657244bd1463cac156aa409b8228` with 12/12 exact-head checks green. Cross-tenant WhatsApp Agent governance binding is now rejected before worker lookup; this is bounded evidence only.
 - Keep Issue #1350 OPEN: Notifications/Outbox actor-by-hierarchy-by-delivery-kind matrix, async report/export combinations, unresolved Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells are not complete.
 - Current verified origin/main: `5bbe21fb3bf2657244bd1463cac156aa409b8228`.
+
+
+## Verified continuation - 2026-11-21 (security and Outbox evidence)
+
+- Dependabot alert #18 (`minimatch`) is fixed on `main` after PR #1490; patched transitive version is 11.0.9 and the frontend clean install/audit reported zero vulnerabilities.
+- PR #1491 adds a two-tenant WhatsApp provider-boundary content-isolation unit regression and is merged. This is one bounded evidence cell only; the full Notifications/Outbox actor x hierarchy x delivery-kind/content matrix remains PARTIAL.
+- Current verified `origin/main`: `8bcf3715d6f2ca3de9adf184bc8590cec29455b1`.
+- Keep Issue #1350 OPEN. Remaining gates include immutable Audit Ledger/failure policy, sanitized historical permission-backfill snapshot review, human portal UX acceptance, broader asynchronous export/report topology coverage, and remaining actor/resource/action cells. Do not perform speculative audit writes, historical Staging/Production backfills, or realtime work.

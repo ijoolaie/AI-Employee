@@ -1728,3 +1728,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - PR #1488 merged at `5bbe21fb3bf2657244bd1463cac156aa409b8228` after 12/12 exact-head checks passed. The WhatsApp worker now has a regression proving a cross-tenant Agent governance proof is rejected before any database lookup; focused module: 10 passed; Ruff lint and diff check passed.
 - This closes one bounded pre-lookup governance-binding test only. Notifications/Outbox actor-by-hierarchy-by-delivery-kind acceptance remains PARTIAL; Issue #1350 remains OPEN.
 - Current verified origin/main: `5bbe21fb3bf2657244bd1463cac156aa409b8228`.
+
+
+## Verified continuation - 2026-11-21 (PRs #1490 and #1491)
+
+- PR #1490 merged at `e0f853d3223a1399b3af32e911ab1883f2943852` after **9/9 exact-head checks passed**. The frontend development toolchain moved to `typescript-eslint` 8.73.0, which resolves the vulnerable transitive `minimatch` to 11.0.9. A clean frontend `npm ci` and `npm audit` both reported zero vulnerabilities; GitHub Dependabot alert #18 is now **fixed** (`fixed_at=2026-11-21T15:20:00Z`). This supersedes the earlier open-alert note about the vulnerable development-only minimatch dependency.
+- PR #1491 merged at `8bcf3715d6f2ca3de9adf184bc8590cec29455b1` after **13/13 exact-head checks passed**. Added a two-tenant WhatsApp worker provider-boundary content-isolation regression; the combined WhatsApp, generic Outbox, Email Outbox and Customer Handoff notification suites passed **35 tests** locally, with targeted Ruff and `git diff --check` clean.
+- The WhatsApp test is unit-level provider-boundary evidence, not live provider/DB execution and not full Notifications/Outbox actor x hierarchy x delivery-kind acceptance. Keep that matrix PARTIAL. Issue #1350 remains OPEN; unresolved Audit Ledger/failure policy, sanitized historical permission-backfill snapshot review, human portal UX acceptance, broader async export/report combinations and remaining actor/resource/action cells remain open.
+- Current verified `origin/main`: `8bcf3715d6f2ca3de9adf184bc8590cec29455b1`.
