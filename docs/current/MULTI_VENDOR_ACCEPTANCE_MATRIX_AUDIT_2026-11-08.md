@@ -748,3 +748,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Extended the worker compatibility test to assert both Run SELECTs (initial load and post-execution refresh) include `runs.tenant_id`. Python 3.12 focused Run Worker, Agent Run governance bootstrap, Agent Outbox governance, and Outbox dispatcher crash-safety suites: **27 passed**. Ruff lint and `git diff --check` passed.
 - Ruff format check still reports pre-existing formatting drift elsewhere in `run_worker.py`; no broad unrelated reformat was applied. This is bounded query-level tenant-scope evidence, not full PostgreSQL/async delivery matrix acceptance. No DB, broker, provider, Staging, or Production service was accessed. Issue #1350 remains OPEN.
 
+## 2026-11-21 - Agent Run post-execution tenant-qualified refresh merged
+
+- PR #1480 merged at `b3207650bea0902eab2a371157bf652c94c662d1` after **17/17 exact-head checks passed**. The post-runtime Run refresh now requires both Run ID and queued tenant ID before updating aggregate token totals; the initial worker lookup already has the same tenant predicate from PR #1478.
+- Local Python 3.12 validation: **27 passed** across Run Worker, Agent Run governance bootstrap, Agent Outbox governance, and Outbox dispatcher crash-safety suites. Ruff lint and `git diff --check` passed. Ruff format check continues to show pre-existing formatting drift elsewhere in `run_worker.py`; no broad reformat was applied.
+- This closes one additional bounded worker query-scope evidence cell, not the full actor/topology/delivery matrix or live PostgreSQL acceptance. Issue #1350 remains OPEN; unresolved Audit Ledger policy, historical permission-backfill snapshot review, and human portal UX acceptance remain open.
+- Current verified `origin/main`: `b3207650bea0902eab2a371157bf652c94c662d1`.
+
