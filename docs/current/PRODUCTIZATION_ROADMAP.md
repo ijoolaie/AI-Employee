@@ -673,3 +673,8 @@ Vendor descendant role replacement is now implemented locally. It preserves non-
 
 - Added the missing WhatsApp worker test counterpart to the existing Email revocation-after-uncertain-commit regression. It proves post-fence revalidation blocks provider I/O and does not retry after the uncertain boundary.
 - Focused WhatsApp worker tests: 5 passed; targeted Ruff and diff check passed. Exact-head CI pending; broader Notifications/Outbox acceptance remains partial.
+
+
+### PR #1467 integration checkpoint - 2026-11-21
+
+- WhatsApp post-fence delegated-revocation regression is integrated in main at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc after exact-head CI passed. The overall Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains partial.

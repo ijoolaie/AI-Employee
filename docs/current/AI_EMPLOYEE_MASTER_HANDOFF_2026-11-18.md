@@ -713,3 +713,8 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 
 - Added a worker test proving WhatsApp's second Agent/delegation validation, after the durable uncertain fence and immediately before provider I/O, blocks a revoked delegated context. The provider is not called, no retry occurs, and the row remains uncertain.
 - Focused Python 3.12 WhatsApp worker module: 5 passed; Ruff and diff check passed. Exact-head CI pending. This is a bounded evidence increment; complete Notifications/Outbox matrix remains PARTIAL.
+
+
+### PR #1467 merged - 2026-11-21
+
+- WhatsApp delegated revocation after the uncertain fence is covered by PR #1467, merged at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc after all exact-head checks passed. Issue #1350 remains OPEN; complete Notifications/Outbox matrix remains PARTIAL.

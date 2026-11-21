@@ -1856,3 +1856,8 @@ No authorization code was changed in this reconnaissance step. The next implemen
 
 - Added the missing WhatsApp counterpart to the existing Email post-uncertain-commit delegated-revocation test. The second authorization check must reject before WhatsApp provider I/O and retain uncertain/no-retry semantics.
 - Focused WhatsApp worker suite: 5 passed; Ruff and diff check passed. Exact-head CI pending. Do not infer full matrix acceptance.
+
+
+### PR #1467 status
+
+- WhatsApp post-uncertain-commit delegated-revocation regression is integrated in main at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc after all exact-head checks passed. This closes one test-evidence cell; full Notifications/Outbox acceptance remains PARTIAL.

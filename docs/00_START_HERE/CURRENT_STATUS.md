@@ -1602,3 +1602,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added a focused WhatsApp worker regression: first validation succeeds, the second (post-uncertain-fence) validation rejects revoked delegated authority, provider is not called, no retry is scheduled, and the durable row remains uncertain.
 - Python 3.12: WhatsApp worker tests **5 passed**; targeted Ruff and git diff --check passed. No database, broker or provider was accessed.
 - This closes one WhatsApp delegated-revocation test-evidence gap only. Full Notifications/Outbox matrix remains PARTIAL; exact-head CI pending.
+
+
+### PR #1467 exact-head CI and merge - 2026-11-21
+
+- PR #1467 exact head 2ec18120dab65ad356671a6c3e936aa814626270 passed all reported exact-head checks, including Backend, W21 real-stack, Recovery, Security/CodeQL, DAST, Architecture and Semantic E2E.
+- Merged to main at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc. Issue #1350 remains OPEN.

@@ -660,3 +660,8 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added test_whatsapp_delegation_revoked_after_uncertain_commit_blocks_provider. It makes the initial validation pass, rejects the second validation, asserts no provider call, no retry, two commits (uncertain fence and final uncertain state), one rollback, and durable uncertain status.
 - Python 3.12 WhatsApp worker tests: 5 passed; targeted Ruff and git diff --check passed. No DB/broker/provider accessed locally.
 - This closes the missing WhatsApp unit-evidence counterpart only. Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL pending exact-head CI and broader end-to-end cases.
+
+
+### PR #1467 exact-head acceptance
+
+- PR #1467 passed all reported exact-head checks on 2ec18120dab65ad356671a6c3e936aa814626270 and merged at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc. WhatsApp delegated revocation after the uncertain fence now has the missing worker regression; the full Notifications/Outbox matrix remains PARTIAL.
