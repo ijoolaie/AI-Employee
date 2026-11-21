@@ -324,16 +324,30 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         # Read both identities without locking; the first durable lock in this worker
         # must be the parent WorkflowRun. Cancellation and terminal reconciliation use
         # the same Parent -> Branch order.
-        branch_ref = await db.execute(
+        branch_lookup = (
             select(WorkflowParallelBranchRun.workflow_run_id)
+            .join(
+                WorkflowRun,
+                WorkflowRun.id == WorkflowParallelBranchRun.workflow_run_id,
+            )
             .where(WorkflowParallelBranchRun.id == branch_id)
         )
+        if expected_tenant_id is not None:
+            branch_lookup = branch_lookup.where(
+                WorkflowRun.tenant_id == expected_tenant_id
+            )
+        branch_ref = await db.execute(branch_lookup)
         workflow_run_id = branch_ref.scalar_one_or_none()
         if workflow_run_id is None:
             raise ValidationAppError("Parallel branch not found")
-        parent_result = await db.execute(
-            select(WorkflowRun).where(WorkflowRun.id == workflow_run_id)
+        parent_lookup = select(WorkflowRun).where(
+            WorkflowRun.id == workflow_run_id
         )
+        if expected_tenant_id is not None:
+            parent_lookup = parent_lookup.where(
+                WorkflowRun.tenant_id == expected_tenant_id
+            )
+        parent_result = await db.execute(parent_lookup)
         parent = parent_result.scalar_one_or_none()
         if parent is None:
             raise ValidationAppError("Workflow Run not found")
