@@ -1009,7 +1009,28 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert vendor_b_usage_data["total_tokens"] == 30
                 assert vendor_b_usage_data["cost_usd"] == 0.03
                 await assert_portal_usage_context(vendor_b_portal_headers, reseller_b.id)
-                await assert_portal_usage_context(direct_customer_portal_headers, direct_customer.id)
+                # The earlier direct Customer grant was deliberately revoked above.
+                # Create a fresh grant here so the usage report checks run under an
+                # active Vendor-to-Customer context, independently of revocation proof.
+                direct_customer_usage_grant = await client.post(
+                    "/api/v1/edition/vendor/portal-access-grants",
+                    headers=grantor_headers,
+                    json={
+                        "actor_user_id": str(actor.id),
+                        "target_tenant_id": str(direct_customer.id),
+                        "reason": "Direct Vendor-to-Customer usage report acceptance",
+                    },
+                )
+                assert direct_customer_usage_grant.status_code == 201, direct_customer_usage_grant.text
+                direct_customer_usage_activation = await client.post(
+                    f"/api/v1/edition/vendor/portal-access-grants/{direct_customer_usage_grant.json()['data']['id']}/activate",
+                    headers=actor_headers,
+                )
+                assert direct_customer_usage_activation.status_code == 200, direct_customer_usage_activation.text
+                direct_customer_usage_headers = {
+                    "Authorization": f"Bearer {direct_customer_usage_activation.json()['data']['access_token']}"
+                }
+                await assert_portal_usage_context(direct_customer_usage_headers, direct_customer.id)
 
                 vendor_b_invoices = await client.get("/api/v1/invoices", headers=vendor_b_portal_headers)
                 assert vendor_b_invoices.status_code == 200, vendor_b_invoices.text
