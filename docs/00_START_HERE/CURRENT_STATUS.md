@@ -1702,3 +1702,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - This closes one additional bounded worker query-scope evidence cell, not the full actor/topology/delivery matrix or live PostgreSQL acceptance. Issue #1350 remains OPEN; unresolved Audit Ledger policy, historical permission-backfill snapshot review, and human portal UX acceptance remain open.
 - Current verified `origin/main`: `b3207650bea0902eab2a371157bf652c94c662d1`.
 
+
+## 2026-11-21 - Workflow worker tenant-qualified lookup merged
+
+- PR #1482 merged at `30f79ea009ff81c1aa43e28ab065431c167bb8ee` after all required exact-head checks completed successfully. The durable `WorkflowRun` lookup now includes both Run ID and the task-provided tenant ID in SQL before lease acquisition or workflow execution; mismatched or missing tenant context fails closed at the query boundary.
+- The regression test asserts the SQL tenant predicate and confirms no execution lease or workflow execution is started for mismatched/missing contexts. Python 3.12 focused workflow worker, parallel-branch, event, approval-expiry, and enqueue-safety suites: **10 passed**. Ruff lint and `git diff --check` passed; Ruff format check still reports existing formatting drift in the touched files, with no broad reformat applied.
+- This closes one bounded workflow-worker query-scope evidence cell only. It does not complete the hierarchy/action matrix or establish live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN; Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells remain open.
+- Current verified `origin/main`: `30f79ea009ff81c1aa43e28ab065431c167bb8ee`.

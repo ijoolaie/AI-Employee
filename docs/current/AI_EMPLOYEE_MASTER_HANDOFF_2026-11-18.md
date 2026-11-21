@@ -814,3 +814,10 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 - This closes one additional bounded worker query-scope evidence cell, not the full actor/topology/delivery matrix or live PostgreSQL acceptance. Issue #1350 remains OPEN; unresolved Audit Ledger policy, historical permission-backfill snapshot review, and human portal UX acceptance remain open.
 - Current verified `origin/main`: `b3207650bea0902eab2a371157bf652c94c662d1`.
 
+
+## 2026-11-21 - Workflow worker tenant-qualified lookup merged
+
+- PR #1482 merged at `30f79ea009ff81c1aa43e28ab065431c167bb8ee` after required exact-head checks passed and the PR was non-draft, base-synced, and mergeable. `backend/app/workers/workflow_worker.py` now qualifies the durable WorkflowRun lookup by both run ID and task tenant ID before lease acquisition or execution.
+- The worker boundary regression asserts `workflow_runs.tenant_id` appears in the SQL predicate and verifies lease acquisition and workflow execution remain untouched for mismatched/missing tenant contexts. Python 3.12 focused workflow worker, parallel-branch, event, approval-expiry, and enqueue-safety suites: **10 passed**; Ruff lint and `git diff --check` passed. Ruff format check continues to report existing formatting drift in touched files; no broad reformat was applied.
+- This is bounded query-level tenant isolation evidence, not full actor/topology/action coverage or live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN; Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining concrete matrix cells remain open.
+- Current verified `origin/main`: `30f79ea009ff81c1aa43e28ab065431c167bb8ee`.
