@@ -17,6 +17,7 @@ from app.core.database import AsyncSessionLocal
 from app.core.exceptions import ValidationAppError
 from app.models.customer_channel import CustomerChannel
 from app.models.employee import Employee, EmployeeVersion
+from app.models.license import CommercialLicense
 from app.models.outbox import OutboxMessage
 from app.models.run import Run
 from app.models.tenant import Tenant
@@ -30,6 +31,7 @@ async def test_postgres_persists_exact_call_approval_and_worker_dispatches_once(
     channel_id, approval_id, outbox_id, agent_id = (uuid4() for _ in range(4))
     forged_outbox_id = uuid4()
     foreign_tenant_id = uuid4()
+    issuer_tenant_id = uuid4()
     tool_call_id = f"call_{uuid4().hex}"
     slug = f"wa-approval-{uuid4().hex[:16]}"
     recipient = "+15551234567"
@@ -37,8 +39,34 @@ async def test_postgres_persists_exact_call_approval_and_worker_dispatches_once(
     arguments = {"channel_id": str(channel_id), "recipient": recipient, "text": text}
 
     async with AsyncSessionLocal() as db:
-        tenant = Tenant(id=tenant_id, name="WhatsApp Approval Test", slug=slug, status="active")
+        issuer = Tenant(
+            id=issuer_tenant_id,
+            name="WhatsApp Approval Issuer",
+            slug=f"{slug}-issuer",
+            status="active",
+            tenant_kind="vendor",
+        )
+        tenant = Tenant(
+            id=tenant_id,
+            name="WhatsApp Approval Test",
+            slug=slug,
+            status="active",
+            tenant_kind="customer",
+            parent_tenant_id=issuer_tenant_id,
+        )
+        db.add(issuer)
+        await db.flush()
         db.add(tenant)
+        await db.flush()
+        db.add(CommercialLicense(
+            license_key=f"LIC-{uuid4().hex}",
+            issuer_tenant_id=issuer_tenant_id,
+            tenant_id=tenant_id,
+            edition="customer",
+            status="active",
+            feature_codes=["run.execute"],
+            license_metadata={},
+        ))
         await db.flush()
 
         employee = Employee(
@@ -232,5 +260,7 @@ async def test_postgres_persists_exact_call_approval_and_worker_dispatches_once(
         await db.execute(delete(CustomerChannel).where(CustomerChannel.id == channel_id))
         await db.execute(delete(EmployeeVersion).where(EmployeeVersion.id == version_id))
         await db.execute(delete(Employee).where(Employee.id == employee_id))
+        await db.execute(delete(CommercialLicense).where(CommercialLicense.tenant_id == tenant_id))
         await db.execute(delete(Tenant).where(Tenant.id == tenant_id))
+        await db.execute(delete(Tenant).where(Tenant.id == issuer_tenant_id))
         await db.commit()

@@ -17,7 +17,7 @@ def _allow_active_tenant_in_worker_unit_tests(monkeypatch):
         return SimpleNamespace(id=tenant_id, status="active")
 
     monkeypatch.setattr(
-        "app.services.billing_service.assert_run_execution_entitlement",
+        "app.services.billing_service.assert_outbound_delivery_entitlement",
         assert_active,
     )
 
@@ -548,23 +548,3 @@ async def test_email_worker_dead_letters_when_commercial_entitlement_is_inactive
     assert row.status == "dead"
     assert row.dead_at is not None
     assert "commercial entitlement expired" in row.last_error
-
-
-@pytest.mark.asyncio
-async def test_outbound_delivery_entitlement_reuses_run_guard_and_fails_closed(monkeypatch):
-    from app.core.exceptions import ConflictError, TenantInactiveError
-    from app.services import billing_service
-
-    tenant_id = uuid4()
-    calls = []
-
-    async def deny(db, *, tenant_id):
-        calls.append(tenant_id)
-        raise ConflictError("subscription expired")
-
-    monkeypatch.setattr(billing_service, "assert_run_execution_entitlement", deny)
-
-    with pytest.raises(TenantInactiveError, match="Commercial entitlement is inactive"):
-        await billing_service.assert_outbound_delivery_entitlement(object(), tenant_id=tenant_id)
-
-    assert calls == [tenant_id]

@@ -17,7 +17,7 @@ def _allow_active_tenant_in_worker_unit_tests(monkeypatch):
         return SimpleNamespace(id=tenant_id, status="active")
 
     monkeypatch.setattr(
-        "app.services.billing_service.assert_run_execution_entitlement",
+        "app.services.billing_service.assert_outbound_delivery_entitlement",
         assert_active,
     )
 

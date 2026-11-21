@@ -333,6 +333,12 @@ async def assert_outbound_delivery_entitlement(db: AsyncSession, *, tenant_id: u
     billing lifecycle mutations; translate deterministic denials to the
     Outbox terminal state rather than retrying an ineligible delivery.
     """
+    tenant = (await db.execute(select(Tenant).where(Tenant.id == tenant_id))).scalar_one_or_none()
+    if tenant is None:
+        raise TenantInactiveError("Tenant no longer exists; outbound delivery is blocked")
+    if tenant.status != "active":
+        raise TenantInactiveError("Tenant is not active; external delivery is blocked")
+
     try:
         await assert_run_execution_entitlement(db, tenant_id=tenant_id)
     except (ConflictError, NotFoundError) as exc:
