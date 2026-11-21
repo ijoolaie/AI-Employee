@@ -688,3 +688,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Focused WhatsApp worker module: **7 passed** on Python 3.12. Ruff lint and `git diff --check` passed. Ruff format check reports pre-existing formatting drift elsewhere in this test module; no unrelated reformat was applied.
 - This is one bounded ownership-fence regression, not proof of the full actor ? hierarchy ? delivery-kind/content matrix. No application code, database, broker or external provider was changed/accessed.
 - Issue #1350 remains OPEN. Next: continue from the documented Notifications/Outbox matrix, avoiding already-covered ownership, entitlement, retry, revocation and broker-race cases.
+
+
+## Verified continuation - 2026-11-21 (PR #1471 merged)
+
+- PR #1471 merged at `aa597dd28d1af2417e8bc5e9cd6f90021837e7b7` after all 13 exact-head checks passed, including backend, frontend, Architecture, DAST, recovery, infrastructure, public-widget, semantic E2E, W21, CodeQL and Release identity consistency.
+- Added `test_whatsapp_worker_rejects_channel_owned_by_another_tenant`: the WhatsApp worker's active CustomerChannel lookup is asserted to include the effective Outbox tenant predicate and to fail closed when no tenant-scoped channel is returned. Python 3.12 focused module: **7 passed**; Ruff lint and diff check passed.
+- The Notification/Outbox actor ? hierarchy ? delivery-kind/content matrix remains PARTIAL. This test closes one ownership-fence evidence cell only; it does not establish full content isolation across all actors/topologies/delivery kinds.
+- Current verified `origin/main`: `aa597dd28d1af2417e8bc5e9cd6f90021837e7b7`. Issue #1350 remains OPEN.
