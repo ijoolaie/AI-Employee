@@ -783,3 +783,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - This is one bounded pre-lookup governance-binding regression. It does not establish the full Email/WhatsApp/Agent actor-by-hierarchy-by-delivery-kind retry/dead-letter/revocation/content-isolation matrix. Issue #1350 remains OPEN.
 - Current verified `origin/main`: `5bbe21fb3bf2657244bd1463cac156aa409b8228`.
 - No staging/production database, broker, or external provider was accessed.
+
+
+## 2026-11-21 - WhatsApp two-tenant provider-boundary content isolation
+
+- Added `test_whatsapp_worker_keeps_two_tenant_content_isolated_at_provider_boundary` to the dedicated WhatsApp worker unit suite. It processes two distinct tenant-owned Outbox rows through separate worker sessions and captures both `deliver_text` provider-boundary calls. Each call must carry only its tenant's recipient, message text, and channel configuration marker; the other tenant's values must be absent, and both rows must reach `dispatched`.
+- Focused Python 3.12 validation: WhatsApp worker plus generic Outbox crash-safety modules **20 passed**; targeted Ruff and `git diff --check` passed. No database, broker, WhatsApp provider, Staging, or Production service was accessed.
+- This adds unit-level provider-boundary content-isolation evidence for two WhatsApp tenants. It is not a live provider integration test and does not close the full actor x hierarchy x delivery-kind/content matrix. Keep Notifications/Outbox acceptance PARTIAL and Issue #1350 OPEN. No AuditLog behavior was changed.
