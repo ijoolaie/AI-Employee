@@ -1877,3 +1877,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 ### PR #1467 status
 
 - WhatsApp post-uncertain-commit delegated-revocation regression is integrated in main at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc after all exact-head checks passed. This closes one test-evidence cell; full Notifications/Outbox acceptance remains PARTIAL.
+
+## Verified continuation - 2026-11-21 (WhatsApp channel tenant fence)
+
+- Added `test_whatsapp_worker_rejects_channel_owned_by_another_tenant` to `backend/tests/workers/test_whatsapp_worker.py`. It verifies the worker's CustomerChannel lookup includes the effective Outbox tenant predicate, returns no channel when that tenant-scoped lookup finds no row, and fails closed before Agent/provider execution.
+- Focused WhatsApp worker module: **7 passed** on Python 3.12. Ruff lint and `git diff --check` passed. Ruff format check reports pre-existing formatting drift elsewhere in this test module; no unrelated reformat was applied.
+- This is one bounded ownership-fence regression, not proof of the full actor × hierarchy × delivery-kind/content matrix. No application code, database, broker or external provider was changed/accessed.
+- Issue #1350 remains OPEN. Next: continue from the documented Notifications/Outbox matrix, avoiding already-covered ownership, entitlement, retry, revocation and broker-race cases.

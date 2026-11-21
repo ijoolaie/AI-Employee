@@ -274,3 +274,60 @@ async def test_whatsapp_pre_provider_retry_exhaustion_dead_letters_without_provi
     assert "missing Agent governance proof" in row.last_error
     assert db.events.count("rollback") == 1
     assert db.events.count("commit") == 1
+
+@pytest.mark.asyncio
+async def test_whatsapp_worker_rejects_channel_owned_by_another_tenant():
+    tenant_id = uuid4()
+    agent_id, run_id, approval_id, channel_id = uuid4(), uuid4(), uuid4(), uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind="whatsapp.send_text",
+        tenant_id=tenant_id,
+        status="processing",
+        attempts=1,
+        payload={
+            "channel_id": str(channel_id),
+            "recipient": "+15551234567",
+            "text": "tenant-scoped message",
+            "run_id": str(run_id),
+            "tool_name": "whatsapp.send_text",
+            "tool_call_id": "call_tenant_scoped",
+            "approval_request_id": str(approval_id),
+            "_agent_governance": {
+                "tenant_id": str(tenant_id),
+                "agent_instance_id": str(agent_id),
+                "run_id": str(run_id),
+                "tool_name": "whatsapp.send_text",
+            },
+        },
+    )
+    approval = SimpleNamespace(
+        id=approval_id,
+        tenant_id=tenant_id,
+        run_id=run_id,
+        tool_name="whatsapp.send_text",
+        tool_call_id="call_tenant_scoped",
+        status="consumed",
+        arguments={
+            "channel_id": str(channel_id),
+            "recipient": row.payload["recipient"],
+            "text": row.payload["text"],
+        },
+    )
+
+    class _TenantScopedDB:
+        def __init__(self):
+            self.statements = []
+
+        async def execute(self, statement):
+            self.statements.append(statement)
+            return _Result(approval if len(self.statements) == 1 else None)
+
+    db = _TenantScopedDB()
+    with pytest.raises(ValidationAppError, match="Active WhatsApp channel not found for this tenant"):
+        await whatsapp_worker._validate_and_load(db, row)
+
+    assert len(db.statements) == 2
+    channel_query = str(db.statements[1])
+    assert "customer_channels.tenant_id" in channel_query
+    assert tenant_id in db.statements[1].compile().params.values()
