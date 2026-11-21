@@ -48,13 +48,14 @@ async def _run_async(workflow_run_id: str, tenant_id: str) -> None:
             # Celery task metadata is untrusted. Validate the durable tenant boundary
             # before acquiring the lease or allowing any workflow step to execute.
             result = await db.execute(
-                select(WorkflowRun.tenant_id).where(WorkflowRun.id == workflow_uuid)
+                select(WorkflowRun.tenant_id).where(
+                    WorkflowRun.id == workflow_uuid,
+                    WorkflowRun.tenant_id == uuid.UUID(tenant_id),
+                )
             )
             durable_tenant_id = result.scalar_one_or_none()
             if durable_tenant_id is None:
-                raise ValueError("Workflow Run not found")
-            if str(durable_tenant_id) != str(tenant_id):
-                raise ValueError("Worker tenant context does not match Workflow Run tenant")
+                raise ValueError("Workflow Run not found for tenant context")
 
             heartbeat_task=None; execution_task=None; lost=asyncio.Event()
             try:
