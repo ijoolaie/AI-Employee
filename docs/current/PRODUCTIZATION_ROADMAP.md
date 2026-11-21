@@ -662,3 +662,8 @@ Vendor descendant role replacement is now implemented locally. It preserves non-
 - The dedicated Email/WhatsApp dispatch path previously retried unconditionally after a broker publish exception using an unlocked row reload. An ambiguous acknowledgement could race with a worker that had already committed dispatched/dead/uncertain, and the retry could overwrite that terminal delivery state.
 - Dispatcher exception recovery now reloads the Outbox row under FOR UPDATE and preserves dispatched, dead, and uncertain. Nonterminal broker failures retain the existing retry/backoff behavior.
 - Focused evidence: 27 Python 3.12 Outbox/Email/WhatsApp tests passed; targeted Ruff and diff check passed. Exact-head CI remains required; the full Notifications/Outbox acceptance matrix remains partial.
+
+
+### PR #1464 integration checkpoint - 2026-11-21
+
+- The Outbox ambiguous-acknowledgement protection is integrated in main at b4e57a048dcc22c772552039cb40a2f61bacc1b3 after 17/17 exact-head checks passed. Full Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance remains partial.

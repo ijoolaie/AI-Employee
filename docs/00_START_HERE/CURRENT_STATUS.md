@@ -1559,3 +1559,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added Email/WhatsApp regression cases simulating worker completion before publisher error and asserting the locked reload never retries/overwrites terminal state. Existing workflow broker-failure retry behavior remains covered.
 - Python 3.12 focused Outbox/Email/WhatsApp suite: 27 passed; targeted Ruff passed; git diff --check passed. No database, broker, provider, Staging or Production service was accessed.
 - This closes the dispatcher terminal-state overwrite race at unit-contract level. Exact-head CI must validate integration; full Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. Issue #1350 remains OPEN.
+
+
+### Exact-head CI and merge confirmation - PR #1464
+
+- PR #1464 exact head ed36d567ef86bbf2a29b09e59507e1fbaa33bfb5 completed all **17/17 checks successfully**, including Backend, W21 real-stack, Recovery, Security/Privacy, Tenant hierarchy/RBAC, DAST, Architecture, CodeQL, and Semantic E2E.
+- PR #1464 merged to main at b4e57a048dcc22c772552039cb40a2f61bacc1b3. The GitHub main ref was verified at this merge commit. Issue #1350 remains OPEN.
