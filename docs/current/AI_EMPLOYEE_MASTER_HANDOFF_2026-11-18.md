@@ -745,3 +745,11 @@ Added target-tenant role replacement API. Only target-local or system roles can 
 ### PR #1467 merged - 2026-11-21
 
 - WhatsApp delegated revocation after the uncertain fence is covered by PR #1467, merged at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc after all exact-head checks passed. Issue #1350 remains OPEN; complete Notifications/Outbox matrix remains PARTIAL.
+
+
+## Verified continuation - 2026-11-21 (WhatsApp channel tenant fence)
+
+- Added `test_whatsapp_worker_rejects_channel_owned_by_another_tenant` to `backend/tests/workers/test_whatsapp_worker.py`. It verifies the worker's CustomerChannel lookup includes the effective Outbox tenant predicate, returns no channel when that tenant-scoped lookup finds no row, and fails closed before Agent/provider execution.
+- Focused WhatsApp worker module: **7 passed** on Python 3.12. Ruff lint and `git diff --check` passed. Ruff format check reports pre-existing formatting drift elsewhere in this test module; no unrelated reformat was applied.
+- This is one bounded ownership-fence regression, not proof of the full actor ? hierarchy ? delivery-kind/content matrix. No application code, database, broker or external provider was changed/accessed.
+- Issue #1350 remains OPEN. Next: continue from the documented Notifications/Outbox matrix, avoiding already-covered ownership, entitlement, retry, revocation and broker-race cases.

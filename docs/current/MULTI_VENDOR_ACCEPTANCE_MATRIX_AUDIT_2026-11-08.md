@@ -680,3 +680,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - PR #1469 head `44eea11d699cce4ac0b42e64a7f718c70a1515e3` passed **13/13** exact-head checks, including Backend, Frontend, Architecture, CodeQL, DAST, Infrastructure, Recovery, Semantic E2E, W21 real-stack, Public Widget Browser/API and Release identity consistency.
 - Merged to `main` at `e3b423d82e912d348c1a2516aba23b5b253ca3d3`. WhatsApp deterministic pre-provider retry exhaustion now has worker evidence for durable dead-lettering with provider suppression.
 - This is one bounded retry-exhaustion cell only; Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance remains PARTIAL. Issue #1350 remains OPEN.
+
+
+## Verified continuation - 2026-11-21 (WhatsApp channel tenant fence)
+
+- Added `test_whatsapp_worker_rejects_channel_owned_by_another_tenant` to `backend/tests/workers/test_whatsapp_worker.py`. It verifies the worker's CustomerChannel lookup includes the effective Outbox tenant predicate, returns no channel when that tenant-scoped lookup finds no row, and fails closed before Agent/provider execution.
+- Focused WhatsApp worker module: **7 passed** on Python 3.12. Ruff lint and `git diff --check` passed. Ruff format check reports pre-existing formatting drift elsewhere in this test module; no unrelated reformat was applied.
+- This is one bounded ownership-fence regression, not proof of the full actor ? hierarchy ? delivery-kind/content matrix. No application code, database, broker or external provider was changed/accessed.
+- Issue #1350 remains OPEN. Next: continue from the documented Notifications/Outbox matrix, avoiding already-covered ownership, entitlement, retry, revocation and broker-race cases.
