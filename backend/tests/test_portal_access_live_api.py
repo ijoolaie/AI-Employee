@@ -70,6 +70,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.ai.tool_registry import registry
     from app.core.exceptions import NotFoundError
 
+    async def allow_report_tool_entitlement(_db, *, tenant_id, feature_code):
+        assert tenant_id in {customer_a.id, direct_customer.id}
+        assert feature_code == "tool:analyze_dataset"
+        return None
+
+    monkeypatch.setattr(
+        license_service, "assert_feature_entitlement", allow_report_tool_entitlement
+    )
+
     engine = create_async_engine(db_url, poolclass=NullPool)
     sessions = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False, autoflush=False)
     run_id = uuid.uuid4().hex
@@ -233,6 +242,15 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 storage_key=f"{direct_customer.id}/direct-vendor-customer-policy.txt",
                 status="active",
             )
+            direct_customer_report_source = FileObject(
+                tenant_id=direct_customer.id,
+                uploaded_by=direct_customer_actor.id,
+                filename="direct-customer-sales.csv",
+                content_type="text/csv",
+                size_bytes=57,
+                storage_key=f"{direct_customer.id}/direct-customer-sales.csv",
+                status="active",
+            )
             customer_file = FileObject(
                 tenant_id=customer_a.id,
                 uploaded_by=customer_actor.id,
@@ -265,7 +283,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 size_bytes=17, storage_key=f"{reseller_b.id}/vendor-b-target-policy.txt",
                 status="active",
             )
-            session.add_all([direct_customer_file, customer_file, customer_report_source, unentitled_sibling_customer_file, target_file, sibling_file, cross_vendor_file, vendor_b_file])
+            session.add_all([
+                direct_customer_file, direct_customer_report_source, customer_file,
+                customer_report_source, unentitled_sibling_customer_file, target_file,
+                sibling_file, cross_vendor_file, vendor_b_file,
+            ])
             target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
             sibling_customer = Customer(tenant_id=sibling.id, external_key=f"sibling-customer-{run_id}", name="Sibling secret customer", email="sibling-secret@example.com", notes="sibling-private-note")
             customer_portal_customer = Customer(tenant_id=customer_a.id, external_key=f"customer-portal-customer-{run_id}", name="Customer portal record", email="portal-customer@example.com", notes="customer-portal-private-note")
@@ -587,10 +609,12 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
         test_storage_backend.objects[sibling_run_artifact_key] = json.dumps({
             "kind": "keyword_research_artifact", "artifact_id": sibling_run_artifact_id,
         }).encode("utf-8")
-        test_storage_backend.objects[f"{customer_a.id}/customer-sales.csv"] = (
+        sales_csv = (
             b"date,region,revenue\n2026-01-01,North,100\n2026-01-02,South,200\n"
             b"2026-01-03,North,150\n"
         )
+        test_storage_backend.objects[f"{customer_a.id}/customer-sales.csv"] = sales_csv
+        test_storage_backend.objects[f"{direct_customer.id}/direct-customer-sales.csv"] = sales_csv
         monkeypatch.setattr(
             storage_service, "get_storage_backend", lambda: test_storage_backend
         )
@@ -679,13 +703,71 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert direct_customer_me.status_code == 200, direct_customer_me.text
                 assert direct_customer_me.json()["data"]["tenant"]["id"] == str(direct_customer.id)
                 assert direct_customer_me.json()["data"]["user"]["tenant_id"] == str(vendor.id)
+
+                # Exercise the Report Employee through a direct Vendor-to-Customer
+                # grant, distinct from the nested Reseller-to-Customer scenario below.
+                async with sessions() as direct_report_session:
+                    direct_report_result = await registry.execute(
+                        "analyze_dataset",
+                        {"file_id": str(direct_customer_report_source.id)},
+                        permissions={"run.execute"},
+                        allowed_tools={"analyze_dataset"},
+                        db=direct_report_session,
+                        tenant_id=direct_customer.id,
+                        actor_id=actor.id,
+                    )
+                    await direct_report_session.commit()
+                direct_report_artifacts = direct_report_result["report_artifacts"]
+                direct_report_file_ids = [
+                    direct_report_artifacts["pdf_file_id"],
+                    direct_report_artifacts["excel_file_id"],
+                    *direct_report_artifacts["chart_file_ids"],
+                ]
+                assert direct_report_result["row_count"] == 3
+                assert len(direct_report_file_ids) >= 2
+                async with sessions() as direct_report_session:
+                    for file_id in direct_report_file_ids:
+                        artifact = await direct_report_session.get(FileObject, uuid.UUID(file_id))
+                        assert artifact is not None
+                        assert artifact.tenant_id == direct_customer.id
+                        assert artifact.uploaded_by == actor.id
+
                 direct_customer_files = await client.get(
                     "/api/v1/files", headers=direct_customer_portal_headers,
                 )
                 assert direct_customer_files.status_code == 200, direct_customer_files.text
-                assert [item["id"] for item in direct_customer_files.json()["data"]] == [
-                    str(direct_customer_file.id)
-                ]
+                direct_customer_listed_ids = {
+                    item["id"] for item in direct_customer_files.json()["data"]
+                }
+                assert str(direct_customer_file.id) in direct_customer_listed_ids
+                assert str(direct_customer_report_source.id) in direct_customer_listed_ids
+                assert set(direct_report_file_ids).issubset(direct_customer_listed_ids)
+                direct_report_pdf_download = await client.get(
+                    f"/api/v1/files/{direct_report_artifacts['pdf_file_id']}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_report_pdf_download.status_code == 200, direct_report_pdf_download.text
+                assert direct_report_pdf_download.content.startswith(b"%PDF-")
+                direct_report_excel_download = await client.get(
+                    f"/api/v1/files/{direct_report_artifacts['excel_file_id']}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_report_excel_download.status_code == 200, direct_report_excel_download.text
+                assert direct_report_excel_download.content[:2] == b"PK"
+                vendor_home_cannot_read_direct_customer_report = await client.get(
+                    f"/api/v1/files/{direct_report_artifacts['pdf_file_id']}",
+                    headers=actor_headers,
+                )
+                assert vendor_home_cannot_read_direct_customer_report.status_code == 404, (
+                    vendor_home_cannot_read_direct_customer_report.text
+                )
+                vendor_home_cannot_download_direct_customer_report = await client.get(
+                    f"/api/v1/files/{direct_report_artifacts['pdf_file_id']}/download",
+                    headers=actor_headers,
+                )
+                assert vendor_home_cannot_download_direct_customer_report.status_code == 404, (
+                    vendor_home_cannot_download_direct_customer_report.text
+                )
                 direct_customer_download = await client.get(
                     f"/api/v1/files/{direct_customer_file.id}/download",
                     headers=direct_customer_portal_headers,
@@ -791,6 +873,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert direct_customer_revoked_download.status_code == 403, (
                     direct_customer_revoked_download.text
+                )
+                direct_customer_revoked_report_download = await client.get(
+                    f"/api/v1/files/{direct_report_artifacts['pdf_file_id']}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_customer_revoked_report_download.status_code == 403, (
+                    direct_customer_revoked_report_download.text
                 )
 
                 # Vendor B independently grants its own actor access to its own
@@ -1279,15 +1368,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert "target tenant knowledge" not in customer_knowledge_content
                 assert "sibling tenant secret" not in customer_knowledge_content
                 # Execute the real Report Employee tool with the effective
-                # Customer tenant resolved by the delegated portal grant.
-                async def allow_report_tool_entitlement(_db, *, tenant_id, feature_code):
-                    assert tenant_id == customer_a.id
-                    assert feature_code == "tool:analyze_dataset"
-                    return None
-
-                monkeypatch.setattr(
-                    license_service, "assert_feature_entitlement", allow_report_tool_entitlement
-                )
+                # Customer tenant resolved by the nested Reseller portal grant.
                 async with sessions() as report_session:
                     report_result = await registry.execute(
                         "analyze_dataset",
