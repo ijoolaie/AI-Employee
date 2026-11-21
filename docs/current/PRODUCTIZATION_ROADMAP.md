@@ -649,3 +649,9 @@ Vendor descendant role replacement is now implemented locally. It preserves non-
 - Targeted Ruff across the corresponding production services/workers and test modules: **All checks passed**. `git diff --check` passed. No production or test source was changed in this verification slice; no database or provider was contacted.
 - This extends the bounded worker/delivery evidence. It does not close the full actor x hierarchy x delivery-kind matrix, prove immutable AuditLog transition coverage, or settle the unresolved failure/error privacy and transaction-coupling policy. Do not add speculative audit writes or change error persistence until that policy is approved.
 - The 81 pre-existing local worktree paths remain preserved and unstaged. Issue #1350 remains OPEN. Remaining gates include the audit/failure policy, sanitized historical Vendor permission-backfill snapshot review, human visual Portal acceptance, and remaining matrix cells.
+
+## 2026-11-21 - Multi-Vendor Outbox provider entitlement fence
+
+- A source audit on merged main found Email and WhatsApp delivery workers did not revalidate commercial entitlement immediately before irreversible provider I/O. The bounded correction reuses assert_run_execution_entitlement through assert_outbound_delivery_entitlement, preserving Subscription-before-Tenant lock ordering and dead-lettering deterministic denials before provider access.
+- Focused evidence on the isolated branch: 16 Python 3.12 tests passed; targeted Ruff and git diff --check passed. The PostgreSQL outbound-suspension suite was guarded and skipped locally because its dedicated ephemeral DB URL was absent; exact-head CI remains required.
+- The overall Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance remains PARTIAL. Continue only with the next source-backed missing cell after this branch's exact-head CI; do not add speculative audit writes while the immutable audit/failure policy remains undecided.

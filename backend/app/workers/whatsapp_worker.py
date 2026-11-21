@@ -128,8 +128,8 @@ async def _send(outbox_id: str) -> None:
 
             # Hold the tenant lifecycle row lock from the final status check
             # through the provider call and durable result commit.
-            from app.services.tenant_access_service import assert_tenant_active_for_side_effect
-            await assert_tenant_active_for_side_effect(db, tenant_id=tenant_id)
+            from app.services.billing_service import assert_outbound_delivery_entitlement
+            await assert_outbound_delivery_entitlement(db, tenant_id=tenant_id)
 
             # Recheck tenant ownership, channel state, and current Agent policy
             # immediately before the irreversible provider call.
