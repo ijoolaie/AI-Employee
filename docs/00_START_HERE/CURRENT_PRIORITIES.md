@@ -1850,3 +1850,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 ### PR #1464 status
 
 - The ambiguous-broker-acknowledgement fix is integrated in main at b4e57a048dcc22c772552039cb40a2f61bacc1b3 after 17/17 exact-head checks passed. Continue from the next concrete uncovered acceptance cell; the full notification matrix remains PARTIAL.
+
+
+## 2026-11-21 - WhatsApp delegated revocation regression
+
+- Added the missing WhatsApp counterpart to the existing Email post-uncertain-commit delegated-revocation test. The second authorization check must reject before WhatsApp provider I/O and retain uncertain/no-retry semantics.
+- Focused WhatsApp worker suite: 5 passed; Ruff and diff check passed. Exact-head CI pending. Do not infer full matrix acceptance.

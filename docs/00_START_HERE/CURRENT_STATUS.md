@@ -1594,3 +1594,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 
 - PR #1464 exact head ed36d567ef86bbf2a29b09e59507e1fbaa33bfb5 completed all **17/17 checks successfully**, including Backend, W21 real-stack, Recovery, Security/Privacy, Tenant hierarchy/RBAC, DAST, Architecture, CodeQL, and Semantic E2E.
 - PR #1464 merged to main at b4e57a048dcc22c772552039cb40a2f61bacc1b3. The GitHub main ref was verified at this merge commit. Issue #1350 remains OPEN.
+
+
+## 2026-11-21 - WhatsApp delegated revocation at provider boundary
+
+- The Email worker already had a regression proving delegated authority revoked after the durable uncertain commit blocks SMTP. WhatsApp source revalidates Agent authorization again after its uncertain commit and immediately before provider delivery, but its worker tests did not prove the revocation-between-checks case.
+- Added a focused WhatsApp worker regression: first validation succeeds, the second (post-uncertain-fence) validation rejects revoked delegated authority, provider is not called, no retry is scheduled, and the durable row remains uncertain.
+- Python 3.12: WhatsApp worker tests **5 passed**; targeted Ruff and git diff --check passed. No database, broker or provider was accessed.
+- This closes one WhatsApp delegated-revocation test-evidence gap only. Full Notifications/Outbox matrix remains PARTIAL; exact-head CI pending.
