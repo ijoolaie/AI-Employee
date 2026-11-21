@@ -1946,3 +1946,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - This closes one additional bounded worker query-scope evidence cell, not the full actor/topology/delivery matrix or live PostgreSQL acceptance. Issue #1350 remains OPEN; unresolved Audit Ledger policy, historical permission-backfill snapshot review, and human portal UX acceptance remain open.
 - Current verified `origin/main`: `b3207650bea0902eab2a371157bf652c94c662d1`.
 
+
+## 2026-11-21 - Workflow worker tenant-qualified lookup merged
+
+- PR #1482 merged at `30f79ea009ff81c1aa43e28ab065431c167bb8ee` after all required exact-head checks completed successfully and the PR was confirmed non-draft, base-synced, and mergeable. The durable `WorkflowRun` lookup now includes both `WorkflowRun.id` and the task-provided `WorkflowRun.tenant_id` in SQL before lease acquisition or workflow execution. A mismatched or missing tenant context therefore resolves as not found at the query boundary.
+- Extended `test_workflow_worker_validates_durable_tenant_before_execution` to assert the SQL tenant predicate and prove neither execution lease acquisition nor workflow execution occurs for mismatched/missing contexts. Python 3.12 focused workflow worker, parallel-branch, event, approval-expiry, and enqueue-safety suites: **10 passed**. Ruff lint and `git diff --check` passed.
+- Ruff format check still reports formatting drift in the touched worker and test files; no broad formatting-only rewrite was applied. This is bounded worker query-scope evidence, not full workflow hierarchy/action matrix acceptance or live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed.
+- Issue #1350 remains OPEN. Immutable Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells remain open.
+- Current verified `origin/main`: `30f79ea009ff81c1aa43e28ab065431c167bb8ee`.
