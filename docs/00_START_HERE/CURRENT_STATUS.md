@@ -1709,3 +1709,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - The regression test asserts the SQL tenant predicate and confirms no execution lease or workflow execution is started for mismatched/missing contexts. Python 3.12 focused workflow worker, parallel-branch, event, approval-expiry, and enqueue-safety suites: **10 passed**. Ruff lint and `git diff --check` passed; Ruff format check still reports existing formatting drift in the touched files, with no broad reformat applied.
 - This closes one bounded workflow-worker query-scope evidence cell only. It does not complete the hierarchy/action matrix or establish live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN; Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells remain open.
 - Current verified `origin/main`: `30f79ea009ff81c1aa43e28ab065431c167bb8ee`.
+
+## 2026-11-21 - Parallel Workflow branch tenant-qualified lookups merged
+
+- PR #1484 merged at `4e6f76df27911f2569c3d4f2b97322d80d882c32` after all required exact-head checks passed. The parallel-branch worker path now applies the expected tenant predicate to both the branch-to-parent lookup and parent WorkflowRun lookup before lease acquisition or branch execution.
+- The regression asserts both SQL queries contain `workflow_runs.tenant_id` and the initial branch lookup joins the parent WorkflowRun. Python 3.12 focused workflow worker, parallel branch, event, approval-expiry, enqueue, child cancellation, and execution-concurrency suites: **16 passed**. Ruff lint and `git diff --check` passed.
+- This is bounded query-level tenant isolation evidence only, not full workflow topology/action coverage or live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN; Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells remain open.
+- Current verified `origin/main`: `4e6f76df27911f2569c3d4f2b97322d80d882c32`.
