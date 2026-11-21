@@ -373,3 +373,85 @@ async def test_whatsapp_worker_rejects_channel_owned_by_another_tenant():
     channel_query = str(db.statements[1])
     assert "customer_channels.tenant_id" in channel_query
     assert tenant_id in db.statements[1].compile().params.values()
+
+
+@pytest.mark.asyncio
+async def test_whatsapp_worker_keeps_two_tenant_content_isolated_at_provider_boundary(monkeypatch):
+    tenants = [
+        {
+            "tenant_id": uuid4(),
+            "channel_id": uuid4(),
+            "recipient": "+15550000001",
+            "text": "private tenant alpha incident 7f31",
+            "channel_marker": "alpha-channel-config",
+        },
+        {
+            "tenant_id": uuid4(),
+            "channel_id": uuid4(),
+            "recipient": "+15550000002",
+            "text": "private tenant beta incident 9c42",
+            "channel_marker": "beta-channel-config",
+        },
+    ]
+    rows = [
+        SimpleNamespace(
+            id=uuid4(),
+            kind="whatsapp.send_text",
+            tenant_id=item["tenant_id"],
+            status="processing",
+            attempts=1,
+            payload={"recipient": item["recipient"], "text": item["text"]},
+        )
+        for item in tenants
+    ]
+    databases = [_DB(row) for row in rows]
+    contexts = iter(databases)
+    channels = [
+        SimpleNamespace(
+            id=item["channel_id"],
+            channel_type="whatsapp",
+            config={"channel_marker": item["channel_marker"]},
+        )
+        for item in tenants
+    ]
+    validations = {
+        row.id: (item["tenant_id"], channel, row.payload, SimpleNamespace(), uuid4(), uuid4(), None)
+        for item, row, channel in zip(tenants, rows, channels, strict=True)
+    }
+    provider = AsyncMock(
+        side_effect=[
+            SimpleNamespace(provider_message_id="provider-alpha", status="sent"),
+            SimpleNamespace(provider_message_id="provider-beta", status="sent"),
+        ]
+    )
+
+    async def mark_dispatched(_db, row):
+        row.status = "dispatched"
+
+    monkeypatch.setattr(whatsapp_worker, "worker_db_session", lambda: _session(next(contexts)))
+
+    async def validate(_db, row):
+        return validations[row.id]
+
+    monkeypatch.setattr(whatsapp_worker, "_validate_and_load", validate)
+    monkeypatch.setattr(whatsapp_worker, "deliver_text", provider)
+    monkeypatch.setattr(whatsapp_worker, "mark_dispatched", mark_dispatched)
+
+    for row in rows:
+        await whatsapp_worker._send(str(row.id))
+
+    assert provider.await_count == 2
+    for index, (item, row, call) in enumerate(zip(tenants, rows, provider.await_args_list, strict=True)):
+        arguments = call.kwargs
+        assert arguments["tenant_id"] == item["tenant_id"]
+        assert arguments["channel_type"] == "whatsapp"
+        assert arguments["channel_config"] == {"channel_marker": item["channel_marker"]}
+        assert arguments["recipient"] == item["recipient"]
+        assert arguments["text"] == item["text"]
+        other = tenants[1 - index]
+        assert other["recipient"] not in repr(arguments)
+        assert other["text"] not in repr(arguments)
+        assert other["channel_marker"] not in repr(arguments)
+        assert row.status == "dispatched"
+        assert databases[index].events.count("commit") == 2
+        assert databases[index].events.count("rollback") == 0
