@@ -1,3 +1,32 @@
+# Current verified status - 2026-11-21
+
+Repository: ijoolaie/AI-Employee
+Verified main HEAD: dc514b1147e95fc713be857225bcdcc6c1af0384
+Tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN)
+
+## Recently integrated
+- PR #1434 Vendor descendant user administration merged at e2d7c11195f750d8c41ae5ecc78c8503b0fe43ff.
+- PR #1447 merged at 6e17d8a611e4194b684daff4341098455c76d5a7.
+- PR #1463 Email/WhatsApp commercial entitlement provider fence merged at 0eaf1b30cb74e504aa36822e19eb5c86ab4fe926 after 18/18 exact-head checks.
+- PR #1464 Outbox ambiguous broker acknowledgement terminal-state protection merged at b4e57a048dcc22c772552039cb40a2f61bacc1b3 after 17/17 exact-head checks.
+- PR #1465 documentation reconciliation merged at dc514b1147e95fc713be857225bcdcc6c1af0384.
+
+## Current acceptance boundary
+- Notifications/Outbox actor ? hierarchy ? delivery-kind end-to-end matrix remains PARTIAL; recent merges close only the Email/WhatsApp commercial-entitlement provider fence and dispatcher terminal-state overwrite race.
+- Immutable Outbox/AssignmentCommand audit-event and failure/privacy/transaction policy remains unresolved; no speculative ledger writes.
+- Sanitized historical Vendor permission-backfill snapshot review remains gated; no staging/production backfill.
+- Human visual portal UX acceptance remains a human gate.
+- Continue from the source-backed acceptance audit and current priorities; Issue #1350 stays OPEN until every acceptance gate has evidence.
+
+## Operating constraints
+- All project operations, generated artifacts, temporary worktrees and test data must remain under the project directory D:/Work/project/AI-Employee. Do not create folders or files elsewhere.
+- Preserve unrelated dirty worktrees and local data. No reset, clean, force push, branch deletion, deployment, or persistent/Staging/Production mutation.
+- PostgreSQL tests only on disposable isolated instances with automatic cleanup. Do not access Staging PostgreSQL/Redis.
+- Remove only generated caches/artifacts created by the current task; never delete existing user work.
+
+The dated records below are historical evidence and are superseded wherever they conflict with this verified checkpoint.
+---
+
 
 
 ## Reseller-to-Customer file lifecycle follow-up - 2026-11-19
