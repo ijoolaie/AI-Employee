@@ -683,3 +683,8 @@ Vendor descendant role replacement is now implemented locally. It preserves non-
 ## 2026-11-21 - Issue #1350 continuation checkpoint
 
 WhatsApp retry-exhaustion evidence was added for deterministic pre-provider validation failure on the final configured attempt: durable dead-letter metadata is written and provider I/O is skipped. Local focused suite: 31 passed; Ruff and diff check passed. This is one bounded Notifications/Outbox acceptance increment, not completion of the actor ? hierarchy ? delivery-kind matrix. Exact-head CI remains pending; Issue #1350 stays OPEN.
+
+
+### PR #1469 merge evidence - 2026-11-21
+
+PR #1469 merged at `e3b423d82e912d348c1a2516aba23b5b253ca3d3` after 13/13 exact-head checks. The WhatsApp retry-exhaustion regression is integrated. Full Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance remains PARTIAL; Issue #1350 remains OPEN.

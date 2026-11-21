@@ -1,13 +1,13 @@
 # Current verified status - 2026-11-21
 
 Repository: ijoolaie/AI-Employee
-Verified main HEAD: 918137a30c52fad42bb1d58054f7b2126b66a47f
+Verified main HEAD: e3b423d82e912d348c1a2516aba23b5b253ca3d3
 Tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN)
 
 ## Latest verified continuation
 - PR #1467 WhatsApp delegated-revocation provider-boundary regression merged at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc; exact-head checks passed.
 - PR #1468 reconciled the #1467 evidence into project docs and merged at 918137a30c52fad42bb1d58054f7b2126b66a47f; all four checks passed.
-- Current focused work adds a WhatsApp pre-provider retry-exhaustion regression: with attempts at the configured maximum, deterministic validation failure is durably dead-lettered and the provider is not called. Local focused suite: 31 passed; Ruff and diff check passed. This change is not yet in a PR and has no GitHub CI evidence.
+- PR #1469 integrated the WhatsApp pre-provider retry-exhaustion regression at merge commit e3b423d82e912d348c1a2516aba23b5b253ca3d3. All 13 exact-head checks passed; local focused suite: 31 passed; Ruff and diff check passed.
 
 ## Acceptance boundary
 - Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. This test closes one WhatsApp retry-exhaustion evidence cell only.
