@@ -30,8 +30,10 @@ class _DbContext:
 class _FakeDb:
     def __init__(self, branch, parent):
         self.values = iter([_Result(branch), _Result(parent)])
+        self.queries = []
 
-    async def execute(self, _statement):
+    async def execute(self, statement):
+        self.queries.append(str(statement))
         return next(self.values)
 
 
@@ -60,4 +62,7 @@ async def test_parallel_branch_rejects_cross_tenant_before_lease(monkeypatch):
             expected_tenant_id="tenant-b",
         )
 
+    assert len(db.queries) == 2
+    assert all("workflow_runs.tenant_id =" in query for query in db.queries)
+    assert "JOIN workflow_runs" in db.queries[0]
     acquire_lease.assert_not_awaited()
