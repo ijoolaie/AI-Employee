@@ -1954,3 +1954,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Ruff format check still reports formatting drift in the touched worker and test files; no broad formatting-only rewrite was applied. This is bounded worker query-scope evidence, not full workflow hierarchy/action matrix acceptance or live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed.
 - Issue #1350 remains OPEN. Immutable Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells remain open.
 - Current verified `origin/main`: `30f79ea009ff81c1aa43e28ab065431c167bb8ee`.
+
+## 2026-11-21 - Parallel Workflow branch tenant-qualified lookups merged
+
+- PR #1484 merged at `4e6f76df27911f2569c3d4f2b97322d80d882c32` after all required exact-head checks passed. The parallel-branch worker path now qualifies both the branch-to-parent lookup (through a WorkflowRun join) and the parent WorkflowRun lookup by the expected tenant before acquiring the branch execution lease. The existing in-memory tenant comparison remains defense in depth.
+- Extended the cross-tenant parallel-branch regression to assert both SQL statements include `workflow_runs.tenant_id` and the first lookup joins the parent WorkflowRun. Python 3.12 focused workflow worker, parallel branch, event, approval-expiry, enqueue, child cancellation, and execution-concurrency suites: **16 passed**. Ruff lint and `git diff --check` passed.
+- This closes one bounded parallel-branch query-scope cell only, not the full workflow hierarchy/action matrix or live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN; Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells remain open.
+- Current verified `origin/main`: `4e6f76df27911f2569c3d4f2b97322d80d882c32`.

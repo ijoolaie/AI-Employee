@@ -761,3 +761,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - PR #1482 merged at `30f79ea009ff81c1aa43e28ab065431c167bb8ee`. The worker's initial durable WorkflowRun lookup now filters by both run ID and task tenant ID before lease acquisition or workflow execution.
 - Python 3.12 focused workflow worker, parallel-branch, event, approval-expiry, and enqueue-safety suites: **10 passed**. The regression asserts the SQL tenant predicate and that mismatched/missing tenant contexts cannot acquire a lease or execute a workflow. Ruff lint and `git diff --check` passed; formatting drift remains in the touched files and was not broadly rewritten.
 - This closes one bounded worker query-scope cell only; the wider actor/resource/action and workflow topology matrix remains open. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN.
+
+## 2026-11-21 - Parallel Workflow branch tenant-qualified lookups merged
+
+- PR #1484 merged at `4e6f76df27911f2569c3d4f2b97322d80d882c32`. The parallel branch worker now tenant-qualifies the branch-to-parent join and parent WorkflowRun lookup before acquiring the execution lease.
+- Python 3.12 focused workflow worker, parallel branch, event, approval-expiry, enqueue, child cancellation, and execution-concurrency suites: **16 passed**. The regression asserts tenant predicates in both SQL queries and confirms cross-tenant rejection before lease acquisition. Ruff lint and `git diff --check` passed.
+- This closes one bounded parallel-branch query-scope cell only; the broader actor/resource/action and workflow topology matrix remains open. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN.
