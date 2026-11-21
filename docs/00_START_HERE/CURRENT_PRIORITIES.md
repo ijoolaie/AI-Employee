@@ -1901,3 +1901,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Focused Python 3.12 validation: WhatsApp worker module **9 passed**; combined WhatsApp worker and generic Outbox crash-safety modules **18 passed**. Ruff lint passed for the changed worker test and production WhatsApp worker; `git diff --check` passed.
 - Ruff format check still reports existing formatting drift elsewhere in the WhatsApp test module; no broad unrelated reformat was applied.
 - This is bounded unit evidence for exact approval/content binding, not completion of end-to-end actor ? hierarchy ? delivery-kind content isolation. No application behavior, DB, broker, provider, Staging, or Production service was changed/accessed. Issue #1350 remains OPEN.
+
+
+## Verified continuation - 2026-11-21 (WhatsApp exact approval binding merged)
+
+- PR #1473 merged at `72ec28e6af027ed1661f8ed65c4dcffa79a1ebdb` after all **13/13** exact-head checks passed, including Backend, Frontend, Architecture, CodeQL, DAST, Recovery, Infrastructure, Public Widget, Semantic E2E, W21 real-stack, and Release identity consistency.
+- WhatsApp consumed-approval regression now parameterizes tampering of `channel_id`, `recipient`, and `text`; each mismatch is rejected before channel lookup, policy evaluation, or provider execution. Python 3.12 WhatsApp worker module: **9 passed**; combined WhatsApp worker and generic Outbox crash-safety modules: **18 passed**; Ruff lint and `git diff --check` passed.
+- The full Notifications/Outbox actor ? hierarchy ? delivery-kind/content matrix remains PARTIAL. This closes bounded exact-approval unit evidence only; no claim of full end-to-end content isolation.
+- Current verified `origin/main`: `72ec28e6af027ed1661f8ed65c4dcffa79a1ebdb`. Issue #1350 remains OPEN.
