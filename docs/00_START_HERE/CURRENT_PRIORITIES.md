@@ -1893,3 +1893,11 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added `test_whatsapp_worker_rejects_channel_owned_by_another_tenant`: the WhatsApp worker's active CustomerChannel lookup is asserted to include the effective Outbox tenant predicate and to fail closed when no tenant-scoped channel is returned. Python 3.12 focused module: **7 passed**; Ruff lint and diff check passed.
 - The Notification/Outbox actor ? hierarchy ? delivery-kind/content matrix remains PARTIAL. This test closes one ownership-fence evidence cell only; it does not establish full content isolation across all actors/topologies/delivery kinds.
 - Current verified `origin/main`: `aa597dd28d1af2417e8bc5e9cd6f90021837e7b7`. Issue #1350 remains OPEN.
+
+
+## Verified continuation - 2026-11-21 (WhatsApp exact approval content binding)
+
+- Expanded `test_whatsapp_worker_rejects_approval_for_different_message` into a parameterized exact-call approval mismatch regression for all three provider-relevant approved arguments: `channel_id`, `recipient`, and `text`. Each mutated Outbox payload is rejected against the consumed approval before channel lookup, policy evaluation, or provider execution.
+- Focused Python 3.12 validation: WhatsApp worker module **9 passed**; combined WhatsApp worker and generic Outbox crash-safety modules **18 passed**. Ruff lint passed for the changed worker test and production WhatsApp worker; `git diff --check` passed.
+- Ruff format check still reports existing formatting drift elsewhere in the WhatsApp test module; no broad unrelated reformat was applied.
+- This is bounded unit evidence for exact approval/content binding, not completion of end-to-end actor ? hierarchy ? delivery-kind content isolation. No application behavior, DB, broker, provider, Staging, or Production service was changed/accessed. Issue #1350 remains OPEN.

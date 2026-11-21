@@ -115,52 +115,58 @@ async def test_whatsapp_worker_never_retries_after_provider_boundary(monkeypatch
 
 
 @pytest.mark.asyncio
-async def test_whatsapp_worker_rejects_approval_for_different_message():
+@pytest.mark.parametrize("tampered_field", ["channel_id", "recipient", "text"])
+async def test_whatsapp_worker_rejects_approval_payload_mismatch(tampered_field):
     tenant_id, agent_id, run_id = uuid4(), uuid4(), uuid4()
     approval_id, channel_id = uuid4(), uuid4()
     tool_call_id = "call_exact_binding"
-    row = SimpleNamespace(
-        id=uuid4(),
-        kind="whatsapp.send_text",
-        tenant_id=tenant_id,
-        status="processing",
-        attempts=1,
-        payload={
-            "channel_id": str(channel_id),
-            "recipient": "+15551234567",
-            "text": "message changed after approval",
+    approved_arguments = {
+        "channel_id": str(channel_id),
+        "recipient": "+15551234567",
+        "text": "original approved message",
+    }
+    payload = {
+        **approved_arguments,
+        "run_id": str(run_id),
+        "tool_name": "whatsapp.send_text",
+        "tool_call_id": tool_call_id,
+        "approval_request_id": str(approval_id),
+        "_agent_governance": {
+            "tenant_id": str(tenant_id),
+            "agent_instance_id": str(agent_id),
             "run_id": str(run_id),
             "tool_name": "whatsapp.send_text",
-            "tool_call_id": tool_call_id,
-            "approval_request_id": str(approval_id),
-            "_agent_governance": {
-                "tenant_id": str(tenant_id),
-                "agent_instance_id": str(agent_id),
-                "run_id": str(run_id),
-                "tool_name": "whatsapp.send_text",
-            },
         },
+    }
+    payload[tampered_field] = {
+        "channel_id": str(uuid4()),
+        "recipient": "+15557654321",
+        "text": "message changed after approval",
+    }[tampered_field]
+    row = SimpleNamespace(
+        id=uuid4(), kind="whatsapp.send_text", tenant_id=tenant_id,
+        status="processing", attempts=1, payload=payload,
     )
     approval = SimpleNamespace(
-        id=approval_id,
-        tenant_id=tenant_id,
-        run_id=run_id,
-        tool_name="whatsapp.send_text",
-        tool_call_id=tool_call_id,
-        status="consumed",
-        arguments={
-            "channel_id": str(channel_id),
-            "recipient": "+15551234567",
-            "text": "original approved message",
-        },
+        id=approval_id, tenant_id=tenant_id, run_id=run_id,
+        tool_name="whatsapp.send_text", tool_call_id=tool_call_id,
+        status="consumed", arguments=approved_arguments,
     )
 
     class _ApprovalDB:
-        async def execute(self, *_args, **_kwargs):
+        def __init__(self):
+            self.statements = []
+
+        async def execute(self, statement):
+            self.statements.append(statement)
             return _Result(approval)
 
+    db = _ApprovalDB()
     with pytest.raises(ValidationAppError, match="does not match its consumed exact-call approval"):
-        await whatsapp_worker._validate_and_load(_ApprovalDB(), row)
+        await whatsapp_worker._validate_and_load(db, row)
+
+    # Reject before loading a channel or reaching policy/provider execution.
+    assert len(db.statements) == 1
 
 
 @pytest.mark.asyncio
