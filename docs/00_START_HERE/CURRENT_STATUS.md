@@ -1721,3 +1721,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 
 - PR #1486 merged at d39baf033b5499106536906e5af26548337015a0 after 12/12 exact-head checks passed. The live portal acceptance test creates a fresh active direct Vendor-to-Customer grant and asserts usage optimization and cost-forecast requests use the Customer tenant ID.
 - This is one additional report-context cell. It does not close broader asynchronous export/report actor/topology coverage, Notifications/Outbox, Audit Ledger policy, historical permission-backfill snapshot review, or human UX acceptance. Issue #1350 remains OPEN.
+
+
+## Verified continuation - 2026-11-21 (PR #1488)
+
+- PR #1488 merged at `5bbe21fb3bf2657244bd1463cac156aa409b8228` after 12/12 exact-head checks passed. The WhatsApp worker now has a regression proving a cross-tenant Agent governance proof is rejected before any database lookup; focused module: 10 passed; Ruff lint and diff check passed.
+- This closes one bounded pre-lookup governance-binding test only. Notifications/Outbox actor-by-hierarchy-by-delivery-kind acceptance remains PARTIAL; Issue #1350 remains OPEN.
+- Current verified origin/main: `5bbe21fb3bf2657244bd1463cac156aa409b8228`.

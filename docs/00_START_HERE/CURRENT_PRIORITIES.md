@@ -1961,3 +1961,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Extended the cross-tenant parallel-branch regression to assert both SQL statements include `workflow_runs.tenant_id` and the first lookup joins the parent WorkflowRun. Python 3.12 focused workflow worker, parallel branch, event, approval-expiry, enqueue, child cancellation, and execution-concurrency suites: **16 passed**. Ruff lint and `git diff --check` passed.
 - This closes one bounded parallel-branch query-scope cell only, not the full workflow hierarchy/action matrix or live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN; Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells remain open.
 - Current verified `origin/main`: `4e6f76df27911f2569c3d4f2b97322d80d882c32`.
+
+
+## Verified continuation - 2026-11-21 (PR #1488)
+
+- PR #1488 merged at `5bbe21fb3bf2657244bd1463cac156aa409b8228` with 12/12 exact-head checks green. Cross-tenant WhatsApp Agent governance binding is now rejected before worker lookup; this is bounded evidence only.
+- Keep Issue #1350 OPEN: Notifications/Outbox actor-by-hierarchy-by-delivery-kind matrix, async report/export combinations, unresolved Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells are not complete.
+- Current verified origin/main: `5bbe21fb3bf2657244bd1463cac156aa409b8228`.

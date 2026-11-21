@@ -774,3 +774,12 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - This complements #1457 Vendor A/B and Customer portal report/invoice/artifact ownership evidence. It does not prove the broader asynchronous export/report actor/topology matrix or every artifact retrieval/download/revocation path.
 - Notifications/Outbox remains PARTIAL; immutable Audit Ledger/failure policy remains unresolved and untouched. Historical permission-backfill snapshot review and human UX acceptance remain gated. Issue #1350 remains OPEN.
 - Current origin/main: d39baf033b5499106536906e5af26548337015a0.
+
+
+## 2026-11-21 - WhatsApp worker cross-tenant governance binding regression merged
+
+- PR #1488 merged at `5bbe21fb3bf2657244bd1463cac156aa409b8228` after all **12/12 exact-head checks** passed on head `659b7b997f1d6f3d68c354e4ae46b133ff0b3857`; the PR was non-draft, base-synced to `1a790b4ede87702104e59ddcb04630bb8c7085ea`, and `CLEAN` before merge.
+- Added `test_whatsapp_worker_rejects_cross_tenant_governance_binding_before_lookup` to `backend/tests/workers/test_whatsapp_worker.py`. It supplies an Outbox row tenant that differs from the persisted Agent governance proof tenant and asserts the worker rejects the mismatch before issuing any database lookup. Focused Python 3.12 WhatsApp worker module: **10 passed**; targeted Ruff lint and `git diff --check` passed.
+- This is one bounded pre-lookup governance-binding regression. It does not establish the full Email/WhatsApp/Agent actor-by-hierarchy-by-delivery-kind retry/dead-letter/revocation/content-isolation matrix. Issue #1350 remains OPEN.
+- Current verified `origin/main`: `5bbe21fb3bf2657244bd1463cac156aa409b8228`.
+- No staging/production database, broker, or external provider was accessed.
