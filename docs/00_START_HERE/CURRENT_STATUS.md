@@ -1716,3 +1716,8 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - The regression asserts both SQL queries contain `workflow_runs.tenant_id` and the initial branch lookup joins the parent WorkflowRun. Python 3.12 focused workflow worker, parallel branch, event, approval-expiry, enqueue, child cancellation, and execution-concurrency suites: **16 passed**. Ruff lint and `git diff --check` passed.
 - This is bounded query-level tenant isolation evidence only, not full workflow topology/action coverage or live PostgreSQL acceptance. No DB, broker, Staging, or Production service was accessed. Issue #1350 remains OPEN; Audit Ledger policy, historical permission-backfill snapshot review, human portal UX acceptance, and remaining actor/resource/action cells remain open.
 - Current verified `origin/main`: `4e6f76df27911f2569c3d4f2b97322d80d882c32`.
+
+## 2026-11-21 - Direct Vendor-to-Customer usage reporting (#1486)
+
+- PR #1486 merged at d39baf033b5499106536906e5af26548337015a0 after 12/12 exact-head checks passed. The live portal acceptance test creates a fresh active direct Vendor-to-Customer grant and asserts usage optimization and cost-forecast requests use the Customer tenant ID.
+- This is one additional report-context cell. It does not close broader asynchronous export/report actor/topology coverage, Notifications/Outbox, Audit Ledger policy, historical permission-backfill snapshot review, or human UX acceptance. Issue #1350 remains OPEN.
