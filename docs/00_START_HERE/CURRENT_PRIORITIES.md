@@ -1,9 +1,9 @@
-# Current priorities - verified 2026-11-21
+# Current priorities - verified 2026-11-21 (after PR #1486)
 
-Current main: e3b423d82e912d348c1a2516aba23b5b253ca3d3
+Current main: d39baf033b5499106536906e5af26548337015a0
 Only active implementation track: Multi-Vendor tenant ownership, delegated authorization and portal acceptance - Issue #1350 (OPEN).
 
-1. P0 - Notifications/Outbox acceptance: continue the source-backed actor ? hierarchy ? delivery-kind matrix. PRs #1463/#1464/#1467/#1468/#1469 are integrated. PR #1469 integrated WhatsApp pre-provider retry-exhaustion/dead-letter evidence (31 focused tests; 13/13 exact-head checks). Broader end-to-end ownership, content isolation and topology permutations remain PARTIAL.
+1. P0 - Notifications/Outbox acceptance: continue the source-backed actor ? hierarchy ? delivery-kind matrix. PRs #1463/#1464/#1467/#1468/#1469 are integrated. PR #1469 integrated WhatsApp pre-provider retry-exhaustion/dead-letter evidence (31 focused tests; 13/13 exact-head checks). Broader end-to-end ownership, content isolation and topology permutations remain PARTIAL. PR #1486 adds direct Vendor-to-Customer usage optimization and cost-forecast portal evidence; broader asynchronous export/report actor and topology combinations remain open.
 2. P1 - Actor ? Resource ? Action: select only a concrete uncovered hierarchy/resource/action cell from the acceptance audit; do not duplicate merged coverage.
 3. Gated - Immutable audit/failure policy: no Outbox/AssignmentCommand ledger implementation until event semantics, actor attribution, failure/privacy behavior and transaction coupling are decided.
 4. Gated - Historical Vendor permission backfill: requires sanitized historical snapshot review; no staging/production rehearsal or mutation.
