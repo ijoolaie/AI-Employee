@@ -4,9 +4,12 @@ from __future__ import annotations
 import asyncio
 import logging
 
+from sqlalchemy import select
+
 from app.core.database import worker_db_session
 from app.core.metrics import OUTBOX_DEAD, OUTBOX_DISPATCH, OUTBOX_RETRIES
 from app.core.telemetry import span
+from app.models.outbox import OutboxMessage
 from app.services import outbox_service
 from app.workers.celery_app import celery_app
 
@@ -83,8 +86,14 @@ async def _dispatch_async(limit: int = 50) -> int:
                         extra={"outbox_id": str(row.id), "kind": row.kind},
                     )
                     await db.rollback()
-                    result = await db.get(type(row), row.id)
-                    if result is not None:
+                    result = (
+                        await db.execute(
+                            select(OutboxMessage)
+                            .where(OutboxMessage.id == row.id)
+                            .with_for_update()
+                        )
+                    ).scalar_one_or_none()
+                    if result is not None and result.status not in {"dispatched", "dead", "uncertain"}:
                         previous_attempts = result.attempts
                         await outbox_service.mark_retry(
                             db,

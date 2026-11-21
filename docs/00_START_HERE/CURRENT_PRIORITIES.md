@@ -1821,3 +1821,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Focused evidence: 16 Python 3.12 tests passed; targeted Ruff and diff check passed. PostgreSQL outbound-suspension integration was not run locally (5 guarded skips); exact-head isolated CI must validate it.
 - Keep the full Notifications/Outbox actor ? hierarchy ? delivery-kind matrix PARTIAL until end-to-end retry exhaustion, dead-letter ownership, revoked/stale delegated context, and provider-boundary combinations have exact evidence.
 - Do not add AuditLog transitions until immutable audit event semantics, actor attribution, failure/privacy behavior, and transaction coupling are decided. Keep Issue #1350 OPEN.
+
+
+## 2026-11-21 - Dispatcher ambiguous-acknowledgement race
+
+- Next bounded Outbox correction is on fix/outbox-dispatch-ambiguous-ack-20261121: broker publish exceptions now reload the durable row under FOR UPDATE and never overwrite dispatched, dead, or uncertain states.
+- Focused evidence: 27 Python 3.12 tests passed across dispatcher, retry/lease, Email and WhatsApp; targeted Ruff and diff check passed. No database/broker/provider used locally.
+- Exact-head CI remains required. Keep the complete Notifications/Outbox actor ? hierarchy ? delivery-kind acceptance PARTIAL; do not alter the unresolved immutable audit policy.

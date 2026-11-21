@@ -1550,3 +1550,12 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - First exact-head Backend CI run reported 2,051 passed, 5 failed, 1 skipped and 1 deselected. The failures were limited to PostgreSQL fixtures that had active Customer tenants but no active CommercialLicense, plus assertions expecting the old lifecycle error text.
 - Corrected the shared outbound guard to preserve the early suspended/missing-Tenant denial before commercial lookup. Updated the active provider-window and WhatsApp approval PostgreSQL fixtures to seed a valid Vendor-issued Customer license and to clean up only their own license/tenant rows.
 - Moved the shared-guard adapter contract into a standalone test module so worker unit fixtures can stub only the adapter without masking the adapter itself. Focused Python 3.12 rerun: 17 passed; Ruff and diff check passed. PostgreSQL execution remains CI-only.
+
+
+## 2026-11-21 - Outbox dedicated-worker ambiguous broker acknowledgement race
+
+- Source audit found the generic Outbox dispatch exception path used an unlocked db.get() followed by mark_retry() after broker publish errors. Email/WhatsApp tasks own a durable uncertain/provider state; if a worker committed dispatched, dead, or uncertain while the broker publisher observed an ambiguous acknowledgement failure, the dispatcher could overwrite that terminal state back to pending.
+- Corrected the exception path to reload the durable Outbox row with SELECT ... FOR UPDATE and preserve dispatched, dead, and uncertain states. Retry remains available for nonterminal rows, including normal broker-unavailable workflow dispatches.
+- Added Email/WhatsApp regression cases simulating worker completion before publisher error and asserting the locked reload never retries/overwrites terminal state. Existing workflow broker-failure retry behavior remains covered.
+- Python 3.12 focused Outbox/Email/WhatsApp suite: 27 passed; targeted Ruff passed; git diff --check passed. No database, broker, provider, Staging or Production service was accessed.
+- This closes the dispatcher terminal-state overwrite race at unit-contract level. Exact-head CI must validate integration; full Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. Issue #1350 remains OPEN.

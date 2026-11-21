@@ -35,6 +35,10 @@ class _DB:
     async def get(self, *_args):
         return self.row
 
+    async def execute(self, statement):
+        assert statement._for_update_arg is not None
+        return SimpleNamespace(scalar_one_or_none=lambda: self.row)
+
 
 @asynccontextmanager
 async def _session(db):
@@ -283,3 +287,62 @@ async def test_agent_run_outbox_rejects_payload_tenant_mismatch(monkeypatch):
     assert "publish" not in events
     retry = next(event for event in events if isinstance(event, tuple) and event[0] == "mark_retry")
     assert "tenant binding" in retry[1]
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("kind", "terminal_status"),
+    [
+        ("email.send", "dispatched"),
+        ("whatsapp.send_text", "uncertain"),
+        ("whatsapp.send_text", "dead"),
+    ],
+)
+async def test_ambiguous_dedicated_worker_publish_does_not_overwrite_terminal_state(
+    monkeypatch, kind, terminal_status
+):
+    events = []
+    db = _DB(events)
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind=kind,
+        tenant_id=uuid4(),
+        payload={},
+        attempts=1,
+        status="processing",
+    )
+    db.row = row
+    retries = []
+
+    async def fake_claim(_db, *, limit):
+        return [row]
+
+    async def mark_retry(_db, message, *_args, **_kwargs):
+        retries.append(message.id)
+        message.status = "pending"
+
+    class _Task:
+        @staticmethod
+        def delay(*_args):
+            # Simulate a worker winning the row lock and committing its
+            # terminal state before the publisher reports an ambiguous error.
+            row.status = terminal_status
+            raise RuntimeError("broker acknowledgement lost")
+
+    module_name = (
+        "app.workers.email_worker" if kind == "email.send"
+        else "app.workers.whatsapp_worker"
+    )
+    task_name = "send_email_task" if kind == "email.send" else "send_whatsapp_text_task"
+
+    monkeypatch.setattr(outbox_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(outbox_worker.outbox_service, "claim", fake_claim)
+    monkeypatch.setattr(outbox_worker.outbox_service, "mark_retry", mark_retry)
+    monkeypatch.setattr(outbox_worker, "span", lambda *args, **kwargs: _Span())
+    monkeypatch.setitem(sys.modules, module_name, SimpleNamespace(**{task_name: _Task}))
+
+    assert await outbox_worker._dispatch_async(limit=1) == 0
+    assert retries == []
+    assert row.status == terminal_status
+    assert events.count("rollback") == 1
+    assert events.count("commit") == 2
