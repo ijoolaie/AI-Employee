@@ -358,6 +358,16 @@ async def validate_run_portal_context(db: AsyncSession, *, run: Run) -> uuid.UUI
         if run.portal_access_grant_id is None:
             if actor_tenant_id != run.tenant_id:
                 raise ValidationAppError("Delegated Run is missing its portal access grant")
+            if run.created_by is not None:
+                actor_result = await db.execute(
+                    select(User.id).where(
+                        User.id == run.created_by,
+                        User.tenant_id == actor_tenant_id,
+                        User.is_active.is_(True),
+                    )
+                )
+                if actor_result.scalar_one_or_none() is None:
+                    raise ValidationAppError("Run creator is not an active member of the actor tenant")
             return actor_tenant_id
 
         if run.actor_tenant_id is None or run.created_by is None:

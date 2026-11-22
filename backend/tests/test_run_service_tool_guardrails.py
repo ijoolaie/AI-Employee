@@ -384,3 +384,35 @@ async def test_run_tool_permissions_load_creator_from_actor_tenant():
     assert actor_tenant_id in params.values()
     assert customer_tenant_id not in params.values()
     assert "users.is_active IS true" in sql
+
+
+@pytest.mark.asyncio
+async def test_run_portal_context_rejects_creator_from_different_tenant():
+    run = SimpleNamespace(
+        tenant_id=uuid.uuid4(),
+        actor_tenant_id=None,
+        created_by=uuid.uuid4(),
+        portal_access_grant_id=None,
+        status="pending",
+        error_message=None,
+        completed_at=None,
+    )
+    flushed = []
+
+    class _Result:
+        def scalar_one_or_none(self):
+            return None
+
+    class _DB:
+        async def execute(self, _statement):
+            return _Result()
+
+        async def flush(self):
+            flushed.append(True)
+
+    actor = await run_service.validate_run_portal_context(_DB(), run=run)
+
+    assert actor is None
+    assert run.status == "failed"
+    assert "not an active member" in run.error_message
+    assert flushed == [True]
