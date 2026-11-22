@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,22 +40,17 @@ export function EmailChangeSettings({ basePath }: { basePath: string }) {
 export function EmailChangeConfirmation({ backPath }: { backPath: string }) {
   const { locale } = useI18n();
   const fa = locale === "fa";
-  const [token, setToken] = useState("");
   const [state, setState] = useState<"ready" | "submitting" | "success" | "error">("ready");
   const [message, setMessage] = useState(fa ? "برای ادامه، تأیید را انتخاب کنید." : "Review this request, then confirm to continue.");
 
-  useEffect(() => {
-    const value = new URLSearchParams(window.location.search).get("token") || "";
-    if (!value) {
+  async function confirm() {
+    if (state === "submitting" || state === "success") return;
+    const token = new URLSearchParams(window.location.search).get("token") || "";
+    if (!token) {
       setState("error");
       setMessage(fa ? "توکن پیوند تأیید وجود ندارد." : "The verification link is missing its token.");
-    } else {
-      setToken(value);
+      return;
     }
-  }, [fa]);
-
-  async function confirm() {
-    if (!token || state === "submitting" || state === "success") return;
     setState("submitting");
     try {
       await confirmEmailChange(token);
@@ -70,7 +65,7 @@ export function EmailChangeConfirmation({ backPath }: { backPath: string }) {
   return <main className="mx-auto max-w-xl space-y-5 p-8">
     <h1 className="text-2xl font-semibold">{fa ? "تأیید تغییر ایمیل" : "Confirm email change"}</h1>
     <p role={state === "error" ? "alert" : "status"} className="text-sm text-gray-700">{message}</p>
-    {token && state !== "success" && state !== "error" ? <Button type="button" onClick={confirm} loading={state === "submitting"}>{fa ? "تأیید تغییر ایمیل" : "Confirm email change"}</Button> : null}
+    {state !== "success" ? <Button type="button" onClick={confirm} loading={state === "submitting"}>{fa ? "تأیید تغییر ایمیل" : "Confirm email change"}</Button> : null}
     <Link href={backPath} className="text-sm underline">{fa ? "بازگشت به ورود" : "Back to sign in"}</Link>
   </main>;
 }
