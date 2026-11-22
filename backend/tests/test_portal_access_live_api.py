@@ -287,6 +287,11 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 filename="customer-sales.csv", content_type="text/csv",
                 size_bytes=57, storage_key=f"{customer_a.id}/customer-sales.csv", status="active",
             )
+            customer_report_registry_source = FileObject(
+                tenant_id=customer_a.id, uploaded_by=customer_actor.id,
+                filename="customer-registry-sales.csv", content_type="text/csv",
+                size_bytes=57, storage_key=f"{customer_a.id}/customer-registry-sales.csv", status="active",
+            )
             sibling_file = FileObject(tenant_id=sibling.id, uploaded_by=actor.id, filename="sibling-secret.txt", content_type="text/plain", size_bytes=12, storage_key=f"{sibling.id}/sibling-secret.txt", status="active")
             cross_vendor_file = FileObject(tenant_id=reseller_b.id, uploaded_by=actor.id, filename="vendor-b-secret.txt", content_type="text/plain", size_bytes=15, storage_key=f"{reseller_b.id}/vendor-b-secret.txt", status="active")
             vendor_b_file = FileObject(
@@ -297,7 +302,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             )
             session.add_all([
                 direct_customer_file, direct_customer_report_source, customer_file,
-                customer_report_source, unentitled_sibling_customer_file, target_file,
+                customer_report_source, customer_report_registry_source, unentitled_sibling_customer_file, target_file,
                 sibling_file, cross_vendor_file, vendor_b_file,
             ])
             target_customer = Customer(tenant_id=target.id, external_key=f"target-customer-{run_id}", name="Target tenant customer", email="target-customer@example.com", notes="target-private-note")
@@ -675,6 +680,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             b"2026-01-03,North,150\n"
         )
         test_storage_backend.objects[f"{customer_a.id}/customer-sales.csv"] = sales_csv
+        test_storage_backend.objects[f"{customer_a.id}/customer-registry-sales.csv"] = sales_csv
         test_storage_backend.objects[f"{direct_customer.id}/direct-customer-sales.csv"] = sales_csv
         monkeypatch.setattr(
             storage_service, "get_storage_backend", lambda: test_storage_backend
@@ -1675,7 +1681,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 async with sessions() as report_session:
                     report_result = await registry.execute(
                         "analyze_dataset",
-                        {"file_id": str(customer_report_source.id)},
+                        {"file_id": str(customer_report_registry_source.id)},
                         permissions={"run.execute"},
                         allowed_tools={"analyze_dataset"},
                         db=report_session,
