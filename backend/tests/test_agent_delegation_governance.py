@@ -634,14 +634,14 @@ async def test_policy_engine_calls_real_direct_delegation_validation(monkeypatch
         datetime.now(timezone.utc) + timedelta(hours=1),
     )
     delegation.source_work_item_id = source_id
-    delegation.scopes = {"actions": ["tool.execute"], "tools": ["send_email"]}
+    delegation.scopes = {"actions": ["tool.execute"], "tools": ["send_email", "whatsapp.send_text"]}
     source = SimpleNamespace(
         id=source_id, tenant_id=tenant, status=WorkItemStatus.RUNNING,
         policy_context={},
     )
     delegator_agent = agent(tenant, delegator_id, permissions=["run.execute"])
     delegate_agent = agent(
-        tenant, delegate_id, allowed_tools=["send_email"],
+        tenant, delegate_id, allowed_tools=["send_email", "whatsapp.send_text"],
         permissions=["run.execute"],
     )
     delegator_identity, delegate_identity = identity(), identity()
@@ -657,6 +657,10 @@ async def test_policy_engine_calls_real_direct_delegation_validation(monkeypatch
         async def execute(self, statement):
             sql = str(statement)
             statements.append(sql)
+            if "tool_approval_requests" in sql:
+                return FakeResult(approval)
+            if "customer_channels" in sql:
+                return FakeResult(channel)
             if "agent_kill_switches" in sql:
                 return FakeResult(None)
             if "agent_delegations" in sql:
@@ -695,5 +699,161 @@ async def test_policy_engine_calls_real_direct_delegation_validation(monkeypatch
     db = IntegratedDb()
     authorized_agent = await assert_authorized(db, request)
     assert authorized_agent.id == delegate_id
+    assert any("agent_delegations" in sql and "FOR UPDATE" in sql for sql in statements)
+    assert any("work_items" in sql and "FOR UPDATE" in sql for sql in statements)
+
+    # Exercise both deferred delivery worker authorization boundaries against
+    # the real Policy Engine and real delegation validator (no policy mock).
+    from app.workers import email_worker, whatsapp_worker
+
+    email_row = SimpleNamespace(
+        tenant_id=tenant,
+        payload={"_agent_governance": {
+            "tenant_id": str(tenant), "agent_instance_id": str(delegate_id),
+            "run_id": str(uuid4()), "tool_name": "send_email",
+            "delegation_id": str(delegation.id),
+        }},
+    )
+    await email_worker._authorize_deferred_agent_side_effect(db, email_row)
+
+    whatsapp_run_id = uuid4()
+    approval_id, channel_id = uuid4(), uuid4()
+    tool_call_id = "policy-engine-worker-call"
+    approved_arguments = {
+        "channel_id": str(channel_id), "recipient": "+15550001111",
+        "text": "policy engine worker integration",
+    }
+    approval = SimpleNamespace(
+        id=approval_id, tenant_id=tenant, run_id=whatsapp_run_id,
+        tool_name="whatsapp.send_text", tool_call_id=tool_call_id,
+        status="consumed", arguments=approved_arguments,
+    )
+    channel = SimpleNamespace(
+        id=channel_id, tenant_id=tenant, channel_type="whatsapp",
+        is_active=True, config={"provider": "test"},
+    )
+    whatsapp_row = SimpleNamespace(
+        tenant_id=tenant,
+        payload={
+            **approved_arguments,
+            "run_id": str(whatsapp_run_id),
+            "approval_request_id": str(approval_id),
+            "channel_id": str(channel_id),
+            "tool_name": "whatsapp.send_text",
+            "tool_call_id": tool_call_id,
+            "_agent_governance": {
+                "tenant_id": str(tenant), "agent_instance_id": str(delegate_id),
+                "run_id": str(whatsapp_run_id), "tool_name": "whatsapp.send_text",
+                "delegation_id": str(delegation.id),
+            },
+        },
+    )
+    loaded = await whatsapp_worker._validate_and_load(db, whatsapp_row)
+    assert loaded[0] == tenant
+    assert loaded[1].id == channel_id
+    assert loaded[4] == delegate_id
+    assert loaded[5] == whatsapp_run_id
+    assert loaded[6] == delegation.id
+    assert sum("agent_delegations" in sql and "FOR UPDATE" in sql for sql in statements) >= 3
+
+@pytest.mark.asyncio
+async def test_policy_engine_validates_full_nested_delegation_chain(monkeypatch):
+    tenant = uuid4()
+    now = datetime.now(timezone.utc)
+    root_agent, middle_agent = agent(tenant), agent(tenant)
+    leaf_agent = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"])
+    root_source = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant, status=WorkItemStatus.RUNNING,
+        policy_context={},
+    )
+    parent = delegation_record(
+        tenant, root_agent.id, middle_agent.id, now + timedelta(hours=2),
+    )
+    parent.source_work_item_id = root_source.id
+    parent.chain_depth = 1
+    parent.scopes = {"actions": ["tool.execute"], "tools": ["send_email"]}
+    leaf_source = SimpleNamespace(
+        id=uuid4(), tenant_id=tenant, status=WorkItemStatus.RUNNING,
+        policy_context={
+            "delegated_from": str(root_source.id),
+            "delegation_id": str(parent.id),
+            "delegation_depth": 1,
+        },
+    )
+    parent.delegated_work_item_id = leaf_source.id
+    child = delegation_record(
+        tenant, middle_agent.id, leaf_agent.id, now + timedelta(hours=1),
+    )
+    child.source_work_item_id = leaf_source.id
+    child.chain_depth = 2
+    child.max_chain_depth = 3
+    child.scopes = {"actions": ["tool.execute"], "tools": ["send_email"]}
+
+    identities = []
+    reviews = {}
+    for instance in (middle_agent, leaf_agent):
+        current_identity = identity()
+        current_identity.agent_instance_id = instance.id
+        current_identity.tenant_id = tenant
+        identities.append(current_identity)
+        review = access_review()
+        review.agent_identity_id = current_identity.id
+        review.tenant_id = tenant
+        reviews[current_identity.id] = review
+
+    statements = []
+    delegation_reads = 0
+    work_item_reads = 0
+    identity_reads = 0
+    review_reads = 0
+
+    class NestedPolicyDb:
+        async def execute(self, statement):
+            nonlocal delegation_reads, work_item_reads, identity_reads, review_reads
+            sql = str(statement)
+            statements.append(sql)
+            if "agent_kill_switches" in sql:
+                return FakeResult(None)
+            if "agent_instances" in sql:
+                return FakeResult([middle_agent, leaf_agent] if " IN (" in sql else leaf_agent)
+            if "agent_identities" in sql:
+                identity_reads += 1
+                return FakeResult(identities[-1] if identity_reads == 1 else identities)
+            if "agent_access_reviews" in sql:
+                review_reads += 1
+                identity_for_review = identities[-1] if review_reads == 1 else identities[0]
+                return FakeResult(reviews[identity_for_review.id])
+            if "agent_delegations" in sql:
+                delegation_reads += 1
+                return FakeResult(child if delegation_reads in (1, 4) else parent)
+            if "work_items" in sql:
+                work_item_reads += 1
+                if work_item_reads in (1, 4):
+                    return FakeResult(leaf_source)
+                return FakeResult(root_source)
+            return FakeResult(None)
+
+        async def flush(self):
+            pass
+
+    async def skip_audit(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(
+        "app.services.agent_policy_engine.record_policy_decision_audit",
+        skip_audit,
+    )
+    request = PolicyRequest(
+        tenant_id=tenant,
+        agent_instance_id=leaf_agent.id,
+        action="tool.execute",
+        tool_name="send_email",
+        required_permission="run.execute",
+        delegation_id=child.id,
+    )
+
+    authorized_agent = await assert_authorized(NestedPolicyDb(), request)
+
+    assert authorized_agent.id == leaf_agent.id
     assert any("agent_delegations" in sql and "FOR UPDATE" in sql for sql in statements)
     assert any("work_items" in sql and "FOR UPDATE" in sql for sql in statements)
