@@ -857,3 +857,29 @@ async def test_policy_engine_validates_full_nested_delegation_chain(monkeypatch)
     assert authorized_agent.id == leaf_agent.id
     assert any("agent_delegations" in sql and "FOR UPDATE" in sql for sql in statements)
     assert any("work_items" in sql and "FOR UPDATE" in sql for sql in statements)
+
+    # Exercise the same real nested chain through the deferred Email worker boundary.
+    delegation_reads = 0
+    work_item_reads = 0
+    identity_reads = 0
+    review_reads = 0
+    from app.workers import email_worker
+
+    email_row = SimpleNamespace(
+        tenant_id=tenant,
+        payload={"_agent_governance": {
+            "tenant_id": str(tenant),
+            "agent_instance_id": str(leaf_agent.id),
+            "run_id": str(uuid4()),
+            "tool_name": "send_email",
+            "delegation_id": str(child.id),
+        }},
+    )
+    await email_worker._authorize_deferred_agent_side_effect(
+        NestedPolicyDb(), email_row,
+    )
+    assert sum(
+        "agent_delegations" in sql and "FOR UPDATE" in sql
+        for sql in statements
+    ) >= 4
+    assert sum("work_items" in sql and "FOR UPDATE" in sql for sql in statements) >= 4
