@@ -1984,3 +1984,17 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - The test asserts generated PDF/Excel/chart FileObjects are owned by the effective direct Customer tenant and attributed to the Vendor actor; generated artifacts appear in that Customer portal's file list and PDF/Excel downloads return valid file signatures. The actor's home Vendor context receives 404 for artifact metadata/download, and the same delegated PDF download returns 403 immediately after the direct grant is revoked.
 - Local validation: Python 3.12 syntax compilation, targeted Ruff, and `git diff --check` passed. The PostgreSQL-backed scenario was not run locally; exact-head isolated GitHub CI is required. No application runtime behavior changed.
 - This closes one direct Vendor-to-Customer report-artifact topology cell only. Broader async export/report actor/topology combinations, other export types, and full revoked-context coverage remain open; Issue #1350 stays OPEN.
+
+# Current priorities - verified 2026-11-22 (after PR #1500)
+
+Current main: a2ecb9c7f2f390bf3cf2427b46adf278854dce92
+Only active implementation track: Multi-Vendor tenant ownership, delegated authorization and portal acceptance - Issue #1350 (OPEN).
+
+1. P0 - Notifications/Outbox acceptance: Agent Email and WhatsApp now have bounded two-tenant direct Vendor?Customer / nested Reseller?Customer provider-boundary content-isolation tests. Revoked delegated context at retry exhaustion now fails closed to dead-letter before provider I/O for both channels. Continue only with remaining uncovered actor ? hierarchy ? delivery-kind combinations and real policy-engine integration evidence; do not duplicate these bounded cells or the existing uncertain-after-provider, broker-race, and Handoff SMTP tests.
+2. P1 - Actor ? Resource ? Action: select only a concrete uncovered hierarchy/resource/action cell from the acceptance audit; do not duplicate merged Vendor descendant-user, nested Customer file lifecycle/sibling isolation, direct/nested report artifact, or WorkflowRun provenance coverage.
+3. Gated - Immutable audit/failure policy: no Outbox/AssignmentCommand ledger implementation until event semantics, actor attribution, failure/privacy behavior and transaction coupling are decided.
+4. Gated - Historical Vendor permission backfill: requires sanitized historical snapshot review; no staging/production rehearsal or mutation.
+5. Gated - Human portal UX: requires human visual acceptance; CI is not a substitute.
+6. Keep Issue #1350 OPEN until all acceptance evidence and gated decisions are complete.
+
+Execution: start from the current handoff, status, priorities and acceptance audit; make one bounded source-backed change; run only focused checks; update documentation and Issue #1350 with verified evidence. PostgreSQL only on isolated disposable instances. No unrelated product tracks or broad repeated sweeps.

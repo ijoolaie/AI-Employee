@@ -845,3 +845,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - The test exercises the real _validate_and_load path twice per row (pre-uncertain and immediately pre-provider), captures the provider call, and asserts each delivery contains only its own tenant/channel/recipient/text and matching PolicyRequest; the other tenant's content and governance identifiers are absent.
 - Focused Python 3.12 WhatsApp, Email, generic Outbox, and Customer Handoff suites: **37 passed**; targeted Ruff and git diff --check passed. Provider is mocked; no DB, WhatsApp provider, SMTP, broker, Staging, or Production service was accessed.
 - Together with PR #1499, this adds bounded Agent Email and Agent WhatsApp provider-boundary content-isolation evidence. Notifications/Outbox actor × hierarchy × delivery-kind acceptance remains PARTIAL; retry/dead-letter/revocation and remaining actor/hierarchy combinations still require matrix-level evidence. Issue #1350 remains OPEN.
+
+## 2026-11-22 - Agent Email/WhatsApp retry-exhaustion and revocation evidence
+
+- Added parameterized direct Vendor→Customer and nested Reseller→Customer Agent Email and WhatsApp worker regressions. Each supplies a valid tenant/AgentInstance/Run/delegation binding, then simulates the current policy decision rejecting the revoked delegation before the provider boundary.
+- Both channels exercise the real worker retry transition and real `mark_retry` service at exhausted attempts: rows become `dead` with UTC `dead_at` and the delegated-revocation error; SMTP/WhatsApp provider is not called. WhatsApp path also validates the consumed exact-call approval and tenant-owned channel before policy rejection.
+- Focused Python 3.12 Email, WhatsApp, generic Outbox and Customer Handoff suites: **41 passed**; targeted Ruff and `git diff --check` passed. Policy decision and providers are mocked; no DB, provider, broker, Staging, or Production service was accessed.
+- This is bounded unit evidence for revoked delegated context at retry exhaustion, not a live policy-engine integration or full actor × hierarchy × delivery-kind matrix. Issue #1350 remains OPEN.

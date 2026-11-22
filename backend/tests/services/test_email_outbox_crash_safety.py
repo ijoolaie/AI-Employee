@@ -747,3 +747,72 @@ async def test_agent_email_direct_and_nested_tenant_content_isolated_at_smtp(mon
             if request.run_id == item["run_id"]
         ]
         assert len(matching_authorizations) == 2
+
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("hierarchy", ["direct_vendor_customer", "reseller_customer"])
+async def test_agent_email_revoked_delegation_dead_letters_after_retry_exhaustion(monkeypatch, hierarchy):
+    from datetime import datetime, timezone
+    from types import SimpleNamespace
+
+    from app.core import config
+    from app.core.exceptions import ValidationAppError
+
+    tenant_id, agent_id, run_id, delegation_id = uuid4(), uuid4(), uuid4(), uuid4()
+    row = SimpleNamespace(
+        id=uuid4(),
+        kind="email.send",
+        status="processing",
+        attempts=1,
+        tenant_id=tenant_id,
+        payload={
+            "to": [f"{hierarchy}@example.test"],
+            "subject": f"{hierarchy} restricted",
+            "body": f"{hierarchy} must never be sent",
+            "_agent_governance": {
+                "tenant_id": str(tenant_id),
+                "agent_instance_id": str(agent_id),
+                "run_id": str(run_id),
+                "tool_name": "send_email",
+                "delegation_id": str(delegation_id),
+            },
+        },
+        last_error=None,
+        dead_at=None,
+        available_at=None,
+    )
+    db = _DB([row])
+    authorization_requests = []
+    smtp_attempts = []
+
+    async def revoked(_db, request):
+        authorization_requests.append(request)
+        assert request.tenant_id == tenant_id
+        assert request.agent_instance_id == agent_id
+        assert request.run_id == run_id
+        assert request.delegation_id == delegation_id
+        assert request.tool_name == "send_email"
+        raise ValidationAppError(f"{hierarchy} delegated grant revoked before SMTP")
+
+    class _UnexpectedSMTP:
+        def __init__(self, *args, **kwargs):
+            smtp_attempts.append((args, kwargs))
+            raise AssertionError("revoked Agent email must not reach SMTP")
+
+    monkeypatch.setattr(config, "get_settings", lambda: SimpleNamespace(outbox_max_attempts=1))
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(db))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", revoked)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _UnexpectedSMTP)
+
+    await email_worker._send(str(row.id))
+
+    assert len(authorization_requests) == 1
+    assert smtp_attempts == []
+    assert row.status == "dead"
+    assert row.dead_at is not None
+    assert isinstance(row.dead_at, datetime)
+    assert row.dead_at.tzinfo == timezone.utc
+    assert hierarchy in row.last_error
+    assert db.commits == 1
