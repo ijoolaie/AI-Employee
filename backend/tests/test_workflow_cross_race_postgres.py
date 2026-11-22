@@ -541,6 +541,8 @@ async def test_timeout_between_child_commit_and_execution_fence_cancels_pending_
         created_by,
         employee_version_id=None,
         agent_instance_id=None,
+        actor_tenant_id=None,
+        portal_access_grant_id=None,
     ):
         child = Run(
             tenant_id=tenant_id,
@@ -548,6 +550,8 @@ async def test_timeout_between_child_commit_and_execution_fence_cancels_pending_
             employee_version_id=employee_version_id or data["employee_version_id"],
             agent_instance_id=agent_instance_id,
             created_by=created_by,
+            actor_tenant_id=actor_tenant_id,
+            portal_access_grant_id=portal_access_grant_id,
             status="pending",
             input_data=input_data,
         )
@@ -686,6 +690,8 @@ async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
         created_by,
         employee_version_id=None,
         agent_instance_id=None,
+        actor_tenant_id=None,
+        portal_access_grant_id=None,
     ):
         child = Run(
             tenant_id=tenant_id,
@@ -693,6 +699,8 @@ async def test_parallel_branch_timeout_after_child_commit_never_executes_child(
             employee_version_id=employee_version_id or data["employee_version_id"],
             agent_instance_id=agent_instance_id,
             created_by=created_by,
+            actor_tenant_id=actor_tenant_id,
+            portal_access_grant_id=portal_access_grant_id,
             status="pending",
             input_data=input_data,
         )
@@ -848,6 +856,8 @@ async def test_parallel_branch_cancellation_after_child_commit_never_executes_ch
         created_by,
         employee_version_id=None,
         agent_instance_id=None,
+        actor_tenant_id=None,
+        portal_access_grant_id=None,
     ):
         child = Run(
             tenant_id=tenant_id,
@@ -855,6 +865,8 @@ async def test_parallel_branch_cancellation_after_child_commit_never_executes_ch
             employee_version_id=employee_version_id or data["employee_version_id"],
             agent_instance_id=agent_instance_id,
             created_by=created_by,
+            actor_tenant_id=actor_tenant_id,
+            portal_access_grant_id=portal_access_grant_id,
             status="pending",
             input_data=input_data,
         )
@@ -993,6 +1005,8 @@ async def test_parallel_branch_cancellation_after_child_execution_preserves_term
         created_by,
         employee_version_id=None,
         agent_instance_id=None,
+        actor_tenant_id=None,
+        portal_access_grant_id=None,
     ):
         child = Run(
             tenant_id=tenant_id,
@@ -1000,6 +1014,8 @@ async def test_parallel_branch_cancellation_after_child_execution_preserves_term
             employee_version_id=employee_version_id or data["employee_version_id"],
             agent_instance_id=agent_instance_id,
             created_by=created_by,
+            actor_tenant_id=actor_tenant_id,
+            portal_access_grant_id=portal_access_grant_id,
             status="pending",
             input_data=input_data,
         )

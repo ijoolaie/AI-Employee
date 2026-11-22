@@ -395,10 +395,8 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         workflow_run_id = branch_ref.scalar_one_or_none()
         if workflow_run_id is None:
             raise ValidationAppError("Parallel branch not found")
-        parent_lookup = (
-            select(WorkflowRun)
-            .where(WorkflowRun.id == workflow_run_id)
-            .with_for_update()
+        parent_lookup = select(WorkflowRun).where(
+            WorkflowRun.id == workflow_run_id
         )
         if expected_tenant_id is not None:
             parent_lookup = parent_lookup.where(
@@ -411,23 +409,6 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         if expected_tenant_id is not None and parent.tenant_id != expected_tenant_id:
             raise ValidationAppError("Worker tenant context does not match Workflow Run tenant")
         workflow_run_id = parent.id
-        if parent.status == "running" and not await validate_workflow_run_portal_context(db, run=parent):
-            branch_result = await db.execute(
-                select(WorkflowParallelBranchRun).where(
-                    WorkflowParallelBranchRun.id == branch_id
-                )
-            )
-            branch = branch_result.scalar_one_or_none()
-            if branch is not None and branch.status not in {"success", "failed", "cancelled"}:
-                branch.status = "failed"
-                branch.error = {
-                    "code": "DELEGATED_PORTAL_CONTEXT_INVALID",
-                    "message": "Parent workflow delegated portal access is no longer active",
-                }
-                branch.completed_at = datetime.now(timezone.utc)
-                await db.flush()
-            await db.commit()
-            return
 
         acquired_lease = execution_lease_id is None
         lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(
@@ -489,6 +470,16 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                     branch.error = {
                         "code": "WORKFLOW_PARENT_TERMINAL",
                         "message": parent.error.get("message") if parent.error else f"Workflow parent ended with status {parent.status}",
+                    }
+                    branch.completed_at = datetime.now(timezone.utc)
+                    branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
+                    await db.commit()
+                    return
+                if not await validate_workflow_run_portal_context(db, run=parent):
+                    branch.status = "failed"
+                    branch.error = {
+                        "code": "DELEGATED_PORTAL_CONTEXT_INVALID",
+                        "message": "Parent workflow delegated portal access is no longer active",
                     }
                     branch.completed_at = datetime.now(timezone.utc)
                     branch.execution_lease_id = None; branch.execution_lease_expires_at = None; branch.execution_heartbeat_at = None
