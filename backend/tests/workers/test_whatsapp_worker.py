@@ -455,3 +455,169 @@ async def test_whatsapp_worker_keeps_two_tenant_content_isolated_at_provider_bou
         assert row.status == "dispatched"
         assert databases[index].events.count("commit") == 2
         assert databases[index].events.count("rollback") == 0
+
+
+
+@pytest.mark.asyncio
+async def test_agent_whatsapp_direct_and_nested_tenant_content_isolated_at_provider(monkeypatch):
+    tenants = [
+        {
+            "hierarchy": "direct_vendor_customer",
+            "tenant_id": uuid4(),
+            "agent_instance_id": uuid4(),
+            "run_id": uuid4(),
+            "delegation_id": uuid4(),
+            "approval_id": uuid4(),
+            "channel_id": uuid4(),
+            "tool_call_id": "direct-call-01",
+            "recipient": "+15550000101",
+            "text": "DIRECT-CUSTOMER-ONLY incident marker",
+            "channel_marker": "direct-customer-channel",
+        },
+        {
+            "hierarchy": "reseller_customer",
+            "tenant_id": uuid4(),
+            "agent_instance_id": uuid4(),
+            "run_id": uuid4(),
+            "delegation_id": uuid4(),
+            "approval_id": uuid4(),
+            "channel_id": uuid4(),
+            "tool_call_id": "nested-call-02",
+            "recipient": "+15550000202",
+            "text": "RESELLER-CUSTOMER-ONLY incident marker",
+            "channel_marker": "reseller-customer-channel",
+        },
+    ]
+    rows = []
+    approvals = []
+    channels = []
+    for item in tenants:
+        row = SimpleNamespace(
+            id=uuid4(),
+            kind="whatsapp.send_text",
+            tenant_id=item["tenant_id"],
+            status="processing",
+            attempts=1,
+            last_error=None,
+            dead_at=None,
+            payload={
+                "run_id": str(item["run_id"]),
+                "approval_request_id": str(item["approval_id"]),
+                "channel_id": str(item["channel_id"]),
+                "tool_name": "whatsapp.send_text",
+                "tool_call_id": item["tool_call_id"],
+                "recipient": item["recipient"],
+                "text": item["text"],
+                "_agent_governance": {
+                    "tenant_id": str(item["tenant_id"]),
+                    "agent_instance_id": str(item["agent_instance_id"]),
+                    "run_id": str(item["run_id"]),
+                    "tool_name": "whatsapp.send_text",
+                    "delegation_id": str(item["delegation_id"]),
+                },
+            },
+        )
+        rows.append(row)
+        approvals.append(
+            SimpleNamespace(
+                id=item["approval_id"],
+                tenant_id=item["tenant_id"],
+                run_id=item["run_id"],
+                tool_name="whatsapp.send_text",
+                tool_call_id=item["tool_call_id"],
+                status="consumed",
+                arguments={
+                    "channel_id": str(item["channel_id"]),
+                    "recipient": item["recipient"],
+                    "text": item["text"],
+                },
+            )
+        )
+        channels.append(
+            SimpleNamespace(
+                id=item["channel_id"],
+                tenant_id=item["tenant_id"],
+                channel_type="whatsapp",
+                is_active=True,
+                config={"channel_marker": item["channel_marker"]},
+            )
+        )
+
+    class _GovernedDB(_DB):
+        def __init__(self, row, approval, channel):
+            super().__init__(row)
+            self.approval = approval
+            self.channel = channel
+            self.query_index = 0
+
+        async def execute(self, *_args, **_kwargs):
+            if self.query_index == 0:
+                result = self.row
+            elif self.query_index % 2 == 1:
+                result = self.approval
+            else:
+                result = self.channel
+            self.query_index += 1
+            return _Result(result)
+
+    databases = [
+        _GovernedDB(row, approval, channel)
+        for row, approval, channel in zip(rows, approvals, channels, strict=True)
+    ]
+    contexts = iter(databases)
+    deliveries = AsyncMock(
+        side_effect=[
+            SimpleNamespace(provider_message_id="direct-provider-message", status="sent"),
+            SimpleNamespace(provider_message_id="nested-provider-message", status="sent"),
+        ]
+    )
+    authorization_requests = []
+    expected_by_delegation = {
+        item["delegation_id"]: item for item in tenants
+    }
+
+    async def authorize(_db, request):
+        authorization_requests.append(request)
+        expected = expected_by_delegation[request.delegation_id]
+        assert request.tenant_id == expected["tenant_id"]
+        assert request.agent_instance_id == expected["agent_instance_id"]
+        assert request.run_id == expected["run_id"]
+        assert request.action == "tool.execute"
+        assert request.tool_name == "whatsapp.send_text"
+        assert request.required_permission == "run.execute"
+
+    async def mark_dispatched(_db, row):
+        row.status = "dispatched"
+
+    monkeypatch.setattr(whatsapp_worker, "worker_db_session", lambda: _session(next(contexts)))
+    monkeypatch.setattr(whatsapp_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(whatsapp_worker, "deliver_text", deliveries)
+    monkeypatch.setattr(whatsapp_worker, "mark_dispatched", mark_dispatched)
+
+    for row in rows:
+        await whatsapp_worker._send(str(row.id))
+
+    assert deliveries.await_count == 2
+    assert len(authorization_requests) == 4
+    for index, (item, row, call, db) in enumerate(
+        zip(tenants, rows, deliveries.await_args_list, databases, strict=True)
+    ):
+        arguments = call.kwargs
+        assert arguments["tenant_id"] == item["tenant_id"]
+        assert arguments["channel_type"] == "whatsapp"
+        assert arguments["channel_config"] == {"channel_marker": item["channel_marker"]}
+        assert arguments["recipient"] == item["recipient"]
+        assert arguments["text"] == item["text"]
+        other = tenants[1 - index]
+        assert other["recipient"] not in repr(arguments)
+        assert other["text"] not in repr(arguments)
+        assert other["channel_marker"] not in repr(arguments)
+        assert row.status == "dispatched"
+        assert db.query_index == 5
+        assert db.events.count("commit") == 2
+        assert db.events.count("rollback") == 0
+        matching_authorizations = [
+            request for request in authorization_requests
+            if request.run_id == item["run_id"]
+        ]
+        assert len(matching_authorizations) == 2

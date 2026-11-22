@@ -1778,3 +1778,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - PR #1497 merged at `cc9f2de906671aaa34973e53c82fcfef85f49b64`; WorkflowRun actor/grant provenance is persisted, delegated workflow.execute is revalidated before worker lease/steps, and sequential/parallel child Runs inherit actor provenance. Parallel branch parent-first lock ordering passed PostgreSQL CI.
 - PR #1498 merged at `b13216a2d11b1f963ea9a6dff7c64c00558898d6`. PostgreSQL-backed direct Vendor→Customer and nested Reseller→Customer Report Employee Runs now exercise Run API -> Outbox -> Celery task, including revoke-before-dispatch denial before memory loading and artifact ownership/list/download/revocation.
 - Agent Email two-tenant SMTP-boundary content-isolation test added; focused Email/WhatsApp/Outbox/Handoff suites: 36 passed; Ruff passed. This is bounded unit evidence only. Notifications/Outbox matrix remains PARTIAL; Issue #1350 remains OPEN.
+
+## 2026-11-22 - Agent WhatsApp provider-boundary isolation
+
+- Added a two-tenant Agent-governed WhatsApp worker test for direct Vendor→Customer and nested Reseller→Customer delegation. It validates each exact approval and governance PolicyRequest twice before provider execution, then proves provider arguments contain only that tenant's channel, recipient, and text.
+- Focused Python 3.12 WhatsApp/Email/Outbox/Customer Handoff suites: 37 passed; targeted Ruff passed. Provider and authorization decision are mocked at unit boundary; no external provider or database was accessed.
+- Agent Email and Agent WhatsApp now each have bounded two-tenant provider-boundary content-isolation evidence. Full Notifications/Outbox actor × hierarchy × delivery-kind matrix remains PARTIAL; Issue #1350 remains OPEN.
