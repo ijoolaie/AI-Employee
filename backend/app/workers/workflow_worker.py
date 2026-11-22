@@ -48,14 +48,23 @@ async def _run_async(workflow_run_id: str, tenant_id: str) -> None:
             # Celery task metadata is untrusted. Validate the durable tenant boundary
             # before acquiring the lease or allowing any workflow step to execute.
             result = await db.execute(
-                select(WorkflowRun.tenant_id).where(
+                select(WorkflowRun).where(
                     WorkflowRun.id == workflow_uuid,
                     WorkflowRun.tenant_id == uuid.UUID(tenant_id),
                 )
             )
-            durable_tenant_id = result.scalar_one_or_none()
-            if durable_tenant_id is None:
+            workflow_run = result.scalar_one_or_none()
+            if workflow_run is None:
                 raise ValueError("Workflow Run not found for tenant context")
+            if not await workflow_service.validate_workflow_run_portal_context(db, run=workflow_run):
+                await db.commit()
+                WORKFLOW_RUNS.labels("failed").inc()
+                WORKFLOW_LATENCY.observe(perf_counter()-started)
+                logger.warning(
+                    "workflow_execution_blocked_delegated_portal_context",
+                    extra={"workflow_run_id": workflow_run_id, "tenant_id": tenant_id},
+                )
+                return
 
             heartbeat_task=None; execution_task=None; lost=asyncio.Event()
             try:

@@ -82,7 +82,7 @@ async def activate_workflow_version(workflow_id: UUID, version_id: UUID, ctx: Wo
 @router.post("/{workflow_id}/runs", response_model=APIResponse[WorkflowRunResponse], status_code=status.HTTP_201_CREATED)
 async def create_workflow_run(workflow_id: UUID, payload: WorkflowRunCreate, ctx: WorkflowExecuteContext, db: DbSession, idempotency_key: str | None = Header(default=None, alias="Idempotency-Key")):
     key = idempotency_key or payload.idempotency_key
-    run = await workflow_service.create_workflow_run(db, tenant_id=ctx.tenant_id, workflow_id=workflow_id, input_data=payload.input_data, created_by=ctx.user_id, idempotency_key=key, workflow_version_id=payload.workflow_version_id)
+    run = await workflow_service.create_workflow_run(db, tenant_id=ctx.tenant_id, workflow_id=workflow_id, input_data=payload.input_data, created_by=ctx.user_id, actor_tenant_id=ctx.actor_tenant_id, portal_access_grant_id=ctx.portal_access_grant_id, idempotency_key=key, workflow_version_id=payload.workflow_version_id)
     from app.services.outbox_service import enqueue
     await enqueue(db, kind="workflow.execute", tenant_id=ctx.tenant_id, payload={"workflow_run_id": str(run.id)}, dedupe_key=f"workflow.execute:{run.id}:initial")
     return APIResponse(success=True, data=WorkflowRunResponse.model_validate(run))
@@ -122,7 +122,7 @@ async def get_workflow_observability(workflow_id: UUID, run_id: UUID, ctx: Workf
 
 @router.post("/{workflow_id}/runs/{run_id}/replay", response_model=APIResponse[WorkflowRunResponse], status_code=status.HTTP_201_CREATED)
 async def replay_workflow_run(workflow_id: UUID, run_id: UUID, payload: WorkflowReplayRequest, ctx: WorkflowExecuteContext, db: DbSession):
-    run = await workflow_service.replay_workflow_run(db, tenant_id=ctx.tenant_id, workflow_id=workflow_id, source_run_id=run_id, created_by=ctx.user_id, idempotency_key=payload.idempotency_key)
+    run = await workflow_service.replay_workflow_run(db, tenant_id=ctx.tenant_id, workflow_id=workflow_id, source_run_id=run_id, created_by=ctx.user_id, actor_tenant_id=ctx.actor_tenant_id, portal_access_grant_id=ctx.portal_access_grant_id, idempotency_key=payload.idempotency_key)
     from app.services.outbox_service import enqueue
     await enqueue(db, kind="workflow.execute", tenant_id=ctx.tenant_id, payload={"workflow_run_id": str(run.id), "reason": "replay", "generation": 0}, dedupe_key=f"workflow.execute:{run.id}:replay")
     return APIResponse(success=True, data=WorkflowRunResponse.model_validate(run))

@@ -6,6 +6,7 @@ import hashlib
 import json
 from datetime import datetime, timezone, timedelta
 from typing import Any
+from fastapi import HTTPException
 from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
@@ -14,6 +15,7 @@ from app.core.exceptions import NotFoundError, ValidationAppError
 from app.core.logging import request_id_var
 from app.models.employee import Employee, EmployeeVersion
 from app.models.run import Run
+from app.models.user import User
 from app.models.workflow import Workflow, WorkflowVersion, WorkflowRun, WorkflowStepRun, WorkflowParallelBranchRun
 from app.models.workflow_approval import WorkflowApproval
 from app.services import audit_service, employee_service, run_service, outbox_service, billing_service
@@ -220,7 +222,60 @@ async def get_current_version(db: AsyncSession, *, workflow_id: uuid.UUID) -> Wo
     return version
 
 
-async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, input_data: dict[str, Any], created_by: uuid.UUID, idempotency_key: str | None = None, workflow_version_id: uuid.UUID | None = None, agent_instance_id: uuid.UUID | None = None) -> WorkflowRun:
+async def validate_workflow_run_portal_context(db: AsyncSession, *, run: WorkflowRun) -> bool:
+    """Revalidate delegated authority before a Workflow Run or branch executes."""
+    actor_tenant_id = run.actor_tenant_id or run.tenant_id
+    try:
+        if run.portal_access_grant_id is None:
+            if actor_tenant_id != run.tenant_id:
+                raise ValidationAppError("Delegated Workflow Run is missing its portal access grant")
+            if run.created_by is not None:
+                actor_result = await db.execute(
+                    select(User.id).where(
+                        User.id == run.created_by,
+                        User.tenant_id == actor_tenant_id,
+                        User.is_active.is_(True),
+                    )
+                )
+                if actor_result.scalar_one_or_none() is None:
+                    raise ValidationAppError("Workflow creator is not an active member of the actor tenant")
+            return True
+
+        if run.actor_tenant_id is None or run.created_by is None:
+            raise ValidationAppError("Delegated Workflow Run is missing actor provenance")
+
+        from app.services.portal_access_service import validate_portal_access_grant
+
+        await validate_portal_access_grant(
+            db,
+            actor_user_id=run.created_by,
+            actor_tenant_id=run.actor_tenant_id,
+            target_tenant_id=run.tenant_id,
+            grant_id=run.portal_access_grant_id,
+        )
+        if not await run_service.actor_has_tenant_permission(
+            db,
+            actor_user_id=run.created_by,
+            actor_tenant_id=run.actor_tenant_id,
+            permission_code="workflow.execute",
+        ):
+            raise ValidationAppError(
+                "Workflow creator no longer has workflow.execute permission in the actor tenant"
+            )
+        return True
+    except (HTTPException, ValidationAppError) as exc:
+        message = str(exc.detail if isinstance(exc, HTTPException) else exc)
+        run.status = "failed"
+        run.error = {"code": "DELEGATED_PORTAL_CONTEXT_INVALID", "message": message[:2000]}
+        run.completed_at = datetime.now(timezone.utc)
+        run.execution_lease_id = None
+        run.execution_lease_expires_at = None
+        run.execution_heartbeat_at = None
+        await db.flush()
+        return False
+
+
+async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, input_data: dict[str, Any], created_by: uuid.UUID, idempotency_key: str | None = None, workflow_version_id: uuid.UUID | None = None, agent_instance_id: uuid.UUID | None = None, actor_tenant_id: uuid.UUID | None = None, portal_access_grant_id: uuid.UUID | None = None) -> WorkflowRun:
     workflow = await get_workflow(db, workflow_id=workflow_id, tenant_id=tenant_id)
     if idempotency_key:
         existing = await db.execute(select(WorkflowRun).where(WorkflowRun.tenant_id == tenant_id, WorkflowRun.workflow_id == workflow_id, WorkflowRun.idempotency_key == idempotency_key))
@@ -243,7 +298,7 @@ async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
     max_runtime = version.config.get("max_runtime_seconds")
     deadline = datetime.now(timezone.utc) + timedelta(seconds=int(max_runtime)) if max_runtime else None
     context = {"input": input_data, "steps": {}, "_workflow": {"dispatch_generation": 0, "workflow_version_number": version.version_number, "workflow_content_hash": version.content_hash, "execution_contract": contract}}
-    run = WorkflowRun(tenant_id=tenant_id, workflow_id=workflow.id, workflow_version_id=version.id, created_by=created_by, agent_instance_id=agent_instance_id, status="pending", context=context, deadline_at=deadline, idempotency_key=idempotency_key)
+    run = WorkflowRun(tenant_id=tenant_id, workflow_id=workflow.id, workflow_version_id=version.id, created_by=created_by, actor_tenant_id=actor_tenant_id or tenant_id, portal_access_grant_id=portal_access_grant_id, agent_instance_id=agent_instance_id, status="pending", context=context, deadline_at=deadline, idempotency_key=idempotency_key)
     try:
         async with db.begin_nested():
             db.add(run)
@@ -264,7 +319,7 @@ async def create_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
     return run
 
 
-async def replay_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, source_run_id: uuid.UUID, created_by: uuid.UUID, idempotency_key: str | None = None) -> WorkflowRun:
+async def replay_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflow_id: uuid.UUID, source_run_id: uuid.UUID, created_by: uuid.UUID, idempotency_key: str | None = None, actor_tenant_id: uuid.UUID | None = None, portal_access_grant_id: uuid.UUID | None = None) -> WorkflowRun:
     """Create a replay using the exact immutable contract of the source run."""
     source = await get_workflow_run(db, workflow_run_id=source_run_id, tenant_id=tenant_id)
     if source.workflow_id != workflow_id:
@@ -285,7 +340,7 @@ async def replay_workflow_run(db: AsyncSession, *, tenant_id: uuid.UUID, workflo
     contract_steps = source_contract.get("steps")
     if not isinstance(contract_steps, list) or not contract_steps:
         raise ValidationAppError("Source workflow version has an invalid immutable execution contract")
-    run = await create_workflow_run(db, tenant_id=tenant_id, workflow_id=workflow_id, workflow_version_id=source.workflow_version_id, input_data=dict(source_context.get("input") or {}), created_by=created_by, idempotency_key=idempotency_key)
+    run = await create_workflow_run(db, tenant_id=tenant_id, workflow_id=workflow_id, workflow_version_id=source.workflow_version_id, input_data=dict(source_context.get("input") or {}), created_by=created_by, idempotency_key=idempotency_key, actor_tenant_id=actor_tenant_id, portal_access_grant_id=portal_access_grant_id)
     state = dict(run.context or {})
     wf = dict(state.get("_workflow") or {})
     wf["replay_of_run_id"] = str(source.id)
@@ -340,8 +395,10 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         workflow_run_id = branch_ref.scalar_one_or_none()
         if workflow_run_id is None:
             raise ValidationAppError("Parallel branch not found")
-        parent_lookup = select(WorkflowRun).where(
-            WorkflowRun.id == workflow_run_id
+        parent_lookup = (
+            select(WorkflowRun)
+            .where(WorkflowRun.id == workflow_run_id)
+            .with_for_update()
         )
         if expected_tenant_id is not None:
             parent_lookup = parent_lookup.where(
@@ -354,6 +411,23 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
         if expected_tenant_id is not None and parent.tenant_id != expected_tenant_id:
             raise ValidationAppError("Worker tenant context does not match Workflow Run tenant")
         workflow_run_id = parent.id
+        if parent.status == "running" and not await validate_workflow_run_portal_context(db, run=parent):
+            branch_result = await db.execute(
+                select(WorkflowParallelBranchRun).where(
+                    WorkflowParallelBranchRun.id == branch_id
+                )
+            )
+            branch = branch_result.scalar_one_or_none()
+            if branch is not None and branch.status not in {"success", "failed", "cancelled"}:
+                branch.status = "failed"
+                branch.error = {
+                    "code": "DELEGATED_PORTAL_CONTEXT_INVALID",
+                    "message": "Parent workflow delegated portal access is no longer active",
+                }
+                branch.completed_at = datetime.now(timezone.utc)
+                await db.flush()
+            await db.commit()
+            return
 
         acquired_lease = execution_lease_id is None
         lease_id = execution_lease_id or await acquire_parallel_branch_execution_lease(
@@ -485,6 +559,8 @@ async def _execute_parallel_branch(branch_id: uuid.UUID, execution_lease_id: uui
                             ),
                             input_data=step_input,
                             created_by=parent.created_by,
+                            actor_tenant_id=parent.actor_tenant_id,
+                            portal_access_grant_id=parent.portal_access_grant_id,
                             agent_instance_id=parent.agent_instance_id,
                         )
                         child.workflow_parallel_branch_run_id = branch.id
@@ -629,6 +705,10 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
     run = result.scalar_one_or_none()
     if run is None:
         raise NotFoundError("Workflow run not found")
+    if run.status not in {"pending", "waiting_approval", "running"}:
+        return run
+    if not await validate_workflow_run_portal_context(db, run=run):
+        return run
     version_result = await db.execute(select(WorkflowVersion).where(WorkflowVersion.id == run.workflow_version_id))
     version = version_result.scalar_one_or_none()
     if version is None:
@@ -760,6 +840,8 @@ async def execute_workflow(db: AsyncSession, *, workflow_run_id: uuid.UUID, exec
                         employee_version_id=uuid.UUID(str(definition["employee_version_id"])) if definition.get("employee_version_id") else None, 
                         input_data=step_input, 
                         created_by=run.created_by,
+                        actor_tenant_id=run.actor_tenant_id,
+                        portal_access_grant_id=run.portal_access_grant_id,
                         agent_instance_id=run.agent_instance_id,
                     )
                     child.workflow_step_run_id = step.id

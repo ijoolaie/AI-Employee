@@ -42,6 +42,9 @@ class WorkflowRun(Base):
     workflow_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("workflows.id"), nullable=False, index=True)
     workflow_version_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("workflow_versions.id"), nullable=False)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"))
+    # Durable actor provenance for delegated portal Workflow Runs. Nullable for historical rows.
+    actor_tenant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True, index=True)
+    portal_access_grant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("portal_access_grants.id", ondelete="SET NULL"), nullable=True, index=True)
     # Optional principal provenance for workflow executions initiated on behalf of an AgentInstance.
     agent_instance_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("agent_instances.id", ondelete="RESTRICT"), nullable=True, index=True)
     status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending", index=True)

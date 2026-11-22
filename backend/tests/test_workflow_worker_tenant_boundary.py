@@ -13,22 +13,36 @@ class _FakeDb:
         self._durable_tenant_id = durable_tenant_id
         self._task_tenant_id = task_tenant_id
         self.queries = []
+        self.committed = False
+        self.run = (
+            SimpleNamespace(
+                id="00000000-0000-0000-0000-000000000001",
+                tenant_id=durable_tenant_id,
+                actor_tenant_id=durable_tenant_id,
+                created_by=None,
+                portal_access_grant_id=None,
+                status="pending",
+                error=None,
+                completed_at=None,
+                execution_lease_id=None,
+                execution_lease_expires_at=None,
+                execution_heartbeat_at=None,
+            )
+            if durable_tenant_id is not None and durable_tenant_id == task_tenant_id
+            else None
+        )
 
     async def execute(self, statement):
         self.queries.append(str(statement))
-        return SimpleNamespace(
-            scalar_one_or_none=lambda: (
-                self._durable_tenant_id
-                if self._durable_tenant_id is not None
-                and self._durable_tenant_id == self._task_tenant_id
-                else None
-            )
-        )
+        return SimpleNamespace(scalar_one_or_none=lambda: self.run)
 
     async def commit(self):
-        raise AssertionError("tenant validation failure must not commit")
+        self.committed = True
 
     async def rollback(self):
+        pass
+
+    async def flush(self):
         pass
 
 
@@ -85,5 +99,44 @@ async def test_workflow_worker_validates_durable_tenant_before_execution(
 
     assert len(db.queries) == 1
     assert "workflow_runs.tenant_id =" in db.queries[0]
+    acquire_lease.assert_not_awaited()
+    execute_workflow.assert_not_awaited()
+
+
+
+@pytest.mark.asyncio
+async def test_workflow_worker_rejects_revoked_portal_context_before_lease(monkeypatch):
+    tenant_id = "10000000-0000-0000-0000-000000000001"
+    db = _FakeDb(tenant_id, tenant_id)
+    db.run.actor_tenant_id = "20000000-0000-0000-0000-000000000002"
+    db.run.created_by = "30000000-0000-0000-0000-000000000003"
+    db.run.portal_access_grant_id = "40000000-0000-0000-0000-000000000004"
+    acquire_lease = AsyncMock()
+    execute_workflow = AsyncMock()
+
+    monkeypatch.setattr(workflow_worker, "worker_db_session", lambda: _DbContext(db))
+    monkeypatch.setattr(
+        workflow_worker.workflow_service,
+        "validate_workflow_run_portal_context",
+        AsyncMock(return_value=False),
+    )
+    monkeypatch.setattr(
+        workflow_worker.workflow_service,
+        "acquire_workflow_execution_lease",
+        acquire_lease,
+    )
+    monkeypatch.setattr(
+        workflow_worker.workflow_service,
+        "execute_workflow",
+        execute_workflow,
+    )
+
+    await workflow_worker._run_async(
+        "00000000-0000-0000-0000-000000000001",
+        tenant_id,
+    )
+
+    assert db.run.status == "pending"
+    assert db.committed is True
     acquire_lease.assert_not_awaited()
     execute_workflow.assert_not_awaited()

@@ -74,6 +74,33 @@ def _effective_run_tool_permissions(user: User, tenant_id: uuid.UUID) -> set[str
         for permission in role.permissions
     }
 
+async def actor_has_tenant_permission(
+    db: AsyncSession,
+    *,
+    actor_user_id: uuid.UUID,
+    actor_tenant_id: uuid.UUID,
+    permission_code: str,
+) -> bool:
+    """Resolve a current actor permission strictly within the actor's home tenant."""
+    user_result = await db.execute(
+        select(User)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
+        .where(
+            User.id == actor_user_id,
+            User.tenant_id == actor_tenant_id,
+            User.is_active.is_(True),
+        )
+    )
+    user = user_result.scalar_one_or_none()
+    if user is None:
+        return False
+    return any(
+        role.tenant_id == actor_tenant_id
+        and any(permission.code == permission_code for permission in role.permissions)
+        for role in user.roles
+    )
+
+
 async def _load_run_user_tool_permissions(
     db: AsyncSession, *, run: Run, actor_tenant_id: uuid.UUID
 ) -> set[str]:
@@ -382,6 +409,13 @@ async def validate_run_portal_context(db: AsyncSession, *, run: Run) -> uuid.UUI
             target_tenant_id=run.tenant_id,
             grant_id=run.portal_access_grant_id,
         )
+        if not await actor_has_tenant_permission(
+            db,
+            actor_user_id=run.created_by,
+            actor_tenant_id=run.actor_tenant_id,
+            permission_code="run.execute",
+        ):
+            raise ValidationAppError("Run creator no longer has run.execute permission in the actor tenant")
         return run.actor_tenant_id
     except (HTTPException, ValidationAppError) as exc:
         run.status = "failed"
