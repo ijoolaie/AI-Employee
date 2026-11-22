@@ -40,26 +40,37 @@ export function EmailChangeSettings({ basePath }: { basePath: string }) {
 export function EmailChangeConfirmation({ backPath }: { backPath: string }) {
   const { locale } = useI18n();
   const fa = locale === "fa";
-  const [state, setState] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState(fa ? "در حال تأیید آدرس ایمیل جدید…" : "Confirming your new email address…");
+  const [token, setToken] = useState("");
+  const [state, setState] = useState<"ready" | "submitting" | "success" | "error">("ready");
+  const [message, setMessage] = useState(fa ? "برای ادامه، تأیید را انتخاب کنید." : "Review this request, then confirm to continue.");
+
   useEffect(() => {
-    let active = true;
-    const token = new URLSearchParams(window.location.search).get("token") || "";
-    if (!token) {
+    const value = new URLSearchParams(window.location.search).get("token") || "";
+    if (!value) {
       setState("error");
       setMessage(fa ? "توکن پیوند تأیید وجود ندارد." : "The verification link is missing its token.");
     } else {
-      confirmEmailChange(token).then(result => {
-        if (!active) return;
-        setState("success");
-        setMessage(result.message);
-      }).catch(err => {
-        if (!active) return;
-        setState("error");
-        setMessage(err instanceof Error ? err.message : (fa ? "پیوند تأیید نامعتبر است یا منقضی شده است." : "The verification link is invalid or expired."));
-      });
+      setToken(value);
     }
-    return () => { active = false; };
-  }, []);
-  return <main className="mx-auto max-w-xl space-y-5 p-8"><h1 className="text-2xl font-semibold">{fa ? "تأیید تغییر ایمیل" : "Confirm email change"}</h1><p role={state === "error" ? "alert" : "status"} className="text-sm text-gray-700">{message}</p>{state === "success" ? <p className="text-sm">{fa ? "لطفاً خارج شوید و با ایمیل جدید دوباره وارد شوید." : "Please sign out and sign in again using the new email address."}</p> : null}<Link href={backPath} className="text-sm underline">{fa ? "بازگشت به تنظیمات امنیت" : "Back to security settings"}</Link></main>;
+  }, [fa]);
+
+  async function confirm() {
+    if (!token || state === "submitting" || state === "success") return;
+    setState("submitting");
+    try {
+      await confirmEmailChange(token);
+      setState("success");
+      setMessage(fa ? "ایمیل ورود با موفقیت تغییر کرد. لطفاً با ایمیل جدید دوباره وارد شوید." : "Your sign-in email has been changed. Please sign in again using the new email address.");
+    } catch (err) {
+      setState("error");
+      setMessage(err instanceof Error ? err.message : (fa ? "پیوند تأیید نامعتبر است یا منقضی شده است." : "The verification link is invalid or expired."));
+    }
+  }
+
+  return <main className="mx-auto max-w-xl space-y-5 p-8">
+    <h1 className="text-2xl font-semibold">{fa ? "تأیید تغییر ایمیل" : "Confirm email change"}</h1>
+    <p role={state === "error" ? "alert" : "status"} className="text-sm text-gray-700">{message}</p>
+    {token && state !== "success" && state !== "error" ? <Button type="button" onClick={confirm} loading={state === "submitting"}>{fa ? "تأیید تغییر ایمیل" : "Confirm email change"}</Button> : null}
+    <Link href={backPath} className="text-sm underline">{fa ? "بازگشت به ورود" : "Back to sign in"}</Link>
+  </main>;
 }
