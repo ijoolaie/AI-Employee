@@ -9,7 +9,7 @@ from app.models.agent_instance import AgentInstanceStatus
 from app.models.agent_access_review import AgentAccessReviewDecision
 from app.services import agent_policy_engine
 from app.services.agent_delegation_service import authorize_delegation, revoke_delegation, validate_delegation
-from app.services.agent_policy_engine import PolicyDecision, PolicyRequest, authorize
+from app.services.agent_policy_engine import PolicyDecision, PolicyRequest, assert_authorized, authorize
 from app.services.unified_execution import ExecutionError, UnifiedExecutionService
 from app.models.work_item import ExecutorType, WorkItemStatus
 
@@ -17,6 +17,9 @@ from app.models.work_item import ExecutorType, WorkItemStatus
 class FakeResult:
     def __init__(self, value): self.value = value
     def scalar_one_or_none(self): return self.value
+    def scalar_one(self):
+        if self.value is None: raise AssertionError("expected a value")
+        return self.value
     def scalars(self): return self
     def all(self): return self.value if isinstance(self.value, list) else [self.value]
     def first(self): return self.value
@@ -620,3 +623,77 @@ def test_tenant_admin_defaults_include_delegation_permissions():
 
     assert "agent_delegation.create" in DEFAULT_TENANT_ADMIN_PERMISSIONS
     assert "agent_delegation.revoke" in DEFAULT_TENANT_ADMIN_PERMISSIONS
+
+
+@pytest.mark.asyncio
+async def test_policy_engine_calls_real_direct_delegation_validation(monkeypatch):
+    tenant = uuid4()
+    delegator_id, delegate_id, source_id = uuid4(), uuid4(), uuid4()
+    delegation = delegation_record(
+        tenant, delegator_id, delegate_id,
+        datetime.now(timezone.utc) + timedelta(hours=1),
+    )
+    delegation.source_work_item_id = source_id
+    delegation.scopes = {"actions": ["tool.execute"], "tools": ["send_email"]}
+    source = SimpleNamespace(
+        id=source_id, tenant_id=tenant, status=WorkItemStatus.RUNNING,
+        policy_context={},
+    )
+    delegator_agent = agent(tenant, delegator_id, permissions=["run.execute"])
+    delegate_agent = agent(
+        tenant, delegate_id, allowed_tools=["send_email"],
+        permissions=["run.execute"],
+    )
+    delegator_identity, delegate_identity = identity(), identity()
+    delegator_identity.agent_instance_id = delegator_id
+    delegate_identity.agent_instance_id = delegate_id
+    reviews = {
+        delegator_identity.id: access_review(),
+        delegate_identity.id: access_review(),
+    }
+    statements = []
+
+    class IntegratedDb:
+        async def execute(self, statement):
+            sql = str(statement)
+            statements.append(sql)
+            if "agent_kill_switches" in sql:
+                return FakeResult(None)
+            if "agent_delegations" in sql:
+                return FakeResult(delegation)
+            if "work_items" in sql:
+                return FakeResult(source)
+            if "agent_instances" in sql:
+                return FakeResult(
+                    [delegator_agent, delegate_agent]
+                    if " IN (" in sql else delegate_agent
+                )
+            if "agent_identities" in sql:
+                return FakeResult(
+                    [delegator_identity, delegate_identity]
+                    if " IN (" in sql else delegate_identity
+                )
+            if "agent_access_reviews" in sql:
+                return FakeResult(reviews[delegate_identity.id])
+            return FakeResult(None)
+
+        async def flush(self):
+            pass
+
+    async def skip_audit(*_args, **_kwargs):
+        return None
+
+    monkeypatch.setattr(
+        "app.services.agent_policy_engine.record_policy_decision_audit",
+        skip_audit,
+    )
+    request = PolicyRequest(
+        tenant_id=tenant, agent_instance_id=delegate_id,
+        action="tool.execute", tool_name="send_email",
+        required_permission="run.execute", delegation_id=delegation.id,
+    )
+    db = IntegratedDb()
+    authorized_agent = await assert_authorized(db, request)
+    assert authorized_agent.id == delegate_id
+    assert any("agent_delegations" in sql and "FOR UPDATE" in sql for sql in statements)
+    assert any("work_items" in sql and "FOR UPDATE" in sql for sql in statements)
