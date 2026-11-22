@@ -255,3 +255,132 @@ async def test_execute_run_allowed_approval_tool_pauses_without_execution(monkey
 
 async def _noop_audit(*_args, **_kwargs):
     return None
+
+
+@pytest.mark.asyncio
+async def test_run_portal_context_revalidates_persisted_actor_and_grant(monkeypatch):
+    from app.services import portal_access_service
+
+    customer_tenant_id = uuid.uuid4()
+    actor_tenant_id = uuid.uuid4()
+    actor_user_id = uuid.uuid4()
+    grant_id = uuid.uuid4()
+    run = SimpleNamespace(
+        tenant_id=customer_tenant_id,
+        actor_tenant_id=actor_tenant_id,
+        created_by=actor_user_id,
+        portal_access_grant_id=grant_id,
+        status="pending",
+        error_message=None,
+        completed_at=None,
+    )
+    calls = []
+
+    async def _validate(db, **kwargs):
+        calls.append((db, kwargs))
+
+    monkeypatch.setattr(portal_access_service, "validate_portal_access_grant", _validate)
+    actor = await run_service.validate_run_portal_context(object(), run=run)
+
+    assert actor == actor_tenant_id
+    assert calls[0][1] == {
+        "actor_user_id": actor_user_id,
+        "actor_tenant_id": actor_tenant_id,
+        "target_tenant_id": customer_tenant_id,
+        "grant_id": grant_id,
+    }
+    assert run.status == "pending"
+
+
+@pytest.mark.asyncio
+async def test_run_portal_context_revocation_marks_run_failed(monkeypatch):
+    from fastapi import HTTPException
+    from app.services import portal_access_service
+
+    customer_tenant_id = uuid.uuid4()
+    run = SimpleNamespace(
+        tenant_id=customer_tenant_id,
+        actor_tenant_id=uuid.uuid4(),
+        created_by=uuid.uuid4(),
+        portal_access_grant_id=uuid.uuid4(),
+        status="pending",
+        error_message=None,
+        completed_at=None,
+    )
+    flushed = []
+
+    async def _revoked(*_args, **_kwargs):
+        raise HTTPException(status_code=403, detail="Active portal access grant required")
+
+    class _DB:
+        async def flush(self):
+            flushed.append(True)
+
+    monkeypatch.setattr(portal_access_service, "validate_portal_access_grant", _revoked)
+    actor = await run_service.validate_run_portal_context(_DB(), run=run)
+
+    assert actor is None
+    assert run.status == "failed"
+    assert "Active portal access grant required" in run.error_message
+    assert run.completed_at is not None
+    assert flushed == [True]
+
+
+@pytest.mark.asyncio
+async def test_run_portal_context_rejects_missing_grant_for_cross_tenant_actor():
+    run = SimpleNamespace(
+        tenant_id=uuid.uuid4(),
+        actor_tenant_id=uuid.uuid4(),
+        created_by=uuid.uuid4(),
+        portal_access_grant_id=None,
+        status="pending",
+        error_message=None,
+        completed_at=None,
+    )
+
+    class _DB:
+        async def flush(self):
+            return None
+
+    actor = await run_service.validate_run_portal_context(_DB(), run=run)
+
+    assert actor is None
+    assert run.status == "failed"
+    assert "missing its portal access grant" in run.error_message
+
+
+@pytest.mark.asyncio
+async def test_run_tool_permissions_load_creator_from_actor_tenant():
+    actor_tenant_id = uuid.uuid4()
+    customer_tenant_id = uuid.uuid4()
+    actor_user_id = uuid.uuid4()
+    run = SimpleNamespace(created_by=actor_user_id, tenant_id=customer_tenant_id)
+    permission = SimpleNamespace(code="report.read")
+    actor_role = SimpleNamespace(tenant_id=actor_tenant_id, permissions=[permission])
+    foreign_role = SimpleNamespace(
+        tenant_id=customer_tenant_id,
+        permissions=[SimpleNamespace(code="customer.admin")],
+    )
+    user = SimpleNamespace(roles=[actor_role, foreign_role])
+    statements = []
+
+    class _Result:
+        def scalar_one_or_none(self):
+            return user
+
+    class _DB:
+        async def execute(self, statement):
+            statements.append((str(statement), statement.compile().params))
+            return _Result()
+
+    permissions = await run_service._load_run_user_tool_permissions(
+        _DB(), run=run, actor_tenant_id=actor_tenant_id
+    )
+
+    assert permissions == {"report.read"}
+    assert len(statements) == 1
+    sql, params = statements[0]
+    assert "users.tenant_id =" in sql
+    assert actor_tenant_id in params.values()
+    assert customer_tenant_id not in params.values()
+    assert "users.is_active IS true" in sql
