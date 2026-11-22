@@ -1784,3 +1784,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Added a two-tenant Agent-governed WhatsApp worker test for direct Vendor→Customer and nested Reseller→Customer delegation. It validates each exact approval and governance PolicyRequest twice before provider execution, then proves provider arguments contain only that tenant's channel, recipient, and text.
 - Focused Python 3.12 WhatsApp/Email/Outbox/Customer Handoff suites: 37 passed; targeted Ruff passed. Provider and authorization decision are mocked at unit boundary; no external provider or database was accessed.
 - Agent Email and Agent WhatsApp now each have bounded two-tenant provider-boundary content-isolation evidence. Full Notifications/Outbox actor × hierarchy × delivery-kind matrix remains PARTIAL; Issue #1350 remains OPEN.
+
+## 2026-11-22 - Agent delivery revocation at retry exhaustion
+
+- Added direct Vendor→Customer and nested Reseller→Customer Agent Email and WhatsApp worker cases where the policy decision rejects the revoked delegation before provider I/O. Both use the actual Outbox `mark_retry` transition at exhausted attempts and assert dead-letter state, UTC timestamp, and no provider call; WhatsApp also checks exact consumed approval and tenant-owned channel.
+- Focused Python 3.12 Email/WhatsApp/Outbox/Customer Handoff suites: 41 passed; targeted Ruff passed. Policy decision/provider are mocked; no external service or database was accessed.
+- This is unit-level revoked-context/dead-letter evidence only. Full Notifications/Outbox actor × hierarchy × delivery-kind acceptance remains PARTIAL; Issue #1350 remains OPEN.
