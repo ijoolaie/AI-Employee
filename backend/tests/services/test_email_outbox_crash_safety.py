@@ -632,3 +632,118 @@ async def test_email_worker_dead_letters_when_commercial_entitlement_is_inactive
     assert row.status == "dead"
     assert row.dead_at is not None
     assert "commercial entitlement expired" in row.last_error
+
+
+
+@pytest.mark.asyncio
+async def test_agent_email_direct_and_nested_tenant_content_isolated_at_smtp(monkeypatch):
+    tenants = [
+        {
+            "hierarchy": "direct_vendor_customer",
+            "tenant_id": uuid4(),
+            "agent_instance_id": uuid4(),
+            "run_id": uuid4(),
+            "delegation_id": uuid4(),
+            "recipient": "direct-customer-ops@example.test",
+            "subject": "Direct customer confidential status",
+            "body": "DIRECT-CUSTOMER-ONLY tenant marker",
+        },
+        {
+            "hierarchy": "reseller_customer",
+            "tenant_id": uuid4(),
+            "agent_instance_id": uuid4(),
+            "run_id": uuid4(),
+            "delegation_id": uuid4(),
+            "recipient": "reseller-customer-ops@example.test",
+            "subject": "Reseller customer confidential status",
+            "body": "RESELLER-CUSTOMER-ONLY tenant marker",
+        },
+    ]
+    rows = [
+        SimpleNamespace(
+            id=uuid4(),
+            kind="email.send",
+            status="processing",
+            attempts=1,
+            tenant_id=item["tenant_id"],
+            last_error=None,
+            dead_at=None,
+            payload={
+                "to": [item["recipient"]],
+                "subject": item["subject"],
+                "body": item["body"],
+                "_agent_governance": {
+                    "tenant_id": str(item["tenant_id"]),
+                    "agent_instance_id": str(item["agent_instance_id"]),
+                    "run_id": str(item["run_id"]),
+                    "tool_name": "email.send",
+                    "delegation_id": str(item["delegation_id"]),
+                },
+            },
+        )
+        for item in tenants
+    ]
+    databases = [_DB([row]) for row in rows]
+    contexts = iter(databases)
+    delivered = []
+    authorization_requests = []
+    expected_by_delegation = {
+        item["delegation_id"]: item for item in tenants
+    }
+
+    async def authorize(_db, request):
+        authorization_requests.append(request)
+        expected = expected_by_delegation[request.delegation_id]
+        assert request.tenant_id == expected["tenant_id"]
+        assert request.agent_instance_id == expected["agent_instance_id"]
+        assert request.run_id == expected["run_id"]
+        assert request.action == "tool.execute"
+        assert request.tool_name == "email.send"
+        assert request.required_permission == "run.execute"
+
+    async def mark_dispatched(_db, row):
+        row.status = "dispatched"
+
+    class _CapturingSMTP:
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def send_message(self, message):
+            delivered.append(message)
+
+    monkeypatch.setattr(email_worker, "worker_db_session", lambda: _DBContext(next(contexts)))
+    monkeypatch.setattr(email_worker, "get_settings", lambda: _Settings())
+    monkeypatch.setattr(email_worker, "assert_authorized", authorize)
+    monkeypatch.setattr(email_worker.smtplib, "SMTP", _CapturingSMTP)
+    monkeypatch.setattr(outbox_service, "mark_dispatched", mark_dispatched)
+
+    for row in rows:
+        await email_worker._send(str(row.id))
+
+    assert len(delivered) == 2
+    assert len(authorization_requests) == 4
+    for index, (item, row, message) in enumerate(zip(tenants, rows, delivered, strict=True)):
+        body = message.get_content()
+        assert message["To"] == item["recipient"]
+        assert message["Subject"] == item["subject"]
+        assert item["body"] in body
+        other = tenants[1 - index]
+        assert other["recipient"] not in body
+        assert other["subject"] not in body
+        assert other["body"] not in body
+        assert str(other["tenant_id"]) not in body
+        assert str(other["agent_instance_id"]) not in body
+        assert str(other["run_id"]) not in body
+        assert str(other["delegation_id"]) not in body
+        assert row.status == "dispatched"
+        matching_authorizations = [
+            request for request in authorization_requests
+            if request.run_id == item["run_id"]
+        ]
+        assert len(matching_authorizations) == 2
