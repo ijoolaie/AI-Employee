@@ -36,6 +36,7 @@ from app.models.business_deal import BusinessDeal
 from app.models.shopify_webhook_event import ShopifyWebhookEvent
 from app.models.shopify_oauth_state import ShopifyOAuthState
 from app.models.password_reset_token import PasswordResetToken
+from app.models.email_change_token import EmailChangeToken
 from app.models.tenant_entitlement import TenantEntitlement
 from app.models.tenant_invitation import TenantInvitation
 from app.models.tenant_demo_grant import TenantDemoGrant

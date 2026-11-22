@@ -3,7 +3,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, String, func
+from sqlalchemy import Boolean, DateTime, ForeignKey, Index, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -20,6 +20,17 @@ class User(Base):
         UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
     )
     email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
+    pending_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
+    __table_args__ = (
+        Index("uq_users_tenant_lower_email", "tenant_id", func.lower(email), unique=True),
+        Index(
+            "uq_users_tenant_lower_pending_email",
+            "tenant_id",
+            func.lower(pending_email),
+            unique=True,
+            postgresql_where=pending_email.is_not(None),
+        ),
+    )
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str | None] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

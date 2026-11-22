@@ -17,6 +17,7 @@ export function VendorSidebar() {
     { href: "/vendor/resellers", label: fa ? "نمایندگی‌ها" : "Resellers", icon: Building2 },
     { href: "/vendor/customers", label: fa ? "مشتریان مستقیم" : "Direct customers", icon: Users },
     { href: "/vendor/licenses", label: fa ? "مجوزهای تجاری" : "Commercial licenses", icon: ShieldCheck },
+    { href: "/vendor/security", label: fa ? "امنیت" : "Security", icon: ShieldCheck },
   ];
   return <aside className="hidden h-screen w-72 shrink-0 flex-col border-r border-slate-800 bg-slate-950 text-slate-200 md:flex">
     <div className="border-b border-slate-800 px-5 py-4"><p className="text-sm font-semibold text-white">AI Employee · Vendor</p><p className="truncate text-xs text-slate-400">{tenant?.name ?? "Vendor workspace"}</p></div>
