@@ -24,7 +24,7 @@ export default function SecuritySettingsPage() {
     catch(err){setError(getErrorMessage(err) || m.updateError);} finally{setSaving(false);}
   }
   const type=showPasswords?"text":"password";
-  return <><Header title={m.title} description={m.description}/><div className="mx-auto max-w-2xl p-6"><Card><CardHeader><CardTitle>{m.changePassword}</CardTitle><p className="text-sm text-gray-500">{m.changeDescription}</p></CardHeader><CardContent>
+  return <><Header title={m.title} description={m.description}/><div className="mx-auto max-w-2xl p-6"><div className="mb-4"><Link href="/settings/security/change-email" className="text-sm font-medium text-brand-600 underline">Change sign-in email</Link></div><Card><CardHeader><CardTitle>{m.changePassword}</CardTitle><p className="text-sm text-gray-500">{m.changeDescription}</p></CardHeader><CardContent>
     {success?<div className="space-y-5"><div role="status" className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-700">{m.success}</div><Button onClick={logout}>{m.signInAgain}</Button></div>:
     <form onSubmit={submit} className="space-y-5">
       <PasswordField id="current-password" label={m.currentPassword} auto="current-password" type={type} value={currentPassword} onChange={setCurrentPassword}/>

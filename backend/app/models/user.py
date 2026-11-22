@@ -20,6 +20,7 @@ class User(Base):
         UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False, index=True
     )
     email: Mapped[str] = mapped_column(String(320), nullable=False, index=True)
+    pending_email: Mapped[str | None] = mapped_column(String(320), nullable=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     full_name: Mapped[str | None] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)

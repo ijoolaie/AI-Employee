@@ -8,6 +8,9 @@ from app.schemas.auth import (
     InvitationAcceptanceResponse,
     ChangePasswordRequest,
     ChangePasswordResponse,
+    EmailChangeRequest,
+    EmailChangeResponse,
+    EmailChangeConfirmRequest,
     ForgotPasswordRequest,
     ForgotPasswordResponse,
     ResetPasswordRequest,
@@ -22,7 +25,7 @@ from app.schemas.auth import (
     UserResponse,
 )
 from app.schemas.common import APIResponse
-from app.services import auth_service, password_change_service, password_reset_service, tenant_invitation_service, tenant_access_service
+from app.services import auth_service, password_change_service, password_reset_service, tenant_invitation_service, tenant_access_service, email_change_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -86,6 +89,29 @@ async def change_password(payload: ChangePasswordRequest, ctx: CurrentContext, d
             message="Password changed successfully. Please sign in again."
         ),
     )
+
+
+@router.post("/email-change/request", response_model=APIResponse[EmailChangeResponse])
+async def request_email_change(payload: EmailChangeRequest, ctx: CurrentContext, db: DbSession):
+    if ctx.api_key_id is not None:
+        from app.core.exceptions import UnauthorizedError
+        raise UnauthorizedError("Email changes require an interactive user session")
+    await email_change_service.request_email_change(
+        db, user=ctx.user, current_password=payload.current_password, new_email=str(payload.new_email)
+    )
+    await db.commit()
+    return APIResponse(success=True, data=EmailChangeResponse(
+        message="A verification link has been queued if email delivery is configured. Your current email remains active until verification."
+    ))
+
+
+@router.post("/email-change/confirm", response_model=APIResponse[EmailChangeResponse])
+async def confirm_email_change(payload: EmailChangeConfirmRequest, db: DbSession):
+    await email_change_service.confirm_email_change(db, raw_token=payload.token)
+    await db.commit()
+    return APIResponse(success=True, data=EmailChangeResponse(
+        message="Email changed successfully. Please sign in again."
+    ))
 
 
 @router.post("/forgot-password", response_model=APIResponse[ForgotPasswordResponse])

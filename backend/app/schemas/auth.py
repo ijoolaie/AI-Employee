@@ -92,6 +92,19 @@ class ChangePasswordResponse(BaseModel):
     message: str
 
 
+class EmailChangeRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=128)
+    new_email: EmailStr
+
+
+class EmailChangeResponse(BaseModel):
+    message: str
+
+
+class EmailChangeConfirmRequest(BaseModel):
+    token: str = Field(min_length=32, max_length=256)
+
+
 class AcceptInvitationRequest(BaseModel):
     token: str = Field(min_length=32, max_length=256)
     password: str = Field(min_length=12, max_length=128)
