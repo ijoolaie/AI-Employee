@@ -1759,3 +1759,10 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Focused Python 3.12 validation: 66 tests passed; targeted Ruff lint and `git diff --check` passed. Alembic migration graph has a single `w34_run_delegated_actor_context` head. Offline SQL generation was not a valid check because an earlier existing data-dependent migration (`9f3a1c7b2d10`) requires a live bind; no database was contacted.
 - WorkflowRun-to-child-Run provenance propagation is not included in this patch; WorkflowRun currently has no persisted actor-tenant/portal-grant fields. Such workflow child Runs remain outside this bounded acceptance and must fail closed rather than inherit Customer roles.
 - PostgreSQL-backed end-to-end Run API -> Outbox -> Celery worker -> Report Employee artifacts and direct/nested topology plus revoke-before-dispatch acceptance remain outstanding. Do not mark async report acceptance complete. Issue #1350 remains OPEN.
+
+
+## Verified continuation - 2026-11-22 (PR #1495)
+
+- PR #1495 merged at `2948ea2489b3afda5b29fc5f6a0b2a4084c356a7` after all required exact-head checks passed. The Run model now persists actor-tenant and portal-grant provenance for new Run API requests; worker and RunService revalidate delegated grants; actor tool permissions are resolved only from active roles in the actor tenant.
+- Focused Python 3.12 validation: 66 passed; targeted Ruff passed. CI backend, Alembic upgrade/consistency, security, RBAC, CodeQL, DAST, recovery, and real-stack checks passed.
+- WorkflowRun-to-child-Run actor/grant provenance is not yet implemented. PostgreSQL-backed async Report Employee artifact lifecycle and revoke-before-dispatch coverage remain open. Issue #1350 remains OPEN.
