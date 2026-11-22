@@ -1,5 +1,6 @@
 """PostgreSQL-backed portal grant, context, and immediate revocation contract."""
 
+import asyncio
 import hashlib
 import json
 import os
@@ -8,6 +9,7 @@ from io import BytesIO
 from collections.abc import AsyncIterator
 from datetime import datetime, timedelta, timezone
 from types import SimpleNamespace
+from unittest.mock import AsyncMock
 
 import pytest
 from httpx import ASGITransport, AsyncClient
@@ -66,7 +68,9 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.tenant import Tenant
     from app.models.tenant_demo_grant import TenantDemoGrant
     from app.models.user import User
-    from app.services import audit_service, customer_dashboard_service, license_service, storage as storage_service
+    from app.services import audit_service, customer_dashboard_service, license_service, outbox_service, run_service, storage as storage_service
+    from app.workers import outbox_worker, run_worker
+    from app.ai.schemas import ChatMessage, ChatResult, ToolCall
     from app.ai.tool_registry import registry
     from app.core.exceptions import NotFoundError
 
@@ -148,6 +152,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     session.add(file_permission)
                     await session.flush()
                 file_permissions.append(file_permission)
+            run_execute_permission = (
+                await session.execute(select(Permission).where(Permission.code == "run.execute"))
+            ).scalar_one_or_none()
+            if run_execute_permission is None:
+                run_execute_permission = Permission(code="run.execute", description="Execute Employee Runs")
+                session.add(run_execute_permission)
+                await session.flush()
             workflow_execute_permission = (
                 await session.execute(select(Permission).where(Permission.code == "workflow.execute"))
             ).scalar_one_or_none()
@@ -216,19 +227,19 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
             reseller_admin_role = Role(tenant_id=target.id, name="Admin", description="Reseller portal admin")
             reader_role = Role(tenant_id=vendor.id, name="Employee Reader", description="Portal integration reader")
             reader_role.permissions = [
-                permission, *file_permissions, workflow_execute_permission,
+                permission, *file_permissions, run_execute_permission, workflow_execute_permission,
                 workflow_read_permission, invoice_read_permission, invoice_export_pdf_permission, run_read_permission, audit_read_permission,
             ]
             grantor.roles = [admin_role]
             actor.roles = [reader_role]
             vendor_b_grantor.roles = [vendor_b_admin_role]
             vendor_b_reader_role.permissions = [
-                *file_permissions, workflow_execute_permission, workflow_read_permission,
+                *file_permissions, run_execute_permission, workflow_execute_permission, workflow_read_permission,
                 invoice_read_permission, invoice_export_pdf_permission, run_read_permission, audit_read_permission,
             ]
             vendor_b_actor.roles = [vendor_b_reader_role]
             reseller_admin_role.permissions = [
-                *file_permissions, workflow_write_permission,
+                *file_permissions, run_execute_permission, workflow_write_permission,
                 invoice_read_permission, invoice_export_pdf_permission, run_read_permission, audit_read_permission,
             ]
             reseller_grantor.roles = [reseller_admin_role]
@@ -390,7 +401,18 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 tenant_id=customer_a.id, slug=f"customer-run-{run_id}",
                 name="Customer Run Employee", kind="custom", is_active=True,
             )
-            session.add_all([target_dashboard_employee, sibling_dashboard_employee, customer_run_employee])
+            direct_report_employee = Employee(
+                tenant_id=direct_customer.id, slug=f"direct-report-{run_id}",
+                name="Direct Customer Report Employee", kind="custom", is_active=True,
+            )
+            nested_report_employee = Employee(
+                tenant_id=customer_a.id, slug=f"nested-report-{run_id}",
+                name="Nested Customer Report Employee", kind="custom", is_active=True,
+            )
+            session.add_all([
+                target_dashboard_employee, sibling_dashboard_employee, customer_run_employee,
+                direct_report_employee, nested_report_employee,
+            ])
             await session.flush()
             target_run_version = EmployeeVersion(
                 employee_id=target_dashboard_employee.id, version_number=1, is_current=True,
@@ -404,7 +426,20 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 employee_id=customer_run_employee.id, version_number=1, is_current=True,
                 input_schema={}, output_schema={}, prompt_template="", allowed_tools=[], rules={},
             )
-            session.add_all([target_run_version, sibling_run_version, customer_run_version])
+            direct_report_version = EmployeeVersion(
+                employee_id=direct_report_employee.id, version_number=1, is_current=True,
+                input_schema={}, output_schema={}, prompt_template="Analyze the supplied customer sales CSV.",
+                allowed_tools=["analyze_dataset"], rules={},
+            )
+            nested_report_version = EmployeeVersion(
+                employee_id=nested_report_employee.id, version_number=1, is_current=True,
+                input_schema={}, output_schema={}, prompt_template="Analyze the supplied customer sales CSV.",
+                allowed_tools=["analyze_dataset"], rules={},
+            )
+            session.add_all([
+                target_run_version, sibling_run_version, customer_run_version,
+                direct_report_version, nested_report_version,
+            ])
             await session.flush()
             target_run = Run(
                 tenant_id=target.id, employee_id=target_dashboard_employee.id,
@@ -704,6 +739,194 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 assert direct_customer_me.json()["data"]["tenant"]["id"] == str(direct_customer.id)
                 assert direct_customer_me.json()["data"]["user"]["tenant_id"] == str(vendor.id)
 
+                # Exercise the real Run API -> transactional Outbox -> dispatcher
+                # -> Celery task body -> RunService -> Report Employee artifact path.
+                dispatch_outbox_ids = []
+                dispatched_run_tasks = []
+                run_file_ids = {}
+                run_tool_calls_completed = set()
+                runtime_memory_calls = []
+
+                async def claim_selected_run_outbox(db, *, limit=50):
+                    result = await db.execute(
+                        select(OutboxMessage)
+                        .where(
+                            OutboxMessage.id.in_(dispatch_outbox_ids),
+                            OutboxMessage.status == "pending",
+                        )
+                        .order_by(OutboxMessage.created_at.asc())
+                        .limit(limit)
+                        .with_for_update(skip_locked=True)
+                    )
+                    rows = list(result.scalars().all())
+                    for row in rows:
+                        row.status = "processing"
+                        row.attempts += 1
+                    await db.flush()
+                    return rows
+
+                async def empty_runtime_memory(*_args, **_kwargs):
+                    runtime_memory_calls.append(True)
+                    return []
+
+                def assemble_test_report_prompt(**_kwargs):
+                    return SimpleNamespace(
+                        messages=[ChatMessage(role="system", content="Generate a report from the supplied file.")],
+                        tools=[],
+                        metadata={"test": "async-report-run"},
+                    )
+
+                class _DeterministicReportGateway:
+                    async def chat(self, _db, _request, *, run_id, **_kwargs):
+                        parsed_run_id = uuid.UUID(str(run_id))
+                        if parsed_run_id not in run_tool_calls_completed:
+                            run_tool_calls_completed.add(parsed_run_id)
+                            return ChatResult(
+                                content="",
+                                prompt_tokens=12,
+                                completion_tokens=3,
+                                tool_calls=[
+                                    ToolCall(
+                                        id=f"analyze-{parsed_run_id}",
+                                        name="analyze_dataset",
+                                        arguments={"file_id": run_file_ids[parsed_run_id]},
+                                    )
+                                ],
+                            )
+                        return ChatResult(
+                            content="Report artifacts generated.",
+                            prompt_tokens=12,
+                            completion_tokens=4,
+                        )
+
+                monkeypatch.setattr(outbox_service, "claim", claim_selected_run_outbox)
+                monkeypatch.setattr(outbox_worker, "worker_db_session", lambda: sessions())
+                monkeypatch.setattr(run_worker, "worker_db_session", lambda: sessions())
+                monkeypatch.setattr(
+                    run_worker.execute_run_task,
+                    "delay",
+                    lambda run_id, tenant_id: dispatched_run_tasks.append((run_id, tenant_id)),
+                )
+                monkeypatch.setattr(run_worker, "acquire_tenant_resource", lambda _tenant_id: "test-lease")
+                monkeypatch.setattr(run_worker, "release_tenant_resource", lambda _lease: None)
+                monkeypatch.setattr(run_worker, "build_runtime_memory", empty_runtime_memory)
+                monkeypatch.setattr(run_service, "AIGateway", _DeterministicReportGateway)
+                monkeypatch.setattr(run_service, "assemble_employee_prompt", assemble_test_report_prompt)
+                monkeypatch.setattr(
+                    run_service,
+                    "extract_and_consolidate_run_memory",
+                    AsyncMock(return_value=None),
+                )
+
+                async def create_async_report_run(headers, employee, source_file, actor_tenant, target_tenant, grant_id):
+                    response = await client.post(
+                        "/api/v1/runs",
+                        headers=headers,
+                        json={
+                            "employee_id": str(employee.id),
+                            "input_data": {"file_id": str(source_file.id)},
+                        },
+                    )
+                    assert response.status_code == 201, response.text
+                    created_run_id = uuid.UUID(response.json()["data"]["id"])
+                    run_file_ids[created_run_id] = str(source_file.id)
+                    async with sessions() as verify_session:
+                        persisted_run = await verify_session.get(Run, created_run_id)
+                        assert persisted_run is not None
+                        assert persisted_run.tenant_id == target_tenant
+                        assert persisted_run.created_by in {actor.id, reseller_actor.id}
+                        assert persisted_run.actor_tenant_id == actor_tenant
+                        assert persisted_run.portal_access_grant_id == grant_id
+                        outbox_rows = (
+                            await verify_session.execute(
+                                select(OutboxMessage).where(
+                                    OutboxMessage.tenant_id == target_tenant,
+                                    OutboxMessage.kind == "agent.run.execute",
+                                )
+                            )
+                        ).scalars().all()
+                        outbox_row = next(
+                            row for row in outbox_rows
+                            if str((row.payload or {}).get("run_id")) == str(created_run_id)
+                        )
+                        return created_run_id, outbox_row.id
+
+                async def dispatch_and_execute_report_run(created_run_id, outbox_id, target_tenant):
+                    dispatch_outbox_ids[:] = [outbox_id]
+                    assert await outbox_worker._dispatch_async(limit=1) == 1
+                    assert dispatched_run_tasks[-1] == (str(created_run_id), str(target_tenant))
+                    await asyncio.to_thread(
+                        run_worker.execute_run_task.run,
+                        str(created_run_id),
+                        str(target_tenant),
+                    )
+                    async with sessions() as verify_session:
+                        completed_run = await verify_session.get(Run, created_run_id)
+                        assert completed_run is not None
+                        assert completed_run.status == "success", completed_run.error_message
+                        assert completed_run.output_data is not None
+                        artifacts = completed_run.output_data["report_artifacts"]
+                        artifact_ids = [
+                            artifacts["pdf_file_id"],
+                            artifacts["excel_file_id"],
+                            *artifacts["chart_file_ids"],
+                        ]
+                        for file_id in artifact_ids:
+                            artifact = await verify_session.get(FileObject, uuid.UUID(file_id))
+                            assert artifact is not None
+                            assert artifact.tenant_id == target_tenant
+                            assert artifact.uploaded_by == completed_run.created_by
+                        outbox_row = await verify_session.get(OutboxMessage, outbox_id)
+                        assert outbox_row is not None
+                        assert outbox_row.status == "dispatched"
+                    return artifact_ids
+
+                direct_async_run_id, direct_async_outbox_id = await create_async_report_run(
+                    direct_customer_portal_headers,
+                    direct_report_employee,
+                    direct_customer_report_source,
+                    vendor.id,
+                    direct_customer.id,
+                    uuid.UUID(direct_customer_grant_id),
+                )
+                direct_async_artifact_ids = await dispatch_and_execute_report_run(
+                    direct_async_run_id,
+                    direct_async_outbox_id,
+                    direct_customer.id,
+                )
+                assert len(direct_async_artifact_ids) >= 2
+                direct_async_file_list = await client.get(
+                    "/api/v1/files", headers=direct_customer_portal_headers,
+                )
+                assert direct_async_file_list.status_code == 200, direct_async_file_list.text
+                assert set(direct_async_artifact_ids).issubset({
+                    item["id"] for item in direct_async_file_list.json()["data"]
+                })
+                direct_async_pdf = await client.get(
+                    f"/api/v1/files/{direct_async_artifact_ids[0]}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_async_pdf.status_code == 200, direct_async_pdf.text
+                assert direct_async_pdf.content.startswith(b"%PDF-")
+                direct_async_vendor_home = await client.get(
+                    f"/api/v1/files/{direct_async_artifact_ids[0]}",
+                    headers=actor_headers,
+                )
+                assert direct_async_vendor_home.status_code == 404, direct_async_vendor_home.text
+
+                # Keep a second Run pending in the Outbox. The grant is revoked
+                # below before dispatch; the eventual Celery task must fail before
+                # loading Customer memory or creating any report artifacts.
+                revoked_before_dispatch_run_id, revoked_before_dispatch_outbox_id = await create_async_report_run(
+                    direct_customer_portal_headers,
+                    direct_report_employee,
+                    direct_customer_report_source,
+                    vendor.id,
+                    direct_customer.id,
+                    uuid.UUID(direct_customer_grant_id),
+                )
+                memory_calls_before_revoked_dispatch = len(runtime_memory_calls)
+
                 # Exercise the Report Employee through a direct Vendor-to-Customer
                 # grant, distinct from the nested Reseller-to-Customer scenario below.
                 async with sessions() as direct_report_session:
@@ -857,6 +1080,29 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers=grantor_headers,
                 )
                 assert direct_customer_revoked.status_code == 200, direct_customer_revoked.text
+                dispatch_outbox_ids[:] = [revoked_before_dispatch_outbox_id]
+                assert await outbox_worker._dispatch_async(limit=1) == 1
+                assert dispatched_run_tasks[-1] == (
+                    str(revoked_before_dispatch_run_id),
+                    str(direct_customer.id),
+                )
+                await asyncio.to_thread(
+                    run_worker.execute_run_task.run,
+                    str(revoked_before_dispatch_run_id),
+                    str(direct_customer.id),
+                )
+                assert len(runtime_memory_calls) == memory_calls_before_revoked_dispatch
+                async with sessions() as revoked_run_session:
+                    revoked_before_dispatch_run = await revoked_run_session.get(
+                        Run, revoked_before_dispatch_run_id
+                    )
+                    assert revoked_before_dispatch_run is not None
+                    assert revoked_before_dispatch_run.status == "failed"
+                    assert "portal access" in revoked_before_dispatch_run.error_message.lower()
+                    revoked_outbox_row = await revoked_run_session.get(
+                        OutboxMessage, revoked_before_dispatch_outbox_id
+                    )
+                    assert revoked_outbox_row.status == "dispatched"
                 direct_customer_revoked_me = await client.get(
                     "/api/v1/auth/me", headers=direct_customer_portal_headers,
                 )
@@ -880,6 +1126,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert direct_customer_revoked_report_download.status_code == 403, (
                     direct_customer_revoked_report_download.text
+                )
+                direct_async_revoked_download = await client.get(
+                    f"/api/v1/files/{direct_async_artifact_ids[0]}/download",
+                    headers=direct_customer_portal_headers,
+                )
+                assert direct_async_revoked_download.status_code == 403, (
+                    direct_async_revoked_download.text
                 )
 
                 # Vendor B independently grants its own actor access to its own
@@ -1306,6 +1559,26 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert reseller_activated.status_code == 200, reseller_activated.text
                 customer_portal_token = reseller_activated.json()["data"]["access_token"]
+                nested_async_run_id, nested_async_outbox_id = await create_async_report_run(
+                    {"Authorization": f"Bearer {customer_portal_token}"},
+                    nested_report_employee,
+                    customer_report_source,
+                    target.id,
+                    customer_a.id,
+                    uuid.UUID(reseller_grant_id),
+                )
+                nested_async_artifact_ids = await dispatch_and_execute_report_run(
+                    nested_async_run_id,
+                    nested_async_outbox_id,
+                    customer_a.id,
+                )
+                assert len(nested_async_artifact_ids) >= 2
+                nested_async_pdf_download = await client.get(
+                    f"/api/v1/files/{nested_async_artifact_ids[0]}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert nested_async_pdf_download.status_code == 200, nested_async_pdf_download.text
+                assert nested_async_pdf_download.content.startswith(b"%PDF-")
                 customer_portal_me = await client.get("/api/v1/auth/me", headers={"Authorization": f"Bearer {customer_portal_token}"})
                 assert customer_portal_me.status_code == 200, customer_portal_me.text
                 assert customer_portal_me.json()["data"]["tenant"]["id"] == str(customer_a.id)
@@ -1318,9 +1591,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                     headers={"Authorization": f"Bearer {customer_portal_token}"},
                 )
                 assert customer_visible_files.status_code == 200, customer_visible_files.text
-                assert {item["id"] for item in customer_visible_files.json()["data"]} == {
-                    str(customer_file.id), str(customer_report_source.id),
+                nested_visible_file_ids = {
+                    item["id"] for item in customer_visible_files.json()["data"]
                 }
+                assert {
+                    str(customer_file.id), str(customer_report_source.id),
+                }.issubset(nested_visible_file_ids)
+                assert set(nested_async_artifact_ids).issubset(nested_visible_file_ids)
                 # A valid grant to one Customer must not expose a sibling
                 # Customer under the same Reseller, including by ID lookup.
                 assert str(unentitled_sibling_customer_file.id) not in {
@@ -1646,6 +1923,13 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 )
                 assert revoked_customer_portal_download.status_code == 403, (
                     revoked_customer_portal_download.text
+                )
+                revoked_nested_async_report_download = await client.get(
+                    f"/api/v1/files/{nested_async_artifact_ids[0]}/download",
+                    headers={"Authorization": f"Bearer {customer_portal_token}"},
+                )
+                assert revoked_nested_async_report_download.status_code == 403, (
+                    revoked_nested_async_report_download.text
                 )
                 revoked_customer_knowledge_search = await client.post(
                     "/api/v1/knowledge/search",
