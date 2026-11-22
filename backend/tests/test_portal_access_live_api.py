@@ -57,6 +57,7 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
     from app.models.ai_provider_call import AIProviderCall
     from app.models.workflow import WorkflowRun
     from app.models.file import FileObject
+    from app.models.license import CommercialLicense
     from app.models.customer import Customer
     from app.models.employee import Employee, EmployeeVersion
     from app.models.run import Run
@@ -535,6 +536,31 @@ async def test_portal_grant_activates_context_and_revocation_invalidates_it(monk
                 reason="Independent Vendor B portal test",
                 expires_at=datetime.now(timezone.utc) + timedelta(days=1),
             ))
+            license_issued_at = datetime.now(timezone.utc)
+            session.add_all([
+                CommercialLicense(
+                    license_key=f"LIC-portal-live-{run_id}-direct",
+                    issuer_tenant_id=vendor.id,
+                    tenant_id=direct_customer.id,
+                    edition="customer",
+                    status="active",
+                    issued_at=license_issued_at,
+                    expires_at=license_issued_at + timedelta(days=1),
+                    feature_codes=["run.execute"],
+                    license_metadata={"test_fixture": "async_direct_report"},
+                ),
+                CommercialLicense(
+                    license_key=f"LIC-portal-live-{run_id}-nested",
+                    issuer_tenant_id=target.id,
+                    tenant_id=customer_a.id,
+                    edition="customer",
+                    status="active",
+                    issued_at=license_issued_at,
+                    expires_at=license_issued_at + timedelta(days=1),
+                    feature_codes=["run.execute"],
+                    license_metadata={"test_fixture": "async_nested_report"},
+                ),
+            ])
             # Simulate a legacy/corrupt grant row: activation must still reject
             # a Reseller actor attempting to enter its parent Vendor portal.
             reseller_vendor_grant_id = uuid.uuid4()
