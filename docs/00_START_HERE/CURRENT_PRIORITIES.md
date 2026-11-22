@@ -1,17 +1,17 @@
-# Current priorities - verified 2026-11-21 (after PR #1486)
+# Current priorities — fixed finish-line plan (verified 2026-11-22)
 
-Current main: d39baf033b5499106536906e5af26548337015a0
-Only active implementation track: Multi-Vendor tenant ownership, delegated authorization and portal acceptance - Issue #1350 (OPEN).
+Current main: `f41cd870e64def364b11cb6b8b7e2d7390052d0e`
+Only active delivery track: Issue #1350. Scope is frozen.
 
-1. P0 - Notifications/Outbox acceptance: continue the source-backed actor ? hierarchy ? delivery-kind matrix. PRs #1463/#1464/#1467/#1468/#1469 are integrated. PR #1469 integrated WhatsApp pre-provider retry-exhaustion/dead-letter evidence (31 focused tests; 13/13 exact-head checks). Broader end-to-end ownership, content isolation and topology permutations remain PARTIAL. PR #1486 adds direct Vendor-to-Customer usage optimization and cost-forecast portal evidence; broader asynchronous export/report actor and topology combinations remain open.
-2. P1 - Actor ? Resource ? Action: select only a concrete uncovered hierarchy/resource/action cell from the acceptance audit; do not duplicate merged coverage.
-3. Gated - Immutable audit/failure policy: no Outbox/AssignmentCommand ledger implementation until event semantics, actor attribution, failure/privacy behavior and transaction coupling are decided.
-4. Gated - Historical Vendor permission backfill: requires sanitized historical snapshot review; no staging/production rehearsal or mutation.
-5. Gated - Human portal UX: requires human visual acceptance; CI is not a substitute.
-6. Keep Issue #1350 OPEN until all acceptance evidence and gated decisions are complete.
+**Canonical plan:** [Issue #1350 Finish-Line Rule and Bounded Completion Plan](../current/ISSUE_1350_FINISH_LINE_POLICY_AND_PLAN_2026-11-22.md)
 
-Execution: start from current handoff, status, priorities and acceptance audit; make one bounded source-backed change; run only focused checks; update documentation and Issue #1350 with verified evidence. PostgreSQL only on isolated disposable instances. No unrelated product tracks or broad repeated sweeps.
+1. **P0 — PR disposition:** resolve the 8 Issue-related open PRs by comparing them with merged evidence. Six Dependabot PRs remain independent maintenance.
+2. **P1 — Human portal acceptance:** one actual review of Vendor, Reseller and Customer navigation, identity and allowed/denied switching. Fix only explicit requirement violations.
+3. **P2 — Audit and migration closeout:** confirm existing required audit attribution and accept synthetic migration compatibility evidence. No speculative ledger or production/staging backfill.
+4. **P3 — Final bounded technical pass:** reuse existing portal, isolation, async Run/Workflow and Email/WhatsApp tests; run focused checks and required CI once.
+5. **P4 — Closeout:** publish exact evidence and final main SHA, then close Issue #1350 when the fixed checklist is complete. Production rollout remains under Issue #19.
 
+**Permanent rule:** no new scope, repeated general audits, duplicate tests/PRs or hypothetical permutations without explicit approval. Normal security controls and required CI remain; redundant process is removed, not security requirements.
 ---
 
 # Current priorities - verified 2026-11-21
