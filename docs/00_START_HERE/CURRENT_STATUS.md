@@ -1,26 +1,29 @@
-# Current verified status - 2026-11-21
+# Current verified status — 2026-11-22
 
 Repository: ijoolaie/AI-Employee
-Verified main HEAD: e3b423d82e912d348c1a2516aba23b5b253ca3d3
-Tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN)
+Verified main HEAD: `f41cd870e64def364b11cb6b8b7e2d7390052d0e`
+Tracker: https://github.com/ijoolaie/AI-Employee/issues/1350 (OPEN; final acceptance not yet complete)
 
-## Latest verified continuation
-- PR #1467 WhatsApp delegated-revocation provider-boundary regression merged at b4180087c48c20dda1d4fe5d1535ea25f3bc6bdc; exact-head checks passed.
-- PR #1468 reconciled the #1467 evidence into project docs and merged at 918137a30c52fad42bb1d58054f7b2126b66a47f; all four checks passed.
-- PR #1469 integrated the WhatsApp pre-provider retry-exhaustion regression at merge commit e3b423d82e912d348c1a2516aba23b5b253ca3d3. All 13 exact-head checks passed; local focused suite: 31 passed; Ruff and diff check passed.
+## Mandatory project rule
+Issue #1350 is scope-frozen. Follow [Issue #1350 Finish-Line Rule and Bounded Completion Plan](../current/ISSUE_1350_FINISH_LINE_POLICY_AND_PLAN_2026-11-22.md). No new acceptance dimensions, exhaustive cartesian matrices, speculative audit architecture or duplicate tests without explicit owner approval.
 
-## Acceptance boundary
-- Notifications/Outbox actor ? hierarchy ? delivery-kind matrix remains PARTIAL. This test closes one WhatsApp retry-exhaustion evidence cell only.
-- Immutable Outbox/AssignmentCommand audit-event and failure/privacy/transaction policy remains unresolved; no speculative ledger writes.
-- Sanitized historical Vendor permission-backfill snapshot review and human visual portal UX acceptance remain gated.
-- Issue #1350 remains OPEN.
+## PR review snapshot
+Issue PR window #1353–#1506: 154 PRs — 139 merged, 14 open, 1 closed. The 14 open PRs comprise 8 Issue-related items and 6 independent Dependabot updates. PR #1507 merged the finish-line rule; the Issue remains open.
+
+## Fixed remaining order
+1. P0: classify the 8 Issue-related open PRs against merged evidence; do not merge stale duplicates.
+2. P1: one human review of Vendor, Reseller and Customer portal navigation, identity and switching.
+3. P2: confirm existing required audit attribution and synthetic migration compatibility; no new ledger or production backfill.
+4. P3: one bounded final technical/required-CI pass using existing portal, isolation, async Run/Workflow and Email/WhatsApp tests.
+5. P4: publish final evidence and close Issue #1350 when the fixed checklist is complete. Production rollout remains separate under Issue #19.
+
+## Latest merged evidence
+PRs #1493, #1495, #1497, #1498 and #1499–#1507 are merged. Reuse their report artifact, async actor provenance, notification provider-boundary and real Policy Engine evidence; do not recreate it.
 
 ## Operating constraints
-- All project operations, generated artifacts, temporary worktrees and test data remain under D:/Work/project/AI-Employee.
 - Preserve unrelated dirty worktrees and local data. No reset, clean, force push, branch deletion, deployment, or persistent/Staging/Production mutation.
-- PostgreSQL tests only on disposable isolated instances. Do not access Staging PostgreSQL/Redis.
-
-The dated records below are historical and superseded wherever they conflict with this checkpoint.
+- PostgreSQL tests only on disposable isolated instances. Never access Staging PostgreSQL/Redis.
+- Do not claim human UX acceptance, production readiness or Issue closure until actually completed.
 ---
 
 # Current verified status - 2026-11-21
