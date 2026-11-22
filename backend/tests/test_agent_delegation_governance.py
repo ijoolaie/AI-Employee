@@ -761,7 +761,7 @@ async def test_policy_engine_validates_full_nested_delegation_chain(monkeypatch)
     tenant = uuid4()
     now = datetime.now(timezone.utc)
     root_agent, middle_agent = agent(tenant), agent(tenant)
-    leaf_agent = agent(tenant, allowed_tools=["send_email"], permissions=["run.execute"])
+    leaf_agent = agent(tenant, allowed_tools=["send_email", "whatsapp.send_text"], permissions=["run.execute"])
     root_source = SimpleNamespace(
         id=uuid4(), tenant_id=tenant, status=WorkItemStatus.RUNNING,
         policy_context={},
@@ -771,7 +771,7 @@ async def test_policy_engine_validates_full_nested_delegation_chain(monkeypatch)
     )
     parent.source_work_item_id = root_source.id
     parent.chain_depth = 1
-    parent.scopes = {"actions": ["tool.execute"], "tools": ["send_email"]}
+    parent.scopes = {"actions": ["tool.execute"], "tools": ["send_email", "whatsapp.send_text"]}
     leaf_source = SimpleNamespace(
         id=uuid4(), tenant_id=tenant, status=WorkItemStatus.RUNNING,
         policy_context={
@@ -787,7 +787,7 @@ async def test_policy_engine_validates_full_nested_delegation_chain(monkeypatch)
     child.source_work_item_id = leaf_source.id
     child.chain_depth = 2
     child.max_chain_depth = 3
-    child.scopes = {"actions": ["tool.execute"], "tools": ["send_email"]}
+    child.scopes = {"actions": ["tool.execute"], "tools": ["send_email", "whatsapp.send_text"]}
 
     identities = []
     reviews = {}
@@ -800,6 +800,24 @@ async def test_policy_engine_validates_full_nested_delegation_chain(monkeypatch)
         review.agent_identity_id = current_identity.id
         review.tenant_id = tenant
         reviews[current_identity.id] = review
+
+    whatsapp_run_id = uuid4()
+    whatsapp_approval_id, whatsapp_channel_id = uuid4(), uuid4()
+    whatsapp_tool_call_id = "nested-policy-whatsapp-call"
+    whatsapp_arguments = {
+        "channel_id": str(whatsapp_channel_id),
+        "recipient": "+15550001111",
+        "text": "nested policy worker integration",
+    }
+    whatsapp_approval = SimpleNamespace(
+        id=whatsapp_approval_id, tenant_id=tenant, run_id=whatsapp_run_id,
+        tool_name="whatsapp.send_text", tool_call_id=whatsapp_tool_call_id,
+        status="consumed", arguments=whatsapp_arguments,
+    )
+    whatsapp_channel = SimpleNamespace(
+        id=whatsapp_channel_id, tenant_id=tenant, channel_type="whatsapp",
+        is_active=True, config={"provider": "test"},
+    )
 
     statements = []
     delegation_reads = 0
@@ -814,6 +832,10 @@ async def test_policy_engine_validates_full_nested_delegation_chain(monkeypatch)
             statements.append(sql)
             if "agent_kill_switches" in sql:
                 return FakeResult(None)
+            if "tool_approval_requests" in sql:
+                return FakeResult(whatsapp_approval)
+            if "customer_channels" in sql:
+                return FakeResult(whatsapp_channel)
             if "agent_instances" in sql:
                 return FakeResult([middle_agent, leaf_agent] if " IN (" in sql else leaf_agent)
             if "agent_identities" in sql:
@@ -883,3 +905,47 @@ async def test_policy_engine_validates_full_nested_delegation_chain(monkeypatch)
         for sql in statements
     ) >= 4
     assert sum("work_items" in sql and "FOR UPDATE" in sql for sql in statements) >= 4
+
+    # Exercise the identical parent -> child delegation chain through the
+    # WhatsApp worker's full validation path, including consumed exact-call
+    # approval and tenant-owned active channel checks.
+    delegation_reads = 0
+    work_item_reads = 0
+    identity_reads = 0
+    review_reads = 0
+    whatsapp_row = SimpleNamespace(
+        tenant_id=tenant,
+        payload={
+            **whatsapp_arguments,
+            "run_id": str(whatsapp_run_id),
+            "approval_request_id": str(whatsapp_approval_id),
+            "channel_id": str(whatsapp_channel_id),
+            "tool_name": "whatsapp.send_text",
+            "tool_call_id": whatsapp_tool_call_id,
+            "_agent_governance": {
+                "tenant_id": str(tenant),
+                "agent_instance_id": str(leaf_agent.id),
+                "run_id": str(whatsapp_run_id),
+                "tool_name": "whatsapp.send_text",
+                "delegation_id": str(child.id),
+            },
+        },
+    )
+    from app.workers import whatsapp_worker
+
+    loaded = await whatsapp_worker._validate_and_load(
+        NestedPolicyDb(), whatsapp_row,
+    )
+    assert loaded[0] == tenant
+    assert loaded[1].id == whatsapp_channel_id
+    assert loaded[4] == leaf_agent.id
+    assert loaded[5] == whatsapp_run_id
+    assert loaded[6] == child.id
+    assert sum(
+        "agent_delegations" in sql and "FOR UPDATE" in sql
+        for sql in statements
+    ) >= 2
+    assert sum(
+        "work_items" in sql and "FOR UPDATE" in sql
+        for sql in statements
+    ) >= 2
