@@ -2,11 +2,10 @@
 from __future__ import annotations
 
 import hashlib
-import hmac
 import secrets
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -67,6 +66,11 @@ async def request_email_change(
         raise ConflictError("This email address is already pending verification")
 
     now = datetime.now(timezone.utc)
+    # Bound token-history growth without weakening the rolling one-hour limit.
+    await db.execute(delete(EmailChangeToken).where(
+        EmailChangeToken.user_id == locked.id,
+        EmailChangeToken.created_at < now - timedelta(hours=24),
+    ))
     recent_count = (await db.execute(
         select(func.count(EmailChangeToken.id)).where(
             EmailChangeToken.user_id == locked.id,
