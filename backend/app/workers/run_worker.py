@@ -19,7 +19,7 @@ from app.models.agent_instance import AgentInstance, AgentInstanceStatus
 from app.models.run import Run
 from app.models.tool_approval import ToolApprovalRequest
 from app.services.run_execution_fence import execute_run_locked
-from app.services.run_service import load_run_employee_version
+from app.services.run_service import load_run_employee_version, validate_run_portal_context
 from app.services.run_recovery import recover_stale_run_execution
 from app.services.agent_run_governance_bootstrap import authorize_agent_run
 from app.services.agent_governance import governed_agent_execution
@@ -67,6 +67,12 @@ async def _run_async(run_id: str, tenant_id: str) -> None:
             if await recover_stale_run_execution(db, run=run):
                 await db.commit()
                 logger.error("run_execution_recovered_as_ambiguous", extra={"run_id": run_id, "tenant_id": tenant_id})
+                return
+
+            # Revalidate delegated portal authority before loading tenant memory or starting runtime work.
+            if await validate_run_portal_context(db, run=run) is None:
+                await db.commit()
+                logger.warning("run_execution_blocked_delegated_portal_context", extra={"run_id": run_id, "tenant_id": tenant_id})
                 return
 
             version = await load_run_employee_version(db, run=run)

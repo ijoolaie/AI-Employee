@@ -59,9 +59,11 @@ async def test_portal_context_permissions_are_evaluated_on_actor_home_tenant():
     home_role = SimpleNamespace(tenant_id="home-tenant", permissions=[permission])
     target_role = SimpleNamespace(tenant_id="target-tenant", permissions=[SimpleNamespace(code="billing.manage")])
     user = SimpleNamespace(id="user-1", tenant_id="home-tenant", roles=[home_role, target_role])
-    ctx = TenantContext(user=user, tenant=SimpleNamespace(id="target-tenant"))
+    grant_id = "grant-1"
+    ctx = TenantContext(user=user, tenant=SimpleNamespace(id="target-tenant"), portal_access_grant_id=grant_id)
 
     assert ctx.tenant_id == "target-tenant"
+    assert ctx.portal_access_grant_id == grant_id
     assert ctx.actor_tenant_id == "home-tenant"
     assert await has_permission(ctx, "employee.read")
     assert not await has_permission(ctx, "billing.manage")

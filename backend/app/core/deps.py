@@ -63,12 +63,13 @@ def _portal_context_path_is_denied(path: str) -> bool:
 class TenantContext:
     """Request-scoped tenant + user context. Never trust client-sent tenant_id."""
 
-    def __init__(self, user: User, tenant: Tenant, *, api_key_id: UUID | None = None, api_key_scopes: list[str] | None = None):
+    def __init__(self, user: User, tenant: Tenant, *, api_key_id: UUID | None = None, api_key_scopes: list[str] | None = None, portal_access_grant_id: UUID | None = None):
         self.user = user
         self.tenant = tenant
         self.actor_tenant_id = getattr(user, "tenant_id", tenant.id)
         self.api_key_id = api_key_id
         self.api_key_scopes = api_key_scopes
+        self.portal_access_grant_id = portal_access_grant_id
 
     @property
     def tenant_id(self) -> UUID:
@@ -159,7 +160,7 @@ async def get_current_context(
     if (request.method, request.url.path) not in billing_only_paths and not await tenant_has_access(db, tenant=tenant):
         raise HTTPException(status_code=402, detail="Tenant requires an approved paid subscription or active Demo grant")
     RequestContextMiddleware.bind_identity(str(tenant.id), str(user.id))
-    return TenantContext(user=user, tenant=tenant)
+    return TenantContext(user=user, tenant=tenant, portal_access_grant_id=context_grant_uuid if portal_context_tenant_id is not None else None)
 
 
 async def has_permission(ctx: TenantContext, permission_code: str) -> bool:

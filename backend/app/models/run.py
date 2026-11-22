@@ -22,6 +22,9 @@ class Run(Base):
     # Multiple Runs may belong to one WorkItem across explicit retries; this is historical execution provenance, not a one-to-one identity.
     work_item_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("work_items.id", ondelete="SET NULL"), nullable=True, index=True)
     created_by: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
+    # Durable identity provenance for delegated portal-context Runs. Nullable for historical rows.
+    actor_tenant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("tenants.id", ondelete="SET NULL"), nullable=True, index=True)
+    portal_access_grant_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("portal_access_grants.id", ondelete="SET NULL"), nullable=True, index=True)
     conversation_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), ForeignKey("customer_conversations.id", ondelete="SET NULL"), nullable=True, index=True)
     # These two FKs intentionally use ALTER-time DDL so SQLAlchemy can topologically
     # order the mutually dependent workflow run/step/branch tables without a cycle warning.

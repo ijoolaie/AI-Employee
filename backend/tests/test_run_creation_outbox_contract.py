@@ -20,3 +20,13 @@ def test_run_creation_outbox_documents_transaction_boundary():
     ).read_text(encoding="utf-8")
 
     assert "same transaction as the Run" in source
+
+
+
+def test_run_creation_persists_delegated_actor_provenance():
+    source = (
+        Path(__file__).parents[1] / "app/api/v1/runs.py"
+    ).read_text(encoding="utf-8")
+
+    assert "actor_tenant_id=ctx.actor_tenant_id" in source
+    assert "portal_access_grant_id=ctx.portal_access_grant_id" in source

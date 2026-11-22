@@ -30,6 +30,7 @@ from typing import Any
 
 from sqlalchemy import or_, select
 from sqlalchemy.orm import selectinload
+from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.ai.gateway import AIGateway
@@ -72,6 +73,27 @@ def _effective_run_tool_permissions(user: User, tenant_id: uuid.UUID) -> set[str
         if role.tenant_id == tenant_id
         for permission in role.permissions
     }
+
+async def _load_run_user_tool_permissions(
+    db: AsyncSession, *, run: Run, actor_tenant_id: uuid.UUID
+) -> set[str]:
+    """Load only active creator roles owned by the persisted actor tenant."""
+    if run.created_by is None:
+        return set()
+    user_result = await db.execute(
+        select(User)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
+        .where(
+            User.id == run.created_by,
+            User.tenant_id == actor_tenant_id,
+            User.is_active.is_(True),
+        )
+    )
+    run_user = user_result.scalar_one_or_none()
+    if run_user is None:
+        return set()
+    return _effective_run_tool_permissions(run_user, actor_tenant_id)
+
 
 def _provider_audit_metadata(tool_result: Any) -> dict[str, Any]:
     """Return a small allowlist of provider outcome fields for durable audit records."""
@@ -276,6 +298,8 @@ async def create_run(
     created_by: uuid.UUID | None,
     employee_version_id: uuid.UUID | None = None,
     agent_instance_id: uuid.UUID | None = None,
+    actor_tenant_id: uuid.UUID | None = None,
+    portal_access_grant_id: uuid.UUID | None = None,
 ) -> Run:
     employee = await employee_service.get_employee(db, employee_id=employee_id, tenant_id=tenant_id)
     if employee_version_id is not None:
@@ -295,6 +319,8 @@ async def create_run(
         employee_version_id=version.id,
         agent_instance_id=agent_instance_id,
         created_by=created_by,
+        actor_tenant_id=actor_tenant_id or tenant_id,
+        portal_access_grant_id=portal_access_grant_id,
         status="pending",
         input_data=input_data,
         request_id=request_id_var.get(),
@@ -318,6 +344,51 @@ async def create_run(
     )
     await db.refresh(run)
     return run
+
+
+async def validate_run_portal_context(db: AsyncSession, *, run: Run) -> uuid.UUID | None:
+    """Revalidate persisted delegated portal authority and return the actor tenant.
+
+    Historical Runs without provenance remain scoped to their effective tenant.
+    A Run with partial or inconsistent delegated provenance fails closed and is
+    made terminal before any runtime work can begin.
+    """
+    actor_tenant_id = run.actor_tenant_id or run.tenant_id
+    try:
+        if run.portal_access_grant_id is None:
+            if actor_tenant_id != run.tenant_id:
+                raise ValidationAppError("Delegated Run is missing its portal access grant")
+            if run.created_by is not None:
+                actor_result = await db.execute(
+                    select(User.id).where(
+                        User.id == run.created_by,
+                        User.tenant_id == actor_tenant_id,
+                        User.is_active.is_(True),
+                    )
+                )
+                if actor_result.scalar_one_or_none() is None:
+                    raise ValidationAppError("Run creator is not an active member of the actor tenant")
+            return actor_tenant_id
+
+        if run.actor_tenant_id is None or run.created_by is None:
+            raise ValidationAppError("Delegated Run is missing actor provenance")
+
+        from app.services.portal_access_service import validate_portal_access_grant
+
+        await validate_portal_access_grant(
+            db,
+            actor_user_id=run.created_by,
+            actor_tenant_id=run.actor_tenant_id,
+            target_tenant_id=run.tenant_id,
+            grant_id=run.portal_access_grant_id,
+        )
+        return run.actor_tenant_id
+    except (HTTPException, ValidationAppError) as exc:
+        run.status = "failed"
+        run.error_message = str(exc.detail if isinstance(exc, HTTPException) else exc)[:2000]
+        run.completed_at = datetime.now(timezone.utc)
+        await db.flush()
+        return None
 
 
 async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
@@ -358,6 +429,10 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
         if latest_approval.status == "rejected":
             return run
 
+    actor_tenant_id = await validate_run_portal_context(db, run=run)
+    if actor_tenant_id is None:
+        return run
+
     run.status = "running"
     if run.started_at is None:
         run.started_at = datetime.now(timezone.utc)
@@ -381,15 +456,10 @@ async def execute_run(db: AsyncSession, *, run_id: uuid.UUID) -> Run:
         tool_permissions = set(
             (agent.permission_policy or {}).get("permissions") or []
         )
-    elif run.created_by is not None:
-        user_result = await db.execute(
-            select(User)
-            .options(selectinload(User.roles).selectinload(Role.permissions))
-            .where(User.id == run.created_by, User.tenant_id == run.tenant_id)
+    else:
+        tool_permissions = await _load_run_user_tool_permissions(
+            db, run=run, actor_tenant_id=actor_tenant_id
         )
-        run_user = user_result.scalar_one_or_none()
-        if run_user is not None:
-            tool_permissions = _effective_run_tool_permissions(run_user, run.tenant_id)
 
     gateway = AIGateway()
     paused_for_approval = False

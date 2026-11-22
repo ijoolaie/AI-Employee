@@ -205,6 +205,8 @@ async def create_run(payload: RunCreate, ctx: RunExecuteContext, db: DbSession):
         employee_id=payload.employee_id,
         input_data=payload.input_data,
         created_by=ctx.user_id,
+        actor_tenant_id=ctx.actor_tenant_id,
+        portal_access_grant_id=ctx.portal_access_grant_id,
     )
 
     # Keep the execution signal in the same transaction as the Run. The

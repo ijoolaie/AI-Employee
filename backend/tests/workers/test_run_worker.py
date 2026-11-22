@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from contextlib import asynccontextmanager, contextmanager
+from datetime import datetime, timezone
 from types import SimpleNamespace
 from uuid import uuid4
 
@@ -62,6 +63,8 @@ def _run(run_id, tenant_id, *, agent_instance_id=None):
         employee_version_id=uuid4(),
         agent_instance_id=agent_instance_id,
         created_by=None,
+        actor_tenant_id=tenant_id,
+        portal_access_grant_id=None,
         input_data={},
         prompt_tokens=0,
         completion_tokens=0,
@@ -301,3 +304,43 @@ async def test_run_worker_blocks_delayed_run_after_delegation_revocation(monkeyp
 
     assert events == ["kill_switch", "authorize"]
     assert db.committed is False
+
+
+@pytest.mark.asyncio
+async def test_run_worker_fails_closed_on_revoked_portal_grant_before_runtime(monkeypatch):
+    run_id = uuid4()
+    customer_tenant_id = uuid4()
+    vendor_tenant_id = uuid4()
+    run = _run(run_id, customer_tenant_id)
+    run.actor_tenant_id = vendor_tenant_id
+    run.portal_access_grant_id = uuid4()
+    db = _Db(run, _employee_version(run.employee_id))
+    events = []
+
+    async def _revoked(_db, *, run):
+        events.append("grant_revalidation")
+        run.status = "failed"
+        run.error_message = "Delegated portal access is no longer active"
+        run.completed_at = datetime.now(timezone.utc)
+        await _db.flush()
+        return None
+
+    async def _memory(*_args, **_kwargs):
+        events.append("memory")
+        raise AssertionError("tenant memory must not load after portal grant revocation")
+
+    async def _execute(*_args, **_kwargs):
+        events.append("execute")
+        raise AssertionError("Run execution must not start after portal grant revocation")
+
+    monkeypatch.setattr(run_worker, "worker_db_session", lambda: _session(db))
+    monkeypatch.setattr(run_worker, "span", _span)
+    monkeypatch.setattr(run_worker, "validate_run_portal_context", _revoked)
+    monkeypatch.setattr(run_worker, "build_runtime_memory", _memory)
+    monkeypatch.setattr(run_worker, "execute_run_locked", _execute)
+
+    await run_worker._run_async(str(run_id), str(customer_tenant_id))
+
+    assert events == ["grant_revalidation"]
+    assert run.status == "failed"
+    assert db.committed is True
