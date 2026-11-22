@@ -852,3 +852,12 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - Both channels exercise the real worker retry transition and real `mark_retry` service at exhausted attempts: rows become `dead` with UTC `dead_at` and the delegated-revocation error; SMTP/WhatsApp provider is not called. WhatsApp path also validates the consumed exact-call approval and tenant-owned channel before policy rejection.
 - Focused Python 3.12 Email, WhatsApp, generic Outbox and Customer Handoff suites: **41 passed**; targeted Ruff and `git diff --check` passed. Policy decision and providers are mocked; no DB, provider, broker, Staging, or Production service was accessed.
 - This is bounded unit evidence for revoked delegated context at retry exhaustion, not a live policy-engine integration or full actor × hierarchy × delivery-kind matrix. Issue #1350 remains OPEN.
+
+
+## 2026-11-22 - Real Policy Engine at Agent notification worker boundaries (#1503)
+
+- PR #1503 merged to `main` at `75afbe9edde59f713ba61abf19d5f57b7d9b710a` (PR head `a0bde2b144f291f4412b6af49cb944af7a75f973`); all 12 reported required checks completed successfully.
+- Added a nested Reseller-to-Customer delegation-chain test that drives the real `assert_authorized` Policy Engine and real `validate_delegation` path, including parent/child WorkItem and AgentDelegation lock assertions.
+- Extended the real Policy Engine integration test to call the deferred Email worker authorization helper and WhatsApp worker `_validate_and_load` path. These worker paths now have direct integration evidence with the real Policy Engine and delegation validator rather than replacing `assert_authorized` with a policy mock in this scenario. WhatsApp exact-call approval and tenant-owned channel loading are exercised before provider admission.
+- Local Python 3.12 focused governance, policy, Outbox, Email, and WhatsApp suites: **73 passed**; targeted Ruff and `git diff --check` passed.
+- Scope/limitations: these Policy Engine integration tests use a controlled fake DB adapter; they are not PostgreSQL-backed live worker/provider deliveries. Provider calls, complete retry/dead-letter behavior, and the full actor x hierarchy x delivery-kind matrix are not all covered by this PR. Existing provider-boundary isolation and revoked-delegation retry-exhaustion tests remain separate bounded evidence. Notifications/Outbox acceptance remains PARTIAL; Issue #1350 remains OPEN. No audit-write policy was inferred or changed; no Staging/Production DB or provider was accessed.
