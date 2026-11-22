@@ -1766,3 +1766,9 @@ No authorization code was changed in this reconnaissance step. The next implemen
 - PR #1495 merged at `2948ea2489b3afda5b29fc5f6a0b2a4084c356a7` after all required exact-head checks passed. The Run model now persists actor-tenant and portal-grant provenance for new Run API requests; worker and RunService revalidate delegated grants; actor tool permissions are resolved only from active roles in the actor tenant.
 - Focused Python 3.12 validation: 66 passed; targeted Ruff passed. CI backend, Alembic upgrade/consistency, security, RBAC, CodeQL, DAST, recovery, and real-stack checks passed.
 - WorkflowRun-to-child-Run actor/grant provenance is not yet implemented. PostgreSQL-backed async Report Employee artifact lifecycle and revoke-before-dispatch coverage remain open. Issue #1350 remains OPEN.
+
+## 2026-11-22 - WorkflowRun delegated actor provenance
+
+- Added nullable WorkflowRun actor-tenant and portal-grant provenance columns (migration w35; no historical backfill). Create/replay API paths persist the actor context; workflow workers and service execution revalidate delegated grants plus the current `workflow.execute` permission before workflow steps, and parallel branch workers revalidate the locked parent before branch execution. Delegated Run workers also revalidate `run.execute` before runtime memory.
+- Sequential and parallel Workflow Employee child Runs inherit the parent WorkflowRun actor tenant and portal grant. Revoked/missing/inconsistent context fails closed; no Customer roles are inherited by Vendor/Reseller actors.
+- Focused Python 3.12 workflow and delegated Run suites: 102 passed; targeted Ruff passed; Alembic reports a single w35 head. PostgreSQL-backed workflow lifecycle and Report Employee artifact acceptance remain unrun; no local DB/broker/staging/prod service was accessed. Issue #1350 remains OPEN.

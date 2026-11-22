@@ -1,4 +1,5 @@
 import uuid
+from unittest.mock import AsyncMock
 from types import SimpleNamespace
 
 import pytest
@@ -280,6 +281,7 @@ async def test_run_portal_context_revalidates_persisted_actor_and_grant(monkeypa
         calls.append((db, kwargs))
 
     monkeypatch.setattr(portal_access_service, "validate_portal_access_grant", _validate)
+    monkeypatch.setattr(run_service, "actor_has_tenant_permission", AsyncMock(return_value=True))
     actor = await run_service.validate_run_portal_context(object(), run=run)
 
     assert actor == actor_tenant_id
@@ -416,3 +418,66 @@ async def test_run_portal_context_rejects_creator_from_different_tenant():
     assert run.status == "failed"
     assert "not an active member" in run.error_message
     assert flushed == [True]
+
+
+@pytest.mark.asyncio
+async def test_run_portal_context_rejects_revoked_run_execute_permission(monkeypatch):
+    from app.services import portal_access_service
+
+    run = SimpleNamespace(
+        tenant_id=uuid.uuid4(),
+        actor_tenant_id=uuid.uuid4(),
+        created_by=uuid.uuid4(),
+        portal_access_grant_id=uuid.uuid4(),
+        status="pending",
+        error_message=None,
+        completed_at=None,
+    )
+
+    async def _grant_active(*_args, **_kwargs):
+        return None
+
+    class _DB:
+        async def flush(self):
+            return None
+
+    monkeypatch.setattr(portal_access_service, "validate_portal_access_grant", _grant_active)
+    monkeypatch.setattr(run_service, "actor_has_tenant_permission", AsyncMock(return_value=False))
+
+    actor = await run_service.validate_run_portal_context(_DB(), run=run)
+
+    assert actor is None
+    assert run.status == "failed"
+    assert "run.execute permission" in run.error_message
+
+
+@pytest.mark.asyncio
+async def test_actor_has_tenant_permission_ignores_foreign_tenant_roles():
+    actor_tenant_id = uuid.uuid4()
+    user = SimpleNamespace(
+        roles=[
+            SimpleNamespace(
+                tenant_id=actor_tenant_id,
+                permissions=[SimpleNamespace(code="run.execute")],
+            ),
+            SimpleNamespace(
+                tenant_id=uuid.uuid4(),
+                permissions=[SimpleNamespace(code="run.execute")],
+            ),
+        ]
+    )
+
+    class _Result:
+        def scalar_one_or_none(self):
+            return user
+
+    class _DB:
+        async def execute(self, _statement):
+            return _Result()
+
+    assert await run_service.actor_has_tenant_permission(
+        _DB(),
+        actor_user_id=uuid.uuid4(),
+        actor_tenant_id=actor_tenant_id,
+        permission_code="run.execute",
+    ) is True
